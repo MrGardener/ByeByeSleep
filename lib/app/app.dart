@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'routes.dart';
+
 class ByeByeSleepApp extends StatelessWidget {
   const ByeByeSleepApp({super.key});
 
@@ -15,7 +17,11 @@ class ByeByeSleepApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const Scaffold(body: Center(child: Text('ByeByeSleep'))),
+      initialRoute: WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+      onGenerateRoute: generateRoute,
+      onGenerateInitialRoutes: (name) => [
+        generateRoute(RouteSettings(name: name)),
+      ],
     );
   }
 }
