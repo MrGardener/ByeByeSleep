@@ -10,6 +10,8 @@ USER_VOLUME=3
 
 fail() {
   echo "FAIL: $1"
+  adb logcat -d -s ByeByeSleep || true
+  adb shell dumpsys audio | sed -n '/- STREAM_ALARM:/,/- STREAM_NOTIFICATION:/p' || true
   adb shell dumpsys audio | grep -iE "AudioPlaybackConfiguration|STREAM_ALARM" | head -20 || true
   adb logcat -d | grep -iE "byebyesleep|AlarmService|RingActivity|FATAL" | tail -60 || true
   exit 1
@@ -20,6 +22,7 @@ alarm_volume() { adb shell cmd media_session volume --stream 4 --get | grep -oE 
 adb install -r -g "$APK"
 adb shell appops set "$PKG" USE_FULL_SCREEN_INTENT allow || true
 adb shell cmd media_session volume --stream 4 --set "$USER_VOLUME" >/dev/null
+echo "alarm volume before: $(alarm_volume)"
 adb shell am start -n "$PKG/.MainActivity" --ei debug_ring_in_seconds 30
 sleep 8
 adb shell input keyevent KEYCODE_HOME

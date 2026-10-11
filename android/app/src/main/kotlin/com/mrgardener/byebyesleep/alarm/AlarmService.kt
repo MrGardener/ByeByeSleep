@@ -19,6 +19,7 @@ import android.os.UserManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import com.mrgardener.byebyesleep.RingActivity
 
 /** Foreground service that makes the noise and keeps the ring screen up. */
@@ -63,7 +64,9 @@ class AlarmService : Service() {
             val audio = getSystemService(AudioManager::class.java)
             val state = ringingState()
             if (!state.contains(KEY_PREVIOUS_VOLUME)) {
-                state.edit().putInt(KEY_PREVIOUS_VOLUME, audio.getStreamVolume(AudioManager.STREAM_ALARM)).commit()
+                val current = audio.getStreamVolume(AudioManager.STREAM_ALARM)
+                state.edit().putInt(KEY_PREVIOUS_VOLUME, current).commit()
+                Log.i(TAG, "saved alarm volume $current")
             }
             audio.setStreamVolume(AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
         }
@@ -143,8 +146,9 @@ class AlarmService : Service() {
         val state = ringingState()
         if (state.contains(KEY_PREVIOUS_VOLUME)) {
             runCatching {
-                getSystemService(AudioManager::class.java)
-                    .setStreamVolume(AudioManager.STREAM_ALARM, state.getInt(KEY_PREVIOUS_VOLUME, 0), 0)
+                val previous = state.getInt(KEY_PREVIOUS_VOLUME, 0)
+                getSystemService(AudioManager::class.java).setStreamVolume(AudioManager.STREAM_ALARM, previous, 0)
+                Log.i(TAG, "restored alarm volume $previous")
             }
             state.edit().remove(KEY_PREVIOUS_VOLUME).commit()
         }
@@ -169,6 +173,7 @@ class AlarmService : Service() {
         private const val CHANNEL_ID = "alarm_ringing"
         private const val NOTIFICATION_ID = 4242
         private const val KEY_PREVIOUS_VOLUME = "previous_alarm_volume"
+        private const val TAG = "ByeByeSleep"
 
         /** Id of the alarm shown on the ring screen (the first one that rang), or null. */
         @Volatile var ringingAlarmId: Int? = null
