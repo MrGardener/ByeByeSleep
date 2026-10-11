@@ -1,0 +1,41 @@
+name: Bug report
+description: Something did not work
+labels: [bug]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: e.g. Pixel 10 Pro
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
