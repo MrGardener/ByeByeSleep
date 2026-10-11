@@ -1,0 +1,101 @@
+import 'package:byebyesleep/alarm/alarm.dart';
+import 'package:byebyesleep/alarm/alarm_providers.dart';
+import 'package:byebyesleep/app/routes.dart';
+import 'package:byebyesleep/ringing/ring_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../support/fake_alarm_platform.dart';
+
+void main() {
+  late FakeAlarmPlatform fake;
+  late int finished;
+
+  Future<void> pumpRing(WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        child: MaterialApp(
+          home: RingScreen(alarmId: 7, onFinished: () => finished++),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  setUp(() {
+    fake = FakeAlarmPlatform(
+      seed: [Alarm(id: 7, hour: 6, minute: 30, label: 'Work')],
+    );
+    finished = 0;
+  });
+
+  testWidgets('showsAlarmLabel', (tester) async {
+    await pumpRing(tester);
+    expect(find.text('Work'), findsOneWidget);
+  });
+
+  testWidgets('stopCallsPlatformAndFinishes', (tester) async {
+    await pumpRing(tester);
+    await tester.tap(find.byKey(const Key('stop')));
+    await tester.pump();
+    expect(fake.calls, contains('stopRinging'));
+    expect(finished, 1);
+  });
+
+  testWidgets('snoozeUses9Minutes', (tester) async {
+    await pumpRing(tester);
+    await tester.tap(find.byKey(const Key('snooze')));
+    await tester.pump();
+    expect(fake.calls, containsAllInOrder(['snooze:7:9', 'stopRinging']));
+    expect(finished, 1);
+  });
+
+  testWidgets('ringScreen_backDoesNotPop', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => RingScreen(alarmId: 7, onFinished: () {}),
+                ),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(RingScreen), findsOneWidget);
+  });
+
+  testWidgets('ringRouteBuildsRingScreenForId', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        child: MaterialApp(
+          onGenerateRoute: generateRoute,
+          onGenerateInitialRoutes: (name) => [
+            generateRoute(RouteSettings(name: name)),
+          ],
+          initialRoute: '/ring/7',
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.byWidgetPredicate((w) => w is RingScreen && w.alarmId == 7),
+      findsOneWidget,
+    );
+  });
+}
