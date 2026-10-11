@@ -6,7 +6,6 @@ set -euo pipefail
 
 PKG=com.mrgardener.byebyesleep
 APK=build/app/outputs/flutter-apk/app-debug.apk
-USER_VOLUME=3
 
 fail() {
   echo "FAIL: $1"
@@ -21,8 +20,11 @@ alarm_volume() { adb shell cmd media_session volume --stream 4 --get | grep -oE 
 
 adb install -r -g "$APK"
 adb shell appops set "$PKG" USE_FULL_SCREEN_INTENT allow || true
-adb shell cmd media_session volume --stream 4 --set "$USER_VOLUME" >/dev/null
-echo "alarm volume before: $(alarm_volume)"
+alarm_max() { adb shell dumpsys audio | sed -n '/- STREAM_ALARM:/,/Max:/p' | grep -oE 'Max: [0-9]+' | head -1 | grep -oE '[0-9]+'; }
+USER_VOLUME=$(alarm_volume)
+MAX_VOLUME=$(alarm_max)
+echo "alarm volume before: $USER_VOLUME (max $MAX_VOLUME)"
+[ "$USER_VOLUME" != "$MAX_VOLUME" ] || fail "emulator alarm volume already at max; cannot test restore"
 adb shell am start -n "$PKG/.MainActivity" --ei debug_ring_in_seconds 30
 sleep 8
 adb shell input keyevent KEYCODE_HOME
@@ -40,6 +42,7 @@ adb shell dumpsys activity services "$PKG/.alarm.AlarmService" | grep -q "isFore
 # Only the live player list: a started player with alarm usage.
 adb shell dumpsys audio | grep -E "AudioPlaybackConfiguration" | grep "USAGE_ALARM" | grep -q "state:started" \
   || fail "No alarm audio playing"
+[ "$(alarm_volume)" = "$MAX_VOLUME" ] || fail "alarm volume not raised to max while ringing (got $(alarm_volume))"
 echo "RINGING OK"
 
 # Tap the Stop button on the Flutter ring screen (found through accessibility).
