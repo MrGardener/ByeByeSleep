@@ -44,7 +44,8 @@ class AlarmService : Service() {
 
     private fun ring(id: Int) {
         val alreadyRinging = player != null
-        ringingAlarmId = id
+        if (ringingAlarmId == null) ringingAlarmId = id
+        ringingAlarmIds = ringingAlarmIds + id
         val notification = postNotification(id, repost = false)
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
@@ -134,6 +135,7 @@ class AlarmService : Service() {
 
     private fun stopRinging() {
         ringingAlarmId = null
+        ringingAlarmIds = emptySet()
         player?.run { runCatching { stop() }; release() }
         player = null
         vibrator?.cancel()
@@ -168,8 +170,12 @@ class AlarmService : Service() {
         private const val NOTIFICATION_ID = 4242
         private const val KEY_PREVIOUS_VOLUME = "previous_alarm_volume"
 
-        /** Id of the alarm currently ringing, or null. */
+        /** Id of the alarm shown on the ring screen (the first one that rang), or null. */
         @Volatile var ringingAlarmId: Int? = null
+            private set
+
+        /** Every alarm ringing right now; Snooze applies to all of them. */
+        @Volatile var ringingAlarmIds: Set<Int> = emptySet()
             private set
 
         fun ringIntent(context: Context, id: Int): Intent =
@@ -178,6 +184,7 @@ class AlarmService : Service() {
         /** Marks ringing as stopped immediately, then lets the service clean up. */
         fun stop(context: Context) {
             ringingAlarmId = null
+            ringingAlarmIds = emptySet()
             context.startService(Intent(context, AlarmService::class.java).setAction(ACTION_STOP))
         }
 

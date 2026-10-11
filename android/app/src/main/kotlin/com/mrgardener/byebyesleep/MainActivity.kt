@@ -8,9 +8,7 @@ import android.os.Bundle
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
-import com.mrgardener.byebyesleep.alarm.AlarmSpec
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
-import com.mrgardener.byebyesleep.alarm.PrefsAlarmRepository
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -34,12 +32,11 @@ class MainActivity : FlutterActivity() {
         AlarmService.ringingAlarmId?.let { startActivity(RingActivity.intent(this, it)) }
     }
 
-    /** Debug builds only: `--ei debug_ring_in_seconds N` rings alarm 9999 in N seconds (emulator smoke test). */
+    /** Debug builds only: `--ei debug_ring_in_seconds N` rings alarm 9999 in N seconds (emulator smoke test). It is not stored, so it never shows up in the list. */
     private fun scheduleDebugRingIfRequested() {
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         val seconds = intent.getIntExtra("debug_ring_in_seconds", -1)
         if (!debuggable || seconds <= 0) return
-        PrefsAlarmRepository(this).put(AlarmSpec(9999, 0, 0, emptySet(), "smoke", true))
         AndroidAlarmClockScheduler(this).schedule(9999, System.currentTimeMillis() + seconds * 1000L)
     }
 

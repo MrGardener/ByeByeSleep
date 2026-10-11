@@ -53,6 +53,16 @@ class AlarmLifecycle(
         return at
     }
 
+    /** Snoozes every alarm in [ids] (several can ring at once); returns the snooze trigger. */
+    fun snoozeAll(ids: Collection<Int>, minutes: Int): Long {
+        val at = clock().plusMinutes(minutes.toLong()).toInstant().toEpochMilli()
+        for (id in ids) {
+            repo.get(id)?.let { repo.put(it.copy(snoozeUntilMs = at)) }
+            scheduler.schedule(id, at)
+        }
+        return at
+    }
+
     /** After boot, time change or app update: a future snooze wins over the regular time. */
     fun rescheduleAll() {
         val nowMs = clock().toInstant().toEpochMilli()

@@ -120,4 +120,16 @@ class AlarmLifecycleTest {
         AlarmLifecycle(repo, throwing) { now }.rescheduleAll()
         assertEquals(ms(at(2026, 10, 12, 8, 0)), sched.scheduled[2])
     }
+
+    @Test fun snoozeAll_snoozesEveryRingingAlarm() {
+        lifecycle.upsert(spec(7, 0, (1..7).toSet()))
+        lifecycle.upsert(spec(7, 0, (1..7).toSet()).copy(id = 2))
+        now = at(2026, 10, 12, 7, 0)
+        lifecycle.onFired(1)
+        lifecycle.onFired(2)
+        val at = lifecycle.snoozeAll(listOf(1, 2), 9)
+        assertEquals(ms(at(2026, 10, 12, 7, 9)), at)
+        assertEquals(at, sched.scheduled[1])
+        assertEquals(at, sched.scheduled[2])
+    }
 }

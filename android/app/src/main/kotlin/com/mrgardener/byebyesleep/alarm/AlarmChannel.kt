@@ -24,12 +24,11 @@ object AlarmChannel {
                         AlarmService.stop(activity)
                         result.success(null)
                     }
-                    "snooze" -> result.success(
-                        lifecycle.snooze(
-                            call.argument<Number>("id")!!.toInt(),
-                            call.argument<Number>("minutes")!!.toInt(),
-                        ),
-                    )
+                    "snooze" -> {
+                        val id = call.argument<Number>("id")!!.toInt()
+                        val ids = AlarmService.ringingAlarmIds.ifEmpty { setOf(id) }
+                        result.success(lifecycle.snoozeAll(ids, call.argument<Number>("minutes")!!.toInt()))
+                    }
                     "permissions" -> result.success(Permissions.status(activity))
                     "openSettings" -> {
                         Permissions.openSettings(activity, call.argument<String>("kind")!!)

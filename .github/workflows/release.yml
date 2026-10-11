@@ -21,6 +21,8 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
       - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
       - name: Configure release signing
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -29,7 +31,8 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "SIGNING_NOTE=This APK is debug-signed (no release keystore configured)." >> "$GITHUB_ENV"
+            echo "SIGNING_NOTE=Pre-release: this APK is debug-signed (no release keystore configured). Installing a later signed release will require uninstalling this one, which deletes its alarms." >> "$GITHUB_ENV"
+            echo "PRERELEASE=true" >> "$GITHUB_ENV"
             exit 0
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks
@@ -40,6 +43,7 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
           echo "SIGNING_NOTE=" >> "$GITHUB_ENV"
+          echo "PRERELEASE=false" >> "$GITHUB_ENV"
       - name: Build APK
         run: |
           flutter build apk --release --build-name "${GITHUB_REF_NAME#v}" --build-number "${{ github.run_number }}"
@@ -49,3 +53,4 @@ jobs:
           files: ByeByeSleep-${{ github.ref_name }}.apk
           generate_release_notes: true
           body: ${{ env.SIGNING_NOTE }}
+          prerelease: ${{ env.PRERELEASE == 'true' }}
