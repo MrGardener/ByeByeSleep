@@ -30,7 +30,16 @@ jobs:
       - run: flutter build apk --debug
       - name: Kotlin unit tests and lint
         working-directory: android
-        run: ./gradlew testDebugUnitTest lintDebug
+        run: |
+          ./gradlew testDebugUnitTest lintDebug
+          # Fail if the Kotlin tests were silently skipped (e.g. NO-SOURCE).
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          files = glob.glob('app/build/test-results/testDebugUnitTest/*.xml')
+          total = sum(int(ET.parse(f).getroot().get('tests')) for f in files)
+          print(f'Kotlin unit tests run: {total}')
+          assert total >= 22, 'expected at least 22 Kotlin unit tests'
+          PY
       - name: Release build (debug-signed fallback, no keystore in CI)
         run: flutter build apk --release
       - uses: actions/upload-artifact@v4
