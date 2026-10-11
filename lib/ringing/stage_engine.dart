@@ -43,18 +43,17 @@ class StageEngine {
     required List<StageConfig> stages,
     required this.ringStartedAt,
     int startIndex = 0,
-    required DateTime Function() clock,
+    required this.clock,
     this.breather = const Duration(seconds: 20),
   }) : _stages = [...stages],
-       _clock = clock,
        _index = startIndex.clamp(0, stages.length) {
-    _stageStartedAt = _clock();
+    _stageStartedAt = clock();
   }
 
   final DateTime ringStartedAt;
   final Duration breather;
   final List<StageConfig> _stages;
-  final DateTime Function() _clock;
+  final DateTime Function() clock;
   int _index;
   late DateTime _stageStartedAt;
   DateTime? _breatherEndsAt;
@@ -67,7 +66,7 @@ class StageEngine {
 
   StagePhase get phase {
     if (_done) return const Done();
-    final now = _clock();
+    final now = clock();
     final breatherEnd = _breatherEndsAt;
     if (breatherEnd != null) {
       final left = breatherEnd.difference(now);
@@ -86,7 +85,7 @@ class StageEngine {
   }
 
   bool get safetyExitAvailable =>
-      _clock().difference(ringStartedAt) >= safetyExitAfter;
+      clock().difference(ringStartedAt) >= safetyExitAfter;
 
   double get ringLevel => phase is Breather ? breatherLevel : 1.0;
 
@@ -95,7 +94,7 @@ class StageEngine {
     if (_index == _stages.length - 1) {
       _index = _stages.length;
     } else {
-      _breatherEndsAt = _clock().add(breather);
+      _breatherEndsAt = clock().add(breather);
     }
   }
 
@@ -104,15 +103,15 @@ class StageEngine {
   void useFallback(ChallengeId replacement) {
     if (phase is! Running) return;
     _stages[_index] = _stages[_index].copyWith(challenge: replacement);
-    _stageStartedAt = _clock();
+    _stageStartedAt = clock();
   }
 
   void tick() {
     final end = _breatherEndsAt;
-    if (end != null && !_clock().isBefore(end)) {
+    if (end != null && !clock().isBefore(end)) {
       _breatherEndsAt = null;
       _index++;
-      _stageStartedAt = _clock();
+      _stageStartedAt = clock();
     }
   }
 }
