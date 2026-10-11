@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'stage_config.dart';
+
 /// A scheduled alarm. Weekdays use ISO-8601 numbering: 1 = Monday … 7 = Sunday.
 /// An empty [repeatDays] means a one-shot alarm.
 @immutable
@@ -11,6 +13,7 @@ class Alarm {
     this.repeatDays = const {},
     this.label = '',
     this.enabled = true,
+    this.stages = defaultStages,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -25,6 +28,7 @@ class Alarm {
     },
     label: m['label'] as String? ?? '',
     enabled: m['enabled'] as bool? ?? true,
+    stages: decodeStages(m['stages'] as String?),
   );
 
   final int id;
@@ -33,6 +37,9 @@ class Alarm {
   final Set<int> repeatDays;
   final String label;
   final bool enabled;
+
+  /// Challenges that must be completed before Stop/Snooze appear.
+  final List<StageConfig> stages;
 
   bool get isRepeating => repeatDays.isNotEmpty;
 
@@ -45,6 +52,7 @@ class Alarm {
     Set<int>? repeatDays,
     String? label,
     bool? enabled,
+    List<StageConfig>? stages,
   }) => Alarm(
     id: id,
     hour: hour ?? this.hour,
@@ -52,6 +60,7 @@ class Alarm {
     repeatDays: repeatDays ?? this.repeatDays,
     label: label ?? this.label,
     enabled: enabled ?? this.enabled,
+    stages: stages ?? this.stages,
   );
 
   Map<String, Object?> toMap() => {
@@ -61,6 +70,7 @@ class Alarm {
     'repeatDays': repeatDays.toList()..sort(),
     'label': label,
     'enabled': enabled,
+    'stages': encodeStages(stages),
   };
 
   @override
@@ -71,7 +81,8 @@ class Alarm {
       other.minute == minute &&
       setEquals(other.repeatDays, repeatDays) &&
       other.label == label &&
-      other.enabled == enabled;
+      other.enabled == enabled &&
+      listEquals(other.stages, stages);
 
   @override
   int get hashCode => Object.hash(
@@ -81,6 +92,7 @@ class Alarm {
     Object.hashAllUnordered(repeatDays),
     label,
     enabled,
+    stages.length,
   );
 
   @override

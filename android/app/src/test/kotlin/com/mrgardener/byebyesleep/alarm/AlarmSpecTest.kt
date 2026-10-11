@@ -17,7 +17,7 @@ class AlarmSpecTest {
         val s = full.copy(snoozeUntilMs = null)
         val map = s.toChannelMap()
         assertEquals(listOf(1, 5), map["repeatDays"])
-        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled"), map.keys)
+        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages"), map.keys)
         assertEquals(s, AlarmSpec.fromChannelMap(map))
     }
 
@@ -25,5 +25,16 @@ class AlarmSpecTest {
         // Flutter's codec may deliver small ints as Int or Long.
         val m = mapOf("id" to 2L, "hour" to 7, "minute" to 0L, "repeatDays" to listOf(1L, 2), "label" to "", "enabled" to true)
         assertEquals(AlarmSpec(2, 7, 0, setOf(1, 2), "", true), AlarmSpec.fromChannelMap(m))
+    }
+
+    @Test fun json_roundTrip_keepsStages() {
+        val s = full.copy(stagesJson = "[{\"challenge\":\"tiltMaze\"}]")
+        assertEquals(s, AlarmSpec.fromJson(s.toJson()))
+    }
+
+    @Test fun channelMap_includesStages() {
+        val s = full.copy(snoozeUntilMs = null, stagesJson = "[]")
+        assertEquals("[]", s.toChannelMap()["stages"])
+        assertEquals(s, AlarmSpec.fromChannelMap(s.toChannelMap()))
     }
 }
