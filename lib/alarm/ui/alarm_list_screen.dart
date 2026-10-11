@@ -30,9 +30,11 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // The user may come back from a system settings page.
+    // The user may come back from a system settings page, and the native
+    // engine may have changed alarms meanwhile (one-shots disable after ringing).
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(permissionStatusProvider);
+      ref.invalidate(alarmListProvider);
     }
   }
 

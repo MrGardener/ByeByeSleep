@@ -57,11 +57,14 @@ class AlarmLifecycle(
     fun rescheduleAll() {
         val nowMs = clock().toInstant().toEpochMilli()
         for (spec in repo.all()) {
-            val snooze = spec.snoozeUntilMs
-            when {
-                snooze != null && snooze > nowMs -> scheduler.schedule(spec.id, snooze)
-                spec.enabled -> scheduleRegular(spec)
-                else -> scheduler.cancel(spec.id)
+            // One failing alarm (e.g. SecurityException) must not stop the others.
+            runCatching {
+                val snooze = spec.snoozeUntilMs
+                when {
+                    snooze != null && snooze > nowMs -> scheduler.schedule(spec.id, snooze)
+                    spec.enabled -> scheduleRegular(spec)
+                    else -> scheduler.cancel(spec.id)
+                }
             }
         }
     }

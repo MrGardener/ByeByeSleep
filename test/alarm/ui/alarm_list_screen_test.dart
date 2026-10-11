@@ -44,6 +44,18 @@ void main() {
     expect(fake.stored, isEmpty);
   });
 
+  testWidgets('listReloadsOnResume', (tester) async {
+    final fake = FakeAlarmPlatform(seed: [Alarm(id: 1, hour: 7, minute: 0)]);
+    await pumpApp(tester, fake);
+    // The native engine disables a one-shot alarm after it rang.
+    fake.stored[1] = fake.stored[1]!.copyWith(enabled: false);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    final sw = tester.widget<Switch>(find.byKey(const Key('alarm-switch-1')));
+    expect(sw.value, isFalse);
+  });
+
   testWidgets('emptyStateIsShown', (tester) async {
     await pumpApp(tester, FakeAlarmPlatform());
     expect(find.text('No alarms yet'), findsOneWidget);

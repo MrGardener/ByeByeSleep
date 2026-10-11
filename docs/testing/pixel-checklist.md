@@ -13,10 +13,12 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 6 | Tap **Stop**. | Sound and vibration stop, ring screen closes, alarm volume back to the previous level, one-shot alarm switched off in the list. |
 | 7 | Set an alarm, open recents and swipe ByeByeSleep away. | Alarm still rings. |
 | 8 | Connect USB, run `adb shell dumpsys deviceidle force-idle`, set an alarm. | Alarm still rings (Doze). Run `adb shell dumpsys deviceidle unforce` afterwards. |
-| 9 | Set an alarm 5 minutes ahead, reboot the phone, do not open the app. | Alarm rings. |
+| 9 | Set an alarm 5 minutes ahead, reboot the phone and **do not unlock it**. | Alarm rings; the notification has a **Stop** button that silences it (the ring screen needs one unlock after a reboot). |
 | 10 | When an alarm rings tap **Snooze 9 min**. | Rings again 9 minutes later. |
 | 11 | Snooze, then reboot during the snooze. | Still rings at the snooze time. |
 | 12 | Turn on Do Not Disturb (default settings: alarms allowed). | Alarm rings. |
 | 13 | Repeating alarm (e.g. every day): let it ring and Stop. | Status bar alarm icon / quick settings shows the next day's time. |
 | 14 | Settings → System → Date & time: change time zone. | Alarm still rings at the same local clock time. |
 | 15 | Use the phone (unlocked, another app open) when an alarm rings. | Heads-up "Alarm ringing" notification; tapping it opens the ring screen; sound plays. |
+| 16 | Settings → Apps → ByeByeSleep → **Force stop**, then open the app. | Alarms still ring at their times (opening the app re-registers them). |
+| 17 | Block ByeByeSleep notifications, let an alarm ring, open the app from the launcher. | The ring screen appears so the alarm can be stopped. |

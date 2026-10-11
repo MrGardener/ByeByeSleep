@@ -1,11 +1,15 @@
 package com.mrgardener.byebyesleep.alarm
 
 import android.content.Context
+import android.os.UserManager
 import org.json.JSONArray
 
-/** Stores alarms as a JSON array in SharedPreferences (readable without Flutter, e.g. at boot). */
+/**
+ * Stores alarms as a JSON array in device-protected SharedPreferences, so they are
+ * readable at boot before the user first unlocks the phone (direct boot).
+ */
 class PrefsAlarmRepository(context: Context) : AlarmRepository {
-    private val prefs = context.getSharedPreferences("alarms", Context.MODE_PRIVATE)
+    private val prefs = deviceProtected(context).getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     override fun all(): List<AlarmSpec> {
         val arr = JSONArray(prefs.getString(KEY, "[]"))
@@ -24,7 +28,17 @@ class PrefsAlarmRepository(context: Context) : AlarmRepository {
         prefs.edit().putString(KEY, arr.toString()).commit()
     }
 
-    private companion object {
-        const val KEY = "alarms_json"
+    companion object {
+        private const val FILE = "alarms"
+        private const val KEY = "alarms_json"
+
+        /** Device-protected storage; migrates the old credential-protected file once. */
+        fun deviceProtected(context: Context): Context {
+            val storage = context.createDeviceProtectedStorageContext()
+            if (context.getSystemService(UserManager::class.java).isUserUnlocked) {
+                storage.moveSharedPreferencesFrom(context, FILE)
+            }
+            return storage
+        }
     }
 }

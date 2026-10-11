@@ -106,4 +106,18 @@ class AlarmLifecycleTest {
         lifecycle.rescheduleAll()
         assertEquals(ms(at(2026, 10, 12, 7, 0)), sched.scheduled[1])
     }
+
+    @Test fun rescheduleAll_oneFailureDoesNotDropOthers() {
+        repo.put(spec(7, 0))
+        repo.put(spec(8, 0).copy(id = 2))
+        val throwing = object : AlarmClockScheduler {
+            override fun schedule(id: Int, triggerAtMs: Long) {
+                if (id == 1) throw SecurityException("exact alarms revoked")
+                sched.schedule(id, triggerAtMs)
+            }
+            override fun cancel(id: Int) = sched.cancel(id)
+        }
+        AlarmLifecycle(repo, throwing) { now }.rescheduleAll()
+        assertEquals(ms(at(2026, 10, 12, 8, 0)), sched.scheduled[2])
+    }
 }

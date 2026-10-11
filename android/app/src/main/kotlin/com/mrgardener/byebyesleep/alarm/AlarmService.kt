@@ -15,6 +15,7 @@ import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.UserManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -25,13 +26,16 @@ class AlarmService : Service() {
     private var player: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var wakeLock: PowerManager.WakeLock? = null
-    private var previousVolume: Int? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_RING -> ring(intent.getIntExtra(EXTRA_ALARM_ID, -1))
+            ACTION_RING -> {
+                ring(intent.getIntExtra(EXTRA_ALARM_ID, -1))
+                // If the process is killed while ringing, Android restarts us with this intent.
+                return START_REDELIVER_INTENT
+            }
             ACTION_RING_ACTIVITY_GONE -> ringingAlarmId?.let { postNotification(it, repost = true) }
             ACTION_STOP -> stopRinging()
         }
@@ -53,9 +57,15 @@ class AlarmService : Service() {
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "byebyesleep:ring")
             .apply { acquire(30 * 60 * 1000L) }
 
-        val audio = getSystemService(AudioManager::class.java)
-        previousVolume = audio.getStreamVolume(AudioManager.STREAM_ALARM)
-        audio.setStreamVolume(AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
+        // Remember the user's volume once (survives a process restart while ringing).
+        runCatching {
+            val audio = getSystemService(AudioManager::class.java)
+            val state = ringingState()
+            if (!state.contains(KEY_PREVIOUS_VOLUME)) {
+                state.edit().putInt(KEY_PREVIOUS_VOLUME, audio.getStreamVolume(AudioManager.STREAM_ALARM)).commit()
+            }
+            audio.setStreamVolume(AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
+        }
 
         val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
@@ -96,7 +106,7 @@ class AlarmService : Service() {
             this, id, RingActivity.intent(this, id),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification = Notification.Builder(this, CHANNEL_ID)
+        val builder = Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("ByeByeSleep")
             .setContentText("Alarm ringing — open to stop it")
@@ -104,7 +114,16 @@ class AlarmService : Service() {
             .setOngoing(true)
             .setContentIntent(open)
             .setFullScreenIntent(open, true)
-            .build()
+        if (!getSystemService(UserManager::class.java).isUserUnlocked) {
+            // Before the first unlock after a reboot the Flutter ring screen cannot start,
+            // so offer a native Stop instead of an alarm nobody can silence.
+            val stop = PendingIntent.getService(
+                this, 0, Intent(this, AlarmService::class.java).setAction(ACTION_STOP),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            builder.addAction(Notification.Action.Builder(null, "Stop", stop).build())
+        }
+        val notification = builder.build()
         if (repost) {
             // Cancel first so the system shows the full-screen intent again.
             nm.cancel(NOTIFICATION_ID)
@@ -119,15 +138,22 @@ class AlarmService : Service() {
         player = null
         vibrator?.cancel()
         vibrator = null
-        previousVolume?.let {
-            getSystemService(AudioManager::class.java).setStreamVolume(AudioManager.STREAM_ALARM, it, 0)
+        val state = ringingState()
+        if (state.contains(KEY_PREVIOUS_VOLUME)) {
+            runCatching {
+                getSystemService(AudioManager::class.java)
+                    .setStreamVolume(AudioManager.STREAM_ALARM, state.getInt(KEY_PREVIOUS_VOLUME, 0), 0)
+            }
+            state.edit().remove(KEY_PREVIOUS_VOLUME).commit()
         }
-        previousVolume = null
         wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
+
+    private fun ringingState() = createDeviceProtectedStorageContext()
+        .getSharedPreferences("ringing", MODE_PRIVATE)
 
     override fun onDestroy() {
         if (player != null) stopRinging()
@@ -140,6 +166,7 @@ class AlarmService : Service() {
         private const val ACTION_RING_ACTIVITY_GONE = "com.mrgardener.byebyesleep.RING_ACTIVITY_GONE"
         private const val CHANNEL_ID = "alarm_ringing"
         private const val NOTIFICATION_ID = 4242
+        private const val KEY_PREVIOUS_VOLUME = "previous_alarm_volume"
 
         /** Id of the alarm currently ringing, or null. */
         @Volatile var ringingAlarmId: Int? = null
