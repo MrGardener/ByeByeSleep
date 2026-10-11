@@ -31,6 +31,8 @@ jobs:
       - name: Kotlin unit tests and lint
         working-directory: android
         run: ./gradlew testDebugUnitTest lintDebug
+      - name: Release build (debug-signed fallback, no keystore in CI)
+        run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: byebyesleep-debug-apk-${{ github.sha }}

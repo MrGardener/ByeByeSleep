@@ -16,3 +16,23 @@ flutter run
 ```
 
 CI builds a downloadable debug APK on every pull request (see the run's artifacts).
+
+## Install on Android
+
+1. Download `ByeByeSleep-vX.Y.Z.apk` from the latest [GitHub Release](https://github.com/MrGardener/ByeByeSleep/releases)
+   (or the `byebyesleep-debug-apk-…` artifact of a CI run).
+2. Allow "Install unknown apps" for the browser or Files app you open it with.
+3. Open the APK and install. Then follow [`docs/testing/pixel-checklist.md`](docs/testing/pixel-checklist.md).
+
+### Release signing (one-time, owner)
+
+Releases are built when a tag `v*` is pushed. Without a keystore they are debug-signed.
+To sign them, create a keystore once and keep it safe — losing it means users must uninstall to update:
+
+```sh
+keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias byebyesleep
+base64 -w0 release.jks   # paste the output into the ANDROID_KEYSTORE_BASE64 secret
+```
+
+Add repository secrets (Settings → Secrets and variables → Actions): `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`byebyesleep`), `ANDROID_KEY_PASSWORD`.
