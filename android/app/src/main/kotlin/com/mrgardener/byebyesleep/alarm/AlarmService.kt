@@ -38,6 +38,7 @@ class AlarmService : Service() {
                 return START_REDELIVER_INTENT
             }
             ACTION_RING_ACTIVITY_GONE -> ringingAlarmId?.let { postNotification(it, repost = true) }
+            ACTION_SET_LEVEL -> intent.getFloatExtra(EXTRA_LEVEL, 1f).coerceIn(0f, 1f).let { player?.setVolume(it, it) }
             ACTION_STOP -> stopRinging()
         }
         return START_NOT_STICKY
@@ -54,6 +55,12 @@ class AlarmService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
         if (alreadyRinging) return
+
+        // Start of a ring: remember when, unless a redelivered ring already did.
+        val state = ringingState()
+        if (!state.contains(KEY_PROGRESS)) {
+            state.edit().putString(KEY_PROGRESS, RingProgress(id, 0, System.currentTimeMillis()).toJson().toString()).commit()
+        }
 
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "byebyesleep:ring")
@@ -144,6 +151,7 @@ class AlarmService : Service() {
         vibrator?.cancel()
         vibrator = null
         val state = ringingState()
+        state.edit().remove(KEY_PROGRESS).commit()
         if (state.contains(KEY_PREVIOUS_VOLUME)) {
             runCatching {
                 val previous = state.getInt(KEY_PREVIOUS_VOLUME, 0)
@@ -158,8 +166,7 @@ class AlarmService : Service() {
         stopSelf()
     }
 
-    private fun ringingState() = createDeviceProtectedStorageContext()
-        .getSharedPreferences("ringing", MODE_PRIVATE)
+    private fun ringingState() = ringingState(this)
 
     override fun onDestroy() {
         if (player != null) stopRinging()
@@ -173,6 +180,9 @@ class AlarmService : Service() {
         private const val CHANNEL_ID = "alarm_ringing"
         private const val NOTIFICATION_ID = 4242
         private const val KEY_PREVIOUS_VOLUME = "previous_alarm_volume"
+        private const val KEY_PROGRESS = "ring_progress"
+        private const val ACTION_SET_LEVEL = "com.mrgardener.byebyesleep.SET_LEVEL"
+        private const val EXTRA_LEVEL = "level"
         private const val TAG = "ByeByeSleep"
 
         /** Id of the alarm shown on the ring screen (the first one that rang), or null. */
@@ -191,6 +201,26 @@ class AlarmService : Service() {
             ringingAlarmId = null
             ringingAlarmIds = emptySet()
             context.startService(Intent(context, AlarmService::class.java).setAction(ACTION_STOP))
+        }
+
+        private fun ringingState(context: Context) = context.createDeviceProtectedStorageContext()
+            .getSharedPreferences("ringing", MODE_PRIVATE)
+
+        fun ringProgress(context: Context): RingProgress? =
+            ringingState(context).getString(KEY_PROGRESS, null)?.let {
+                runCatching { RingProgress.fromJson(org.json.JSONObject(it)) }.getOrNull()
+            }
+
+        fun saveRingProgress(context: Context, progress: RingProgress) {
+            ringingState(context).edit().putString(KEY_PROGRESS, progress.toJson().toString()).commit()
+        }
+
+        /** 0.0–1.0 of full alarm volume (quieter during breathers between stages). */
+        fun setRingLevel(context: Context, level: Float) {
+            if (ringingAlarmId == null) return
+            context.startService(
+                Intent(context, AlarmService::class.java).setAction(ACTION_SET_LEVEL).putExtra(EXTRA_LEVEL, level),
+            )
         }
 
         fun ringActivityGone(context: Context) {

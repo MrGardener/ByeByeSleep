@@ -29,6 +29,15 @@ object AlarmChannel {
                         val ids = AlarmService.ringingAlarmIds.ifEmpty { setOf(id) }
                         result.success(lifecycle.snoozeAll(ids, call.argument<Number>("minutes")!!.toInt()))
                     }
+                    "getRingProgress" -> result.success(AlarmService.ringProgress(activity)?.toChannelMap())
+                    "saveRingProgress" -> {
+                        AlarmService.saveRingProgress(activity, RingProgress.fromChannelMap(call.arguments as Map<*, *>))
+                        result.success(null)
+                    }
+                    "setRingLevel" -> {
+                        AlarmService.setRingLevel(activity, call.argument<Number>("level")!!.toFloat())
+                        result.success(null)
+                    }
                     "permissions" -> result.success(Permissions.status(activity))
                     "openSettings" -> {
                         Permissions.openSettings(activity, call.argument<String>("kind")!!)

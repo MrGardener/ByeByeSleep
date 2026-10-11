@@ -18,6 +18,8 @@ class FakeAlarmPlatform implements AlarmPlatform {
   PermissionStatus permissionStatus;
   bool supported;
 
+  RingProgress? ringProgress;
+
   /// When set, upsert/delete/snooze throw this (simulates a native failure).
   Object? failWith;
 
@@ -66,4 +68,17 @@ class FakeAlarmPlatform implements AlarmPlatform {
   @override
   Future<void> openSettings(PermissionKind kind) async =>
       calls.add('openSettings:${kind.name}');
+
+  @override
+  Future<RingProgress?> getRingProgress() async => ringProgress;
+
+  @override
+  Future<void> saveRingProgress(RingProgress progress) async {
+    calls.add('saveRingProgress:${progress.alarmId}:${progress.stageIndex}');
+    ringProgress = progress;
+  }
+
+  @override
+  Future<void> setRingLevel(double level) async =>
+      calls.add('setRingLevel:$level');
 }

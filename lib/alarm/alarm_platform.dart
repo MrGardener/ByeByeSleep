@@ -26,6 +26,48 @@ class PermissionStatus {
   bool get allGranted => missing.isEmpty;
 }
 
+/// How far the user got through a ringing alarm's stages. Kept natively so it
+/// survives the ring screen being recreated.
+class RingProgress {
+  const RingProgress({
+    required this.alarmId,
+    required this.stageIndex,
+    required this.startedAtMs,
+  });
+
+  factory RingProgress.fromMap(Map<Object?, Object?> m) => RingProgress(
+    alarmId: m['alarmId']! as int,
+    stageIndex: m['stageIndex']! as int,
+    startedAtMs: m['startedAtMs']! as int,
+  );
+
+  final int alarmId;
+  final int stageIndex;
+  final int startedAtMs;
+
+  RingProgress copyWith({int? stageIndex}) => RingProgress(
+    alarmId: alarmId,
+    stageIndex: stageIndex ?? this.stageIndex,
+    startedAtMs: startedAtMs,
+  );
+
+  Map<String, Object?> toMap() => {
+    'alarmId': alarmId,
+    'stageIndex': stageIndex,
+    'startedAtMs': startedAtMs,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is RingProgress &&
+      other.alarmId == alarmId &&
+      other.stageIndex == stageIndex &&
+      other.startedAtMs == startedAtMs;
+
+  @override
+  int get hashCode => Object.hash(alarmId, stageIndex, startedAtMs);
+}
+
 /// Bridge to the native alarm engine.
 abstract class AlarmPlatform {
   /// False when this platform has no alarm engine yet (iOS before Phase 2).
@@ -46,6 +88,14 @@ abstract class AlarmPlatform {
   Future<PermissionStatus> permissions();
 
   Future<void> openSettings(PermissionKind kind);
+
+  /// Progress of the alarm ringing now, or null if none is known.
+  Future<RingProgress?> getRingProgress();
+
+  Future<void> saveRingProgress(RingProgress progress);
+
+  /// Alarm loudness as a fraction of full volume (0.0–1.0).
+  Future<void> setRingLevel(double level);
 }
 
 class MethodChannelAlarmPlatform implements AlarmPlatform {
@@ -105,4 +155,18 @@ class MethodChannelAlarmPlatform implements AlarmPlatform {
   @override
   Future<void> openSettings(PermissionKind kind) =>
       _invoke<void>('openSettings', {'kind': kind.name});
+
+  @override
+  Future<RingProgress?> getRingProgress() async {
+    final raw = await _invoke<Map<Object?, Object?>>('getRingProgress');
+    return raw == null ? null : RingProgress.fromMap(raw);
+  }
+
+  @override
+  Future<void> saveRingProgress(RingProgress progress) =>
+      _invoke<void>('saveRingProgress', progress.toMap());
+
+  @override
+  Future<void> setRingLevel(double level) =>
+      _invoke<void>('setRingLevel', {'level': level});
 }

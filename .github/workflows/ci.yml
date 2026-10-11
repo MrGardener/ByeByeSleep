@@ -38,7 +38,7 @@ jobs:
           files = glob.glob('../build/app/test-results/testDebugUnitTest/*.xml') + glob.glob('app/build/test-results/testDebugUnitTest/*.xml')
           total = sum(int(ET.parse(f).getroot().get('tests')) for f in files)
           print(f'Kotlin unit tests run: {total}')
-          assert total >= 24, 'expected at least 24 Kotlin unit tests'
+          assert total >= 28, 'expected at least 28 Kotlin unit tests'
           PY
       - name: Release build (debug-signed fallback, no keystore in CI)
         run: flutter build apk --release

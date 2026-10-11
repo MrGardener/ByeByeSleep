@@ -77,12 +77,42 @@ void main() {
     expect(await platform.isSupported(), isTrue);
   });
 
+  test('getRingProgress parses map', () async {
+    mock((call) async => {'alarmId': 4, 'stageIndex': 2, 'startedAtMs': 1000});
+    expect(
+      await platform.getRingProgress(),
+      const RingProgress(alarmId: 4, stageIndex: 2, startedAtMs: 1000),
+    );
+  });
+
+  test('saveRingProgress and setRingLevel send arguments', () async {
+    final calls = <MethodCall>[];
+    mock((call) async {
+      calls.add(call);
+      return null;
+    });
+    await platform.saveRingProgress(
+      const RingProgress(alarmId: 4, stageIndex: 1, startedAtMs: 5),
+    );
+    await platform.setRingLevel(0.2);
+    expect(calls[0].method, 'saveRingProgress');
+    expect(calls[0].arguments, {
+      'alarmId': 4,
+      'stageIndex': 1,
+      'startedAtMs': 5,
+    });
+    expect(calls[1].method, 'setRingLevel');
+    expect(calls[1].arguments, {'level': 0.2});
+  });
+
   test('missing plugin degrades gracefully', () async {
     mock(null);
     expect(await platform.isSupported(), isFalse);
     expect(await platform.list(), isEmpty);
     expect((await platform.permissions()).allGranted, isTrue);
     expect(await platform.upsert(Alarm(id: 1, hour: 1, minute: 1)), isNull);
+    expect(await platform.getRingProgress(), isNull);
+    await platform.setRingLevel(1);
     await platform.stopRinging();
   });
 }
