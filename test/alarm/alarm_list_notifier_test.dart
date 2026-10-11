@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -72,5 +73,21 @@ void main() {
     await notifier().remove(1);
     expect(await state(), isEmpty);
     expect(fake.calls.last, 'delete:1');
+  });
+
+  test('remove updates state before the platform answers', () async {
+    await state();
+    await notifier().add(hour: 7, minute: 0);
+    final pending = notifier().remove(1);
+    expect(container.read(alarmListProvider).value, isEmpty);
+    await pending;
+  });
+
+  test('failed remove restores the alarm', () async {
+    await state();
+    await notifier().add(hour: 7, minute: 0);
+    fake.failWith = PlatformException(code: 'x');
+    await expectLater(notifier().remove(1), throwsA(isA<PlatformException>()));
+    expect((await state()).single.id, 1);
   });
 }

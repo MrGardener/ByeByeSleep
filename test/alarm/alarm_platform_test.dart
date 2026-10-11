@@ -72,8 +72,14 @@ void main() {
     expect(calls[1].arguments, {'kind': 'notifications'});
   });
 
+  test('isSupported is true when the native engine answers', () async {
+    mock((call) async => call.method == 'list' ? <Object?>[] : null);
+    expect(await platform.isSupported(), isTrue);
+  });
+
   test('missing plugin degrades gracefully', () async {
     mock(null);
+    expect(await platform.isSupported(), isFalse);
     expect(await platform.list(), isEmpty);
     expect((await platform.permissions()).allGranted, isTrue);
     expect(await platform.upsert(Alarm(id: 1, hour: 1, minute: 1)), isNull);

@@ -89,7 +89,14 @@ class _AlarmTile extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 24),
         child: const Icon(Icons.delete),
       ),
-      onDismissed: (_) => notifier.remove(alarm.id),
+      onDismissed: (_) {
+        final messenger = ScaffoldMessenger.of(context);
+        notifier.remove(alarm.id).catchError((Object _) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Could not delete the alarm.')),
+          );
+        });
+      },
       child: ListTile(
         title: Text(
           alarm.timeLabel,

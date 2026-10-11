@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fake_alarm_platform.dart';
@@ -35,5 +36,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(fake.stored.keys, [4]);
     expect(fake.stored[4]!.repeatDays, isEmpty);
+  });
+
+  testWidgets('doubleTapSaveSavesOnceAndPopsOnce', (tester) async {
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.tap(find.byKey(const Key('save-alarm')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(fake.calls.where((c) => c.startsWith('upsert')), hasLength(1));
+    expect(
+      find.byKey(const Key('add-alarm')),
+      findsOneWidget,
+    ); // list still there
+  });
+
+  testWidgets('saveFailureShowsErrorAndStays', (tester) async {
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    fake.failWith = PlatformException(code: 'x');
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not save the alarm. Try again.'), findsOneWidget);
+    expect(find.byKey(const Key('save-alarm')), findsOneWidget);
   });
 }

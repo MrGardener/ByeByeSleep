@@ -28,6 +28,9 @@ class PermissionStatus {
 
 /// Bridge to the native alarm engine.
 abstract class AlarmPlatform {
+  /// False when this platform has no alarm engine yet (iOS before Phase 2).
+  Future<bool> isSupported();
+
   Future<List<Alarm>> list();
 
   /// Saves the alarm; returns the next trigger (epoch ms), or null if disabled.
@@ -57,6 +60,16 @@ class MethodChannelAlarmPlatform implements AlarmPlatform {
       return await _channel.invokeMethod<T>(method, arguments);
     } on MissingPluginException {
       return null;
+    }
+  }
+
+  @override
+  Future<bool> isSupported() async {
+    try {
+      await _channel.invokeMethod<Object?>('list');
+      return true;
+    } on MissingPluginException {
+      return false;
     }
   }
 

@@ -16,6 +16,10 @@ final permissionStatusProvider = FutureProvider<PermissionStatus>(
   (ref) => ref.watch(alarmPlatformProvider).permissions(),
 );
 
+final alarmSupportedProvider = FutureProvider<bool>(
+  (ref) => ref.watch(alarmPlatformProvider).isSupported(),
+);
+
 class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
   AlarmPlatform get _platform => ref.read(alarmPlatformProvider);
 
@@ -54,10 +58,17 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
     await save(alarm.copyWith(enabled: enabled));
   }
 
+  /// Removes the alarm from the list immediately; restores it if the
+  /// platform fails, then rethrows.
   Future<void> remove(int id) async {
-    await _platform.delete(id);
-    final current = await future;
+    final current = state.value ?? await future;
     state = AsyncData(current.where((a) => a.id != id).toList());
+    try {
+      await _platform.delete(id);
+    } catch (_) {
+      state = AsyncData(_sorted(current));
+      rethrow;
+    }
   }
 
   static List<Alarm> _sorted(List<Alarm> alarms) => [...alarms]

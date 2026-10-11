@@ -3,6 +3,7 @@ import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/app/routes.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,6 +51,19 @@ void main() {
     await tester.pump();
     expect(fake.calls, containsAllInOrder(['snooze:7:9', 'stopRinging']));
     expect(finished, 1);
+  });
+
+  testWidgets('snoozeFailureKeepsRingingAndShowsError', (tester) async {
+    await pumpRing(tester);
+    fake.failWith = PlatformException(code: 'x');
+    await tester.tap(find.byKey(const Key('snooze')));
+    await tester.pump();
+    expect(fake.calls, isNot(contains('stopRinging')));
+    expect(finished, 0);
+    expect(
+      find.text('Snooze failed — the alarm keeps ringing.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('ringScreen_backDoesNotPop', (tester) async {

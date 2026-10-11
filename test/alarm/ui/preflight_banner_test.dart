@@ -24,4 +24,14 @@ void main() {
     await pumpApp(tester, FakeAlarmPlatform());
     expect(find.byKey(const Key('preflight-banner')), findsNothing);
   });
+
+  testWidgets('unsupportedPlatformShowsWarning', (tester) async {
+    await pumpApp(tester, FakeAlarmPlatform(supported: false));
+    expect(find.byKey(const Key('unsupported-banner')), findsOneWidget);
+  });
+
+  testWidgets('supportedPlatformHasNoWarning', (tester) async {
+    await pumpApp(tester, FakeAlarmPlatform());
+    expect(find.byKey(const Key('unsupported-banner')), findsNothing);
+  });
 }

@@ -11,12 +11,24 @@ const _labels = {
   PermissionKind.ignoreBatteryOptimizations: 'Battery optimisation off',
 };
 
-/// Warns about permissions the alarm engine is missing.
+/// Warns when alarms cannot ring: no alarm engine on this platform, or
+/// permissions the alarm engine is missing.
 class PreflightBanner extends ConsumerWidget {
   const PreflightBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(alarmSupportedProvider).value == false) {
+      return Card(
+        key: const Key('unsupported-banner'),
+        color: Theme.of(context).colorScheme.errorContainer,
+        margin: const EdgeInsets.all(12),
+        child: const ListTile(
+          title: Text("Alarms can't ring on this phone yet"),
+          subtitle: Text('iPhone support arrives in a later update.'),
+        ),
+      );
+    }
     final status = ref.watch(permissionStatusProvider).value;
     if (status == null || status.allGranted) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;

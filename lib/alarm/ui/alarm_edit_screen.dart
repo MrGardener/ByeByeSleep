@@ -19,6 +19,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late TimeOfDay _time;
   late Set<int> _days;
   late final TextEditingController _label;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -43,6 +44,22 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return; // ignore double taps
+    setState(() => _saving = true);
+    try {
+      await _persist();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the alarm. Try again.')),
+      );
+      return;
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _persist() async {
     final notifier = ref.read(alarmListProvider.notifier);
     final existing = widget.alarm;
     if (existing == null) {
@@ -63,7 +80,6 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         ),
       );
     }
-    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -113,7 +129,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           const SizedBox(height: 24),
           FilledButton(
             key: const Key('save-alarm'),
-            onPressed: _save,
+            onPressed: _saving ? null : _save,
             child: const Text('Save'),
           ),
         ],

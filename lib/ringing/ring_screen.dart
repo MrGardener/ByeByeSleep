@@ -83,6 +83,23 @@ class _ActionButtons extends ConsumerWidget {
   final int alarmId;
   final VoidCallback onFinished;
 
+  /// Runs [action]; on failure keeps the screen (the alarm keeps ringing)
+  /// and tells the user.
+  Future<void> _attempt(
+    BuildContext context,
+    Future<void> Function() action,
+    String error,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    onFinished();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final platform = ref.read(alarmPlatformProvider);
@@ -93,10 +110,11 @@ class _ActionButtons extends ConsumerWidget {
         children: [
           FilledButton(
             key: const Key('stop'),
-            onPressed: () async {
-              await platform.stopRinging();
-              onFinished();
-            },
+            onPressed: () => _attempt(
+              context,
+              platform.stopRinging,
+              'Stop failed — try again.',
+            ),
             child: const Padding(
               padding: EdgeInsets.all(16),
               child: Text('Stop'),
@@ -105,11 +123,10 @@ class _ActionButtons extends ConsumerWidget {
           const SizedBox(height: 16),
           OutlinedButton(
             key: const Key('snooze'),
-            onPressed: () async {
+            onPressed: () => _attempt(context, () async {
               await platform.snooze(alarmId, snoozeMinutes);
               await platform.stopRinging();
-              onFinished();
-            },
+            }, 'Snooze failed — the alarm keeps ringing.'),
             child: const Padding(
               padding: EdgeInsets.all(16),
               child: Text('Snooze $snoozeMinutes min'),
