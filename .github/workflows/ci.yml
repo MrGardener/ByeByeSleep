@@ -28,6 +28,9 @@ jobs:
       - run: flutter analyze
       - run: flutter test --coverage
       - run: flutter build apk --debug
+      - name: Kotlin unit tests
+        working-directory: android
+        run: ./gradlew testDebugUnitTest
       - uses: actions/upload-artifact@v4
         with:
           name: byebyesleep-debug-apk-${{ github.sha }}
