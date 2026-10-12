@@ -11,8 +11,7 @@ import '../core/types.dart';
 import 'maze.dart';
 import 'physics.dart';
 
-/// Level → maze size. Level 5 (magnetometer) arrives in Phase 1B and plays
-/// as level 4 until then.
+/// Level → maze size.
 const _sizes = [5, 7, 9, 11, 11];
 
 class TiltMazeChallenge extends ConsumerStatefulWidget {
@@ -35,6 +34,11 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
   double _rotationRate = 0; // rad/s around the screen axis
   double _angle = 0; // maze rotation (level 4+)
   Offset? _finger; // level 1, in cell units
+  Vec3? _magnetic; // level 5
+  double? _startHeading;
+  bool _onHeading = true;
+  double _arrow = 0; // degrees from where the phone points to the target
+  Duration _elapsed = Duration.zero;
   Duration _last = Duration.zero;
   bool _reported = false;
 
@@ -45,8 +49,11 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
     if (_level >= 2) {
       _subs.add(motion.accelerometer.listen((a) => _gravity = a));
     }
-    if (_level >= 4) {
+    if (_level == 4) {
       _subs.add(motion.gyroscope.listen((g) => _rotationRate = g.z));
+    }
+    if (_level == 5) {
+      _subs.add(motion.magnetometer.listen(_onMagnetic));
     }
     _ticker.start();
   }
@@ -60,20 +67,37 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
     super.dispose();
   }
 
+  /// Level 5: the ball only moves while the phone points at the target.
+  void _onMagnetic(Vec3 m) {
+    _magnetic = m;
+    final heading = headingDegrees(_gravity, m);
+    final start = _startHeading ??= heading;
+    final target = targetHeading(start, _elapsed);
+    _arrow = ((target - heading) % 360 + 540) % 360 - 180;
+    final ok = headingOk(heading, target);
+    if (ok != _onHeading) setState(() => _onHeading = ok);
+  }
+
   Offset _accel() {
     if (_level == 1) {
       final f = _finger;
       return f == null ? Offset.zero : (f - _ball.pos) * 12 - _ball.vel * 3;
     }
     final screen = tiltToAccel(_gravity, inverted: _level == 3);
-    return _level >= 4 ? rotate(screen, -_angle) : screen;
+    return _level == 4 ? rotate(screen, -_angle) : screen;
   }
 
   void _tick(Duration elapsed) {
     final dt = (elapsed - _last).inMicroseconds / 1e6;
     _last = elapsed;
-    if (_level >= 4) _angle += _rotationRate * dt;
-    stepBall(_maze, _ball, _accel(), dt);
+    _elapsed = elapsed;
+    if (_level == 4) _angle += _rotationRate * dt;
+    if (_level == 5 && _magnetic != null) _onMagnetic(_magnetic!);
+    if (_level == 5 && !_onHeading) {
+      _ball.vel = Offset.zero; // frozen until the phone faces the target
+    } else {
+      stepBall(_maze, _ball, _accel(), dt);
+    }
     setState(() {});
     if (isAtGoal(_maze, _ball) && !_reported) {
       _reported = true;
@@ -88,12 +112,13 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
     final hint = switch (_level) {
       1 => 'Drag your finger to pull the ball.',
       3 => 'Controls are reversed!',
-      >= 4 => 'Turning the phone turns the maze.',
+      4 => 'Turning the phone turns the maze.',
+      5 => 'Keep facing the moving arrow, or the ball freezes.',
       _ => 'Tilt the phone to roll the ball.',
     };
     return LayoutBuilder(
       builder: (context, box) {
-        const hintHeight = 32.0;
+        final hintHeight = _level == 5 ? 56.0 : 32.0;
         final side = min(
           box.maxWidth,
           box.maxHeight.isFinite ? box.maxHeight - hintHeight : box.maxWidth,
@@ -103,7 +128,28 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(height: hintHeight, child: Text(hint)),
+            SizedBox(
+              height: hintHeight,
+              child: Column(
+                children: [
+                  Text(hint),
+                  if (_level == 5)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Transform.rotate(
+                          angle: _arrow * pi / 180,
+                          child: const Icon(Icons.navigation, size: 20),
+                        ),
+                        Text(
+                          _onHeading ? 'On course' : 'Turn to the arrow!',
+                          key: Key(_onHeading ? 'heading-ok' : 'heading-off'),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
             GestureDetector(
               onPanStart: (d) => _finger = toCells(d.localPosition),
               onPanUpdate: (d) => _finger = toCells(d.localPosition),

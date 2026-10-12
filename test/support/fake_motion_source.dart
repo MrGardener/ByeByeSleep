@@ -33,6 +33,10 @@ class FakeMotionSource implements MotionSource {
 
   final accel = StreamController<Vec3>.broadcast();
   final gyro = StreamController<Vec3>.broadcast();
+  final mag = StreamController<Vec3>.broadcast();
+
+  @override
+  Stream<Vec3> get magnetometer => mag.stream;
 
   @override
   Stream<Vec3> get accelerometer => accel.stream;

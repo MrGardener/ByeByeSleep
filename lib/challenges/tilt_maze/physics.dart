@@ -95,3 +95,25 @@ bool _blockedY(Maze m, int cell, Direction d, double x, int cx) {
   return (x - ballRadius < cx && m.wall(next, Direction.west)) ||
       (x + ballRadius > cx + 1 && m.wall(next, Direction.east));
 }
+
+/// Compass heading in degrees (0 = magnetic north, 90 = east) of the phone's
+/// top edge, compensated for tilt (Android's getRotationMatrix azimuth).
+double headingDegrees(Vec3 gravity, Vec3 magnetic) {
+  // East = magnetic × gravity, north = gravity × east.
+  final ex = magnetic.y * gravity.z - magnetic.z * gravity.y;
+  final ey = magnetic.z * gravity.x - magnetic.x * gravity.z;
+  final ez = magnetic.x * gravity.y - magnetic.y * gravity.x;
+  final ny = gravity.z * ex - gravity.x * ez;
+  final azimuth = atan2(ey, ny) * 180 / pi;
+  return (azimuth + 360) % 360;
+}
+
+/// Level 5 target: sweeps ±60° around [start], at most ~9.4°/s.
+double targetHeading(double start, Duration t) =>
+    start + 60 * sin(2 * pi * t.inMicroseconds / 40e6);
+
+/// Within ±15° of [target], wrap-around safe.
+bool headingOk(double heading, double target) {
+  final diff = ((heading - target) % 360 + 540) % 360 - 180;
+  return diff.abs() <= 15;
+}

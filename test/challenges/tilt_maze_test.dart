@@ -155,4 +155,57 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  test('heading_flatNorthEastSouth', () {
+    const flat = Vec3(0, 0, 9.8);
+    expect(headingDegrees(flat, const Vec3(0, 30, -40)), closeTo(0, 0.5));
+    expect(headingDegrees(flat, const Vec3(30, 0, -40)), closeTo(270, 0.5));
+    expect(headingDegrees(flat, const Vec3(-30, 0, -40)), closeTo(90, 0.5));
+    expect(headingDegrees(flat, const Vec3(0, -30, -40)), closeTo(180, 0.5));
+  });
+
+  test('headingOk_wrapsAround', () {
+    expect(headingOk(359, 5), isTrue);
+    expect(headingOk(5, 359), isTrue);
+    expect(headingOk(100, 120), isFalse);
+    expect(headingOk(100, 114), isTrue);
+  });
+
+  test('targetHeading_speedBelow10DegPerSecond', () {
+    var maxRate = 0.0;
+    for (var ms = 0; ms < 60000; ms += 100) {
+      final a = targetHeading(200, Duration(milliseconds: ms));
+      final b = targetHeading(200, Duration(milliseconds: ms + 100));
+      maxRate = max(maxRate, (b - a).abs() * 10);
+    }
+    expect(maxRate, lessThanOrEqualTo(10));
+    expect(targetHeading(200, Duration.zero), closeTo(200, 1e-9));
+  });
+
+  testWidgets('maze5_frozenWhenOffHeading', (tester) async {
+    final motion = FakeMotionSource();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [motionSourceProvider.overrideWithValue(motion)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: TiltMazeChallenge(
+              args: ChallengeArgs(
+                difficulty: 5,
+                random: Random(5),
+                onPassed: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    motion.accel.add(const Vec3(0, 0, 9.8));
+    motion.mag.add(const Vec3(0, 30, -40)); // start heading 0°
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('heading-ok')), findsOneWidget);
+    motion.mag.add(const Vec3(30, 0, -40)); // turned to 270°
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('heading-off')), findsOneWidget);
+  });
 }
