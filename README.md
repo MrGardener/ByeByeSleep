@@ -8,6 +8,16 @@ contains Sensor Quest, a game that uses every sensor of the phone.
 - Design: [`docs/superpowers/specs/2026-10-11-byebyesleep-design.md`](docs/superpowers/specs/2026-10-11-byebyesleep-design.md)
 - Plans: [`docs/superpowers/plans/`](docs/superpowers/plans/)
 
+## How it works
+
+Each alarm has a list of stages (by default four challenges: orientation hopscotch,
+tilt maze, broken calculator and colour words). When it rings you must finish every
+stage; between stages the sound drops for a 20-second breather. Stop and Snooze only
+appear after the last stage. Stuck? A hint appears after 2 minutes, a different
+challenge after 5, and after 15 minutes an emergency stop lets you type a fixed
+sentence to turn the alarm off. Stages are edited per alarm, and every challenge has
+a "Try it" practice button.
+
 ## Build
 
 ```sh

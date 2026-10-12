@@ -22,3 +22,17 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 15 | Use the phone (unlocked, another app open) when an alarm rings. | Heads-up "Alarm ringing" notification; tapping it opens the ring screen; sound plays. |
 | 16 | Settings → Apps → ByeByeSleep → **Force stop**, then open the app. | Alarms still ring at their times (opening the app re-registers them). |
 | 17 | Block ByeByeSleep notifications, let an alarm ring, open the app from the launcher. | The ring screen appears so the alarm can be stopped. |
+
+## Phase 1A — stages
+
+| # | Check | Expected |
+|---|---|---|
+| 18 | New alarm, keep the default stages, let it ring. | Stage 1 of 4 (orientation hopscotch) shows; no Stop/Snooze buttons. |
+| 19 | Complete each stage. | Between stages the sound drops for about 20 s ("Next stage in N s"), then full volume again. After stage 4: Stop and Snooze appear. |
+| 20 | While on stage 2, run `adb shell am kill com.mrgardener.byebyesleep`. | The alarm keeps (or resumes) ringing and the ring screen reopens on stage 2, not stage 1. |
+| 21 | Stay on one stage for 2 min, then 5 min. | A hint appears at 2 min; "Try a different challenge" at 5 min swaps the challenge. |
+| 22 | Let an alarm ring 15 min without finishing. | "I can't finish — emergency stop" appears; a wrong sentence keeps ringing; the exact sentence stops the alarm (no snooze). |
+| 23 | Orientation hopscotch: turn the phone sideways and upside down. | The screen stays upright (portrait) and the steps tick off. |
+| 24 | Tilt maze at difficulty 1, 2, 3 and 4. | 1: finger drag; 2: tilt; 3: tilt reversed; 4: turning the phone turns the maze. |
+| 25 | Alarm editor: reorder, change difficulty, add/remove stages, tap ▶ "Try it". | Changes are saved; "Try it" plays the challenge without sound and returns when passed. |
+| 26 | Long-press the "ByeByeSleep" title. | Sensor trace recorder opens; recording shares a JSON file. |
