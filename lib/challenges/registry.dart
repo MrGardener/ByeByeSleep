@@ -5,6 +5,8 @@ import 'broken_calculator/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
+import 'lights_on/setup.dart';
+import 'lights_on/widget.dart';
 import 'orientation_hopscotch/widget.dart';
 import 'stroop_tap/widget.dart';
 import 'tilt_maze/widget.dart';
@@ -48,7 +50,8 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Lights on',
     instructions: 'Switch on the room light.',
     requires: (_) => const {SensorKind.light},
-    build: _todo,
+    build: (args) => LightsChallenge(args: args),
+    setup: setupLights,
   ),
   ChallengeId.walkSteps: ChallengeDefinition(
     id: ChallengeId.walkSteps,
