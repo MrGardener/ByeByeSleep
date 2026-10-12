@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../alarm/stage_config.dart';
 import 'broken_calculator/widget.dart';
+import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
@@ -92,7 +93,7 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Charger',
     instructions: 'Plug the phone into a charger away from your bed.',
     requires: (_) => const {SensorKind.battery},
-    build: _todo,
+    build: (args) => ChargerChallenge(args: args),
   ),
 };
 

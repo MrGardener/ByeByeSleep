@@ -10,7 +10,7 @@ import '../alarm/alarm.dart';
 import '../alarm/alarm_platform.dart';
 import '../alarm/alarm_providers.dart';
 import '../alarm/stage_config.dart';
-import '../challenges/core/motion.dart';
+import '../challenges/core/capabilities.dart';
 import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
 import 'safety_exit.dart';
@@ -107,7 +107,7 @@ class _RingScreenState extends ConsumerState<RingScreen> {
     }
     Set<SensorKind> available;
     try {
-      available = await ref.read(motionSourceProvider).available();
+      available = await ref.read(deviceCapabilitiesProvider.future);
     } catch (_) {
       available = const {};
     }

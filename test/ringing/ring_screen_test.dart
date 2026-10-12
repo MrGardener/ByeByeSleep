@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
+import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/app/routes.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/fake_alarm_platform.dart';
+import '../support/fake_env_sensors.dart';
 import '../support/fake_motion_source.dart';
 
 void main() {
@@ -21,12 +23,14 @@ void main() {
         overrides: [
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
+          envSensorProvider.overrideWithValue(FakeEnvSensors()),
         ],
         child: MaterialApp(
           home: RingScreen(alarmId: 7, onFinished: () => finished++),
         ),
       ),
     );
+    await tester.pump();
     await tester.pump();
     await tester.pump();
   }
@@ -81,6 +85,7 @@ void main() {
         overrides: [
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
+          envSensorProvider.overrideWithValue(FakeEnvSensors()),
         ],
         child: MaterialApp(
           home: Builder(
@@ -111,6 +116,7 @@ void main() {
         overrides: [
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
+          envSensorProvider.overrideWithValue(FakeEnvSensors()),
         ],
         child: MaterialApp(
           onGenerateRoute: generateRoute,

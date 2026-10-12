@@ -5,6 +5,7 @@ import 'package:byebyesleep/alarm/alarm_platform.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
+import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:byebyesleep/ringing/safety_exit.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/challenge_solvers.dart';
 import '../support/fake_alarm_platform.dart';
+import '../support/fake_env_sensors.dart';
 import '../support/fake_motion_source.dart';
 
 void main() {
@@ -30,6 +32,7 @@ void main() {
         overrides: [
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
+          envSensorProvider.overrideWithValue(FakeEnvSensors()),
         ],
         child: MaterialApp(
           home: RingScreen(
@@ -41,6 +44,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
     await tester.pump();
     await tester.pump();
   }
@@ -166,5 +170,20 @@ void main() {
     expect(find.text('Stage 1 of ${defaultStages.length}'), findsOneWidget);
     await advance(tester, const Duration(minutes: 15));
     expect(find.byKey(const Key('safety-exit')), findsOneWidget);
+  });
+
+  testWidgets('light and battery stages are not substituted', (tester) async {
+    fake = FakeAlarmPlatform(
+      seed: [
+        Alarm(
+          id: 7,
+          hour: 7,
+          minute: 0,
+          stages: const [StageConfig(ChallengeId.lightsOn)],
+        ),
+      ],
+    );
+    await pumpRing(tester);
+    expect(find.text('Turn on the light'), findsOneWidget);
   });
 }
