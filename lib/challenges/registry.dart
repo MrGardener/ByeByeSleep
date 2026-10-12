@@ -5,6 +5,7 @@ import 'broken_calculator/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
+import 'stroop_tap/widget.dart';
 
 Widget _placeholder(ChallengeArgs args) => const Center(child: Text('…'));
 
@@ -39,7 +40,7 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Colour words',
     instructions: 'Tap the colour of the ink, not the word.',
     requires: (_) => const {},
-    build: _placeholder,
+    build: (args) => StroopChallenge(args: args),
   ),
 };
 
