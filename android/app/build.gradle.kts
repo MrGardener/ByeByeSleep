@@ -8,6 +8,10 @@ plugins {
 
 // Release signing comes from android/key.properties (written by the release workflow);
 // without it, release builds fall back to debug signing so builds never fail.
+// Debug signing uses app/shared-debug.keystore, committed on purpose: every machine and CI
+// run then signs test builds with the same key, so a new test APK installs over the old
+// one instead of forcing an uninstall (which deletes the alarms). It is public, so it only
+// signs test builds; real releases use the secret keystore above.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -38,6 +42,12 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            storeFile = file("shared-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (!keystoreProperties.isEmpty) {
             create("release") {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
