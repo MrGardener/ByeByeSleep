@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../alarm/stage_config.dart';
+import 'broken_calculator/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
@@ -31,7 +32,7 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Broken calculator',
     instructions: 'Solve the sum. The keys move after every press.',
     requires: (_) => const {},
-    build: _placeholder,
+    build: (args) => BrokenCalculatorChallenge(args: args),
   ),
   ChallengeId.stroopTap: ChallengeDefinition(
     id: ChallengeId.stroopTap,
