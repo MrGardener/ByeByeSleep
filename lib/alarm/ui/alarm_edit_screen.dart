@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../alarm.dart';
 import '../alarm_providers.dart';
+import '../stage_config.dart';
 import 'repeat_summary.dart';
+import 'stage_editor.dart';
 
 /// Creates a new alarm ([alarm] == null) or edits an existing one.
 class AlarmEditScreen extends ConsumerStatefulWidget {
@@ -18,6 +20,7 @@ class AlarmEditScreen extends ConsumerStatefulWidget {
 class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late TimeOfDay _time;
   late Set<int> _days;
+  late List<StageConfig> _stages;
   late final TextEditingController _label;
   bool _saving = false;
 
@@ -29,6 +32,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         ? TimeOfDay(hour: a.hour, minute: a.minute)
         : TimeOfDay(hour: (DateTime.now().hour + 1) % 24, minute: 0);
     _days = {...?a?.repeatDays};
+    _stages = a?.stages ?? defaultStages;
     _label = TextEditingController(text: a?.label ?? '');
   }
 
@@ -68,6 +72,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         minute: _time.minute,
         repeatDays: _days,
         label: _label.text.trim(),
+        stages: _stages,
       );
     } else {
       await notifier.save(
@@ -77,6 +82,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           repeatDays: _days,
           label: _label.text.trim(),
           enabled: true,
+          stages: _stages,
         ),
       );
     }
@@ -89,6 +95,13 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.alarm == null ? 'New alarm' : 'Edit alarm'),
+        actions: [
+          TextButton(
+            key: const Key('save-alarm'),
+            onPressed: _saving ? null : _save,
+            child: const Text('Save'),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -127,10 +140,9 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             decoration: const InputDecoration(labelText: 'Label'),
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            key: const Key('save-alarm'),
-            onPressed: _saving ? null : _save,
-            child: const Text('Save'),
+          StageEditor(
+            stages: _stages,
+            onChanged: (s) => setState(() => _stages = s),
           ),
         ],
       ),

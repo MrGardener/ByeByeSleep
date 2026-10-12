@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'alarm.dart';
 import 'alarm_platform.dart';
+import 'stage_config.dart';
 
 final alarmPlatformProvider = Provider<AlarmPlatform>(
   (_) => MethodChannelAlarmPlatform(),
@@ -31,6 +32,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
     required int minute,
     Set<int> repeatDays = const {},
     String label = '',
+    List<StageConfig> stages = defaultStages,
   }) async {
     final current = await future;
     final nextId = current.fold(0, (m, a) => a.id > m ? a.id : m) + 1;
@@ -40,6 +42,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
       minute: minute,
       repeatDays: repeatDays,
       label: label,
+      stages: stages,
     );
     await save(alarm);
     return alarm;
