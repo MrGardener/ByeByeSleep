@@ -5,6 +5,7 @@ import 'broken_calculator/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
+import 'orientation_hopscotch/widget.dart';
 import 'stroop_tap/widget.dart';
 
 Widget _placeholder(ChallengeArgs args) => const Center(child: Text('…'));
@@ -15,7 +16,7 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Orientation hopscotch',
     instructions: 'Turn the phone into each position shown, in order.',
     requires: (_) => const {SensorKind.accelerometer},
-    build: _placeholder,
+    build: (args) => HopscotchChallenge(args: args),
   ),
   ChallengeId.tiltMaze: ChallengeDefinition(
     id: ChallengeId.tiltMaze,
