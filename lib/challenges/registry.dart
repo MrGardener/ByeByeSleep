@@ -10,6 +10,8 @@ import 'lights_on/widget.dart';
 import 'orientation_hopscotch/widget.dart';
 import 'stroop_tap/widget.dart';
 import 'tilt_maze/widget.dart';
+import 'walk_steps/setup.dart';
+import 'walk_steps/widget.dart';
 
 final Map<ChallengeId, ChallengeDefinition> _definitions = {
   ChallengeId.orientationHopscotch: ChallengeDefinition(
@@ -58,7 +60,8 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Walk',
     instructions: 'Walk to your spot.',
     requires: (_) => const {SensorKind.stepDetector},
-    build: _todo,
+    build: (args) => WalkChallenge(args: args),
+    setup: setupWalk,
   ),
   ChallengeId.photoMatch: ChallengeDefinition(
     id: ChallengeId.photoMatch,
