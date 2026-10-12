@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
+import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/app/routes.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/fake_alarm_platform.dart';
+import '../support/fake_motion_source.dart';
 
 void main() {
   late FakeAlarmPlatform fake;
@@ -16,18 +18,25 @@ void main() {
   Future<void> pumpRing(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        overrides: [
+          alarmPlatformProvider.overrideWithValue(fake),
+          motionSourceProvider.overrideWithValue(FakeMotionSource()),
+        ],
         child: MaterialApp(
           home: RingScreen(alarmId: 7, onFinished: () => finished++),
         ),
       ),
     );
     await tester.pump();
+    await tester.pump();
   }
 
   setUp(() {
     fake = FakeAlarmPlatform(
-      seed: [Alarm(id: 7, hour: 6, minute: 30, label: 'Work')],
+      // No stages: Stop/Snooze are available straight away.
+      seed: [
+        Alarm(id: 7, hour: 6, minute: 30, label: 'Work', stages: const []),
+      ],
     );
     finished = 0;
   });
@@ -69,7 +78,10 @@ void main() {
   testWidgets('ringScreen_backDoesNotPop', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        overrides: [
+          alarmPlatformProvider.overrideWithValue(fake),
+          motionSourceProvider.overrideWithValue(FakeMotionSource()),
+        ],
         child: MaterialApp(
           home: Builder(
             builder: (context) => TextButton(
@@ -96,7 +108,10 @@ void main() {
   testWidgets('ringRouteBuildsRingScreenForId', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+        overrides: [
+          alarmPlatformProvider.overrideWithValue(fake),
+          motionSourceProvider.overrideWithValue(FakeMotionSource()),
+        ],
         child: MaterialApp(
           onGenerateRoute: generateRoute,
           onGenerateInitialRoutes: (name) => [
