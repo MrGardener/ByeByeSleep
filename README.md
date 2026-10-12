@@ -49,8 +49,9 @@ CI builds a downloadable debug APK on every pull request (see the run's artifact
 
 ## Install on Android
 
-1. Download `ByeByeSleep-vX.Y.Z.apk` from the latest [GitHub Release](https://github.com/MrGardener/ByeByeSleep/releases)
-   (or the `byebyesleep-debug-apk-…` artifact of a CI run).
+1. On the phone, open **https://github.com/MrGardener/ByeByeSleep/releases/download/latest-apk/ByeByeSleep.apk**
+   — a plain APK (no zip) rebuilt from `main` after every merge. Tagged versions are on the
+   [Releases page](https://github.com/MrGardener/ByeByeSleep/releases).
 2. Allow "Install unknown apps" for the browser or Files app you open it with.
 3. Open the APK and install. Then follow [`docs/testing/pixel-checklist.md`](docs/testing/pixel-checklist.md).
 

@@ -1,0 +1,44 @@
+name: Latest APK
+
+# Publishes the newest build of main as a plain .apk download (no zip) at
+# https://github.com/MrGardener/ByeByeSleep/releases/download/latest-apk/ByeByeSleep.apk
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: latest-apk
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+      - run: flutter pub get
+      - name: Build APK
+        run: |
+          flutter build apk --release --build-number "${{ github.run_number }}"
+          cp build/app/outputs/flutter-apk/app-release.apk ByeByeSleep.apk
+      - name: Replace the latest-apk release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-apk --cleanup-tag --yes || true
+          gh release create latest-apk ByeByeSleep.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Latest build (main)" \
+            --notes "Newest build of main (${GITHUB_SHA::7}). Debug-signed test build: tap ByeByeSleep.apk to download and install."
