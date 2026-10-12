@@ -2,10 +2,12 @@ import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/alarm/ui/stage_editor.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
+import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/fake_alarm_platform.dart';
+import '../../support/fake_env_sensors.dart';
 import '../../support/pump_app.dart';
 
 void main() {
@@ -117,5 +119,69 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('add-stage')), findsOneWidget);
+  });
+
+  testWidgets('editor_showsNeedsSetupForPhoto', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: StageEditor(
+              stages: const [
+                StageConfig(ChallengeId.photoMatch),
+                StageConfig(ChallengeId.stroopTap),
+              ],
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('needs-setup-0')), findsOneWidget);
+    expect(find.byKey(const Key('setup-stage-0')), findsOneWidget);
+    expect(find.byKey(const Key('needs-setup-1')), findsNothing);
+    expect(find.byKey(const Key('setup-stage-1')), findsNothing);
+  });
+
+  testWidgets('editor_routineTemplate', (tester) async {
+    final fake = FakeAlarmPlatform();
+    await openNewAlarm(tester, fake);
+    await tester.tap(find.byKey(const Key('use-routine')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(fake.stored.values.single.stages.map((s) => s.challenge), [
+      ChallengeId.lightsOn,
+      ChallengeId.walkSteps,
+      ChallengeId.photoMatch,
+      ChallengeId.tiltMaze,
+      ChallengeId.brokenCalculator,
+    ]);
+  });
+
+  testWidgets('editor_setupStoresParams', (tester) async {
+    final fake = FakeAlarmPlatform();
+    final sensors = FakeEnvSensors();
+    await tester.binding.setSurfaceSize(const Size(500, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpApp(
+      tester,
+      fake,
+      extraOverrides: [envSensorProvider.overrideWithValue(sensors)],
+    );
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('use-routine')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('setup-stage-0'))); // lights on
+    await tester.pumpAndSettle();
+    sensors.luxController.add(250);
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('setup-save')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(fake.stored.values.single.stages.first.params, {'lux': 250.0});
   });
 }

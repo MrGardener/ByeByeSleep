@@ -11,10 +11,14 @@ Future<void> pumpApp(
   WidgetTester tester,
   FakeAlarmPlatform fake, {
   String initialRoute = '/',
+  List<Object> extraOverrides = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [alarmPlatformProvider.overrideWithValue(fake)],
+      overrides: [
+        alarmPlatformProvider.overrideWithValue(fake),
+        ...extraOverrides.cast(),
+      ],
       child: MaterialApp(
         onGenerateRoute: generateRoute,
         onGenerateInitialRoutes: (name) => [

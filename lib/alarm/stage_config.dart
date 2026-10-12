@@ -23,12 +23,15 @@ class StageConfig {
   final int difficulty;
   final Map<String, Object?> params;
 
-  StageConfig copyWith({ChallengeId? challenge, int? difficulty}) =>
-      StageConfig(
-        challenge ?? this.challenge,
-        difficulty: difficulty ?? this.difficulty,
-        params: params,
-      );
+  StageConfig copyWith({
+    ChallengeId? challenge,
+    int? difficulty,
+    Map<String, Object?>? params,
+  }) => StageConfig(
+    challenge ?? this.challenge,
+    difficulty: difficulty ?? this.difficulty,
+    params: params ?? this.params,
+  );
 
   Map<String, Object?> toJson() => {
     'challenge': challenge.name,
@@ -55,6 +58,16 @@ const List<StageConfig> defaultStages = [
   StageConfig(ChallengeId.tiltMaze),
   StageConfig(ChallengeId.brokenCalculator),
   StageConfig(ChallengeId.stroopTap),
+];
+
+/// The full routine from spec §4.2: Lights → Move (walk + photo at the spot)
+/// → Brain (maze, calculator). Needs setup, so it is opt-in.
+const List<StageConfig> wakeUpRoutine = [
+  StageConfig(ChallengeId.lightsOn),
+  StageConfig(ChallengeId.walkSteps),
+  StageConfig(ChallengeId.photoMatch),
+  StageConfig(ChallengeId.tiltMaze),
+  StageConfig(ChallengeId.brokenCalculator),
 ];
 
 String encodeStages(List<StageConfig> stages) =>

@@ -19,6 +19,23 @@ class StageEditor extends StatelessWidget {
 
   void _replace(int i, StageConfig s) => onChanged([...stages]..[i] = s);
 
+  Future<void> _setup(BuildContext context, int i) async {
+    final setup = definitionFor(stages[i].challenge).setup;
+    if (setup == null) return;
+    final params = await setup(context, stages[i].params);
+    if (params != null) _replace(i, stages[i].copyWith(params: params));
+  }
+
+  /// Switches to the wake-up routine, keeping setup already done for the
+  /// same challenges.
+  void _useRoutine() => onChanged([
+    for (final r in wakeUpRoutine)
+      stages
+              .where((s) => s.challenge == r.challenge && s.params.isNotEmpty)
+              .firstOrNull ??
+          r,
+  ]);
+
   Future<void> _add(BuildContext context) async {
     final picked = await showModalBottomSheet<ChallengeId>(
       context: context,
@@ -73,6 +90,20 @@ class StageEditor extends StatelessWidget {
                               definitionFor(stages[i].challenge).title,
                             ),
                           ),
+                          if (!definitionFor(stages[i].challenge)
+                              .isSetUp(stages[i].params))
+                            Chip(
+                              key: Key('needs-setup-$i'),
+                              label: const Text('Needs setup'),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          if (definitionFor(stages[i].challenge).setup != null)
+                            IconButton(
+                              key: Key('setup-stage-$i'),
+                              tooltip: 'Set up',
+                              icon: const Icon(Icons.tune),
+                              onPressed: () => _setup(context, i),
+                            ),
                           IconButton(
                             key: Key('try-stage-$i'),
                             tooltip: 'Try it',
@@ -117,6 +148,16 @@ class StageEditor extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+        Wrap(
+          children: [
+            TextButton.icon(
+              key: const Key('use-routine'),
+              onPressed: _useRoutine,
+              icon: const Icon(Icons.wb_sunny_outlined),
+              label: const Text('Use wake-up routine'),
+            ),
           ],
         ),
         TextButton.icon(
