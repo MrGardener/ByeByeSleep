@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
+import '../../sensors/trace_recorder_screen.dart';
 import '../alarm.dart';
 import '../alarm_providers.dart';
 import 'preflight_banner.dart';
@@ -42,7 +43,17 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
   Widget build(BuildContext context) {
     final alarms = ref.watch(alarmListProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('ByeByeSleep')),
+      appBar: AppBar(
+        // Long-press: developer sensor trace recorder.
+        title: GestureDetector(
+          onLongPress: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const TraceRecorderScreen(),
+            ),
+          ),
+          child: const Text('ByeByeSleep'),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         key: const Key('add-alarm'),
         onPressed: () => Navigator.of(context).pushNamed(editRoute),
