@@ -33,7 +33,7 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_RING -> {
-                ring(intent.getIntExtra(EXTRA_ALARM_ID, -1))
+                ring(intent.getIntExtra(EXTRA_ALARM_ID, -1), redelivered = flags and START_FLAG_REDELIVERY != 0)
                 // If the process is killed while ringing, Android restarts us with this intent.
                 return START_REDELIVER_INTENT
             }
@@ -44,7 +44,7 @@ class AlarmService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun ring(id: Int) {
+    private fun ring(id: Int, redelivered: Boolean) {
         val alreadyRinging = player != null
         if (ringingAlarmId == null) ringingAlarmId = id
         ringingAlarmIds = ringingAlarmIds + id
@@ -56,11 +56,9 @@ class AlarmService : Service() {
         }
         if (alreadyRinging) return
 
-        // Start of a ring: remember when, unless a redelivered ring already did.
-        val state = ringingState()
-        if (!state.contains(KEY_PROGRESS)) {
-            state.edit().putString(KEY_PROGRESS, RingProgress(id, 0, System.currentTimeMillis()).toJson().toString()).commit()
-        }
+        // A new ring starts at stage 0; a redelivered one (process restarted) continues.
+        val progress = RingProgress.onRing(storedProgress(this), id, System.currentTimeMillis(), redelivered)
+        ringingState().edit().putString(KEY_PROGRESS, progress.toJson().toString()).commit()
 
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "byebyesleep:ring")
@@ -206,12 +204,17 @@ class AlarmService : Service() {
         private fun ringingState(context: Context) = context.createDeviceProtectedStorageContext()
             .getSharedPreferences("ringing", MODE_PRIVATE)
 
-        fun ringProgress(context: Context): RingProgress? =
+        private fun storedProgress(context: Context): RingProgress? =
             ringingState(context).getString(KEY_PROGRESS, null)?.let {
                 runCatching { RingProgress.fromJson(org.json.JSONObject(it)) }.getOrNull()
             }
 
+        /** Progress of the alarm ringing now; null when nothing rings or it is stale. */
+        fun ringProgress(context: Context): RingProgress? =
+            RingProgress.current(storedProgress(context), System.currentTimeMillis(), ringingAlarmId != null)
+
         fun saveRingProgress(context: Context, progress: RingProgress) {
+            if (ringingAlarmId == null) return
             ringingState(context).edit().putString(KEY_PROGRESS, progress.toJson().toString()).commit()
         }
 

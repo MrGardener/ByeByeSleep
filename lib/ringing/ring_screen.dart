@@ -11,12 +11,14 @@ import '../alarm/alarm_platform.dart';
 import '../alarm/alarm_providers.dart';
 import '../alarm/stage_config.dart';
 import '../challenges/core/motion.dart';
+import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
 import 'safety_exit.dart';
 import 'stage_engine.dart';
 import 'stage_runner.dart';
 
 const snoozeMinutes = 9;
+const _loadTimeout = Duration(seconds: 3);
 
 /// Alarm used by the emulator smoke test (debug builds only): no stages.
 const debugSmokeAlarmId = 9999;
@@ -69,24 +71,46 @@ class _RingScreenState extends ConsumerState<RingScreen> {
     super.dispose();
   }
 
+  /// Loads stages, progress and sensors. Every step falls back to a safe
+  /// default: a ringing alarm must always reach its stages and, after
+  /// 15 minutes, the emergency stop.
   Future<void> _load() async {
-    final alarms = await ref.read(alarmListProvider.future);
-    final alarm = alarms.where((a) => a.id == widget.alarmId).firstOrNull;
+    Alarm? alarm;
+    try {
+      // Ask the platform directly: the list provider retries failures and
+      // would leave this screen loading forever.
+      final alarms = await _platform.list().timeout(_loadTimeout);
+      alarm = alarms.where((a) => a.id == widget.alarmId).firstOrNull;
+    } catch (_) {
+      alarm = null;
+    }
+    if (!mounted) return;
     final List<StageConfig> stages =
         kDebugMode && widget.alarmId == debugSmokeAlarmId
         ? const []
         : alarm?.stages ?? defaultStages;
     final now = widget.clock();
-    var progress = await _platform.getRingProgress();
+    RingProgress? progress;
+    try {
+      progress = await _platform.getRingProgress().timeout(_loadTimeout);
+    } catch (_) {
+      progress = null;
+    }
+    if (!mounted) return;
     if (progress == null || progress.alarmId != widget.alarmId) {
       progress = RingProgress(
         alarmId: widget.alarmId,
         stageIndex: 0,
         startedAtMs: now.millisecondsSinceEpoch,
       );
-      await _platform.saveRingProgress(progress);
+      unawaited(_platform.saveRingProgress(progress).catchError((Object _) {}));
     }
-    final available = await ref.read(motionSourceProvider).available();
+    Set<SensorKind> available;
+    try {
+      available = await ref.read(motionSourceProvider).available();
+    } catch (_) {
+      available = const {};
+    }
     if (!mounted) return;
     setState(() {
       _alarm = alarm;
@@ -116,11 +140,15 @@ class _RingScreenState extends ConsumerState<RingScreen> {
     if (engine == null || progress == null) return;
     if (engine.currentIndex != progress.stageIndex) {
       _progress = progress.copyWith(stageIndex: engine.currentIndex);
-      _platform.saveRingProgress(_progress!);
+      unawaited(
+        _platform.saveRingProgress(_progress!).catchError((Object _) {}),
+      );
     }
     if (engine.ringLevel != _level) {
       _level = engine.ringLevel;
-      _platform.setRingLevel(engine.ringLevel);
+      unawaited(
+        _platform.setRingLevel(engine.ringLevel).catchError((Object _) {}),
+      );
     }
   }
 

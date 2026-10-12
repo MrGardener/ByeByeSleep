@@ -20,6 +20,9 @@ class FakeAlarmPlatform implements AlarmPlatform {
 
   RingProgress? ringProgress;
 
+  /// When set, list/getRingProgress throw this (native side broken).
+  Object? readFailWith;
+
   /// When set, upsert/delete/snooze throw this (simulates a native failure).
   Object? failWith;
 
@@ -34,6 +37,8 @@ class FakeAlarmPlatform implements AlarmPlatform {
   @override
   Future<List<Alarm>> list() async {
     calls.add('list');
+    final f = readFailWith;
+    if (f != null) throw f;
     return stored.values.toList();
   }
 
@@ -70,7 +75,11 @@ class FakeAlarmPlatform implements AlarmPlatform {
       calls.add('openSettings:${kind.name}');
 
   @override
-  Future<RingProgress?> getRingProgress() async => ringProgress;
+  Future<RingProgress?> getRingProgress() async {
+    final f = readFailWith;
+    if (f != null) throw f;
+    return ringProgress;
+  }
 
   @override
   Future<void> saveRingProgress(RingProgress progress) async {

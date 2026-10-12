@@ -18,13 +18,17 @@ abstract class MotionSource {
 }
 
 class SensorsPlusMotionSource implements MotionSource {
+  // Game rate (~50 Hz): the plugin default (5 Hz) makes the maze lag and the
+  // gyroscope integration drift.
   @override
   Stream<Vec3> get accelerometer =>
-      accelerometerEventStream().map((e) => Vec3(e.x, e.y, e.z));
+      accelerometerEventStream(samplingPeriod: SensorInterval.gameInterval)
+          .map((e) => Vec3(e.x, e.y, e.z));
 
   @override
   Stream<Vec3> get gyroscope =>
-      gyroscopeEventStream().map((e) => Vec3(e.x, e.y, e.z));
+      gyroscopeEventStream(samplingPeriod: SensorInterval.gameInterval)
+          .map((e) => Vec3(e.x, e.y, e.z));
 
   @override
   Future<Set<SensorKind>> available() async {

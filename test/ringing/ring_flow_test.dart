@@ -9,6 +9,7 @@ import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:byebyesleep/ringing/safety_exit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -156,5 +157,14 @@ void main() {
     fake = FakeAlarmPlatform();
     await pumpRing(tester);
     expect(find.text('Stage 1 of ${defaultStages.length}'), findsOneWidget);
+  });
+
+  testWidgets('load failure still runs the default stages', (tester) async {
+    fake.readFailWith = PlatformException(code: 'broken');
+    await pumpRing(tester);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Stage 1 of ${defaultStages.length}'), findsOneWidget);
+    await advance(tester, const Duration(minutes: 15));
+    expect(find.byKey(const Key('safety-exit')), findsOneWidget);
   });
 }
