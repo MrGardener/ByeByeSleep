@@ -33,6 +33,8 @@ enum SensorKind {
   camera,
   nfc,
   battery,
+  barometer,
+  proximity,
 }
 
 class Vec3 {
