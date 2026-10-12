@@ -25,3 +25,19 @@ class BatteryPlusChargeSource implements ChargeSource {
 final chargeSourceProvider = Provider<ChargeSource>(
   (_) => BatteryPlusChargeSource(),
 );
+
+/// The battery charge in percent (0–100).
+abstract class BatteryLevelSource {
+  Future<int> level();
+}
+
+class BatteryPlusLevelSource implements BatteryLevelSource {
+  final _battery = Battery();
+
+  @override
+  Future<int> level() => _battery.batteryLevel;
+}
+
+final batteryLevelProvider = Provider<BatteryLevelSource>(
+  (_) => BatteryPlusLevelSource(),
+);
