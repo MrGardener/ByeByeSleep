@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../alarm/stage_config.dart';
@@ -6,6 +8,8 @@ import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
+import 'photo_match/setup.dart';
+import 'photo_match/widget.dart';
 import 'lights_on/setup.dart';
 import 'lights_on/widget.dart';
 import 'orientation_hopscotch/widget.dart';
@@ -69,8 +73,14 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Photo match',
     instructions: 'Take the same photo as your reference.',
     requires: (_) => const {SensorKind.camera},
-    build: _todo,
-    isSetUp: (p) => p['photos'] is List && (p['photos']! as List).length == 2,
+    build: (args) => PhotoMatchChallenge(args: args),
+    setup: setupPhoto,
+    isSetUp: (p) {
+      final photos = p['photos'];
+      return photos is List &&
+          photos.length == 2 &&
+          photos.every((path) => path is String && File(path).existsSync());
+    },
   ),
   ChallengeId.nfcTag: ChallengeDefinition(
     id: ChallengeId.nfcTag,
