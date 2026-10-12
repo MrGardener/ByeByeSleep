@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+      - run: flutter pub get
+      - run: dart format --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - run: flutter build apk --debug
+      - name: Kotlin unit tests and lint
+        working-directory: android
+        run: |
+          ./gradlew :app:testDebugUnitTest :app:lintDebug
+          # Fail if the Kotlin tests were silently skipped (e.g. NO-SOURCE).
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          files = glob.glob('../build/app/test-results/testDebugUnitTest/*.xml') + glob.glob('app/build/test-results/testDebugUnitTest/*.xml')
+          total = sum(int(ET.parse(f).getroot().get('tests')) for f in files)
+          print(f'Kotlin unit tests run: {total}')
+          assert total >= 40, 'expected at least 40 Kotlin unit tests'
+          PY
+      - name: Release build (debug-signed fallback, no keystore in CI)
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: byebyesleep-debug-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
+
+  ios-compile:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --simulator --debug

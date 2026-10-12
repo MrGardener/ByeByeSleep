@@ -1,0 +1,30 @@
+name: Challenge idea
+description: Propose a new wake-up challenge or Sensor Quest level
+labels: [challenge-idea]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Name
+    validations:
+      required: true
+  - type: input
+    id: sensors
+    attributes:
+      label: Sensors used
+      placeholder: e.g. accelerometer, camera, NFC
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How it wakes you up
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platforms
+      options:
+        - label: Android
+        - label: iPhone
