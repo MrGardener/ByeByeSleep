@@ -5,6 +5,7 @@ import '../../app/routes.dart';
 import '../../sensors/trace_recorder_screen.dart';
 import '../alarm.dart';
 import '../alarm_providers.dart';
+import '../guard.dart';
 import 'preflight_banner.dart';
 import 'repeat_summary.dart';
 
@@ -94,6 +95,11 @@ class _AlarmTile extends ConsumerWidget {
     return Dismissible(
       key: Key('alarm-tile-${alarm.id}'),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => confirmWeakening(
+        ref,
+        alarm,
+        'Confirm deleting an alarm that rings soon',
+      ),
       background: Container(
         color: Theme.of(context).colorScheme.error,
         alignment: Alignment.centerRight,
@@ -120,7 +126,17 @@ class _AlarmTile extends ConsumerWidget {
         trailing: Switch(
           key: Key('alarm-switch-${alarm.id}'),
           value: alarm.enabled,
-          onChanged: (v) => notifier.setEnabled(alarm.id, v),
+          onChanged: (v) async {
+            if (!v &&
+                !await confirmWeakening(
+                  ref,
+                  alarm,
+                  'Confirm turning off an alarm that rings soon',
+                )) {
+              return;
+            }
+            await notifier.setEnabled(alarm.id, v);
+          },
         ),
         onTap: () =>
             Navigator.of(context).pushNamed(editRoute, arguments: alarm),

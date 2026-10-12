@@ -11,10 +11,11 @@ import com.mrgardener.byebyesleep.alarm.PreflightReceiver
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 
-class MainActivity : FlutterActivity() {
+/** FragmentActivity: required by local_auth for the biometric prompt. */
+class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Force-stop clears AlarmManager; opening the app restores every alarm.

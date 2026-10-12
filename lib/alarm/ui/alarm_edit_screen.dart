@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../alarm.dart';
 import '../alarm_platform.dart';
 import '../alarm_providers.dart';
+import '../guard.dart';
 import '../preflight.dart';
 import '../stage_config.dart';
 import 'repeat_summary.dart';
@@ -96,6 +97,20 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   Future<void> _save() async {
     if (_saving) return; // ignore double taps
     setState(() => _saving = true);
+    final existing = widget.alarm;
+    final timeChanged =
+        existing != null &&
+        (existing.hour != _time.hour || existing.minute != _time.minute);
+    if (existing != null &&
+        timeChanged &&
+        !await confirmWeakening(
+          ref,
+          existing,
+          'Confirm moving an alarm that rings soon',
+        )) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     if (!await _confirmPreflight()) {
       if (mounted) setState(() => _saving = false);
       return;
