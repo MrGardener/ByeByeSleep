@@ -68,6 +68,37 @@ void main() {
     expect(passed, 1);
   });
 
+  testWidgets('steady light with no further sensor events still passes', (
+    tester,
+  ) async {
+    final sensors = FakeEnvSensors();
+    var now = Duration.zero;
+    var passed = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [envSensorProvider.overrideWithValue(sensors)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: LightsChallenge(
+              args: ChallengeArgs(
+                difficulty: 2,
+                random: Random(1),
+                onPassed: () => passed++,
+              ),
+              elapsed: () => now,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    sensors.luxController.add(800); // the sensor reports once, then stays quiet
+    await tester.pump();
+    now = const Duration(seconds: 2, milliseconds: 100);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(passed, 1);
+  });
+
   testWidgets('lightsSetup_savesCurrentLux', (tester) async {
     final sensors = FakeEnvSensors();
     Map<String, Object?>? saved;

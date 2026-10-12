@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 class FakeScanner {
   ValueChanged<String>? onCode;
 
-  Widget build(ValueChanged<String> onCode) {
+  Widget build(ValueChanged<String> onCode, {VoidCallback? onError}) {
     this.onCode = onCode;
     return const SizedBox(key: Key('fake-scanner'), height: 10);
   }

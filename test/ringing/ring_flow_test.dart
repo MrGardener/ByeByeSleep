@@ -5,6 +5,7 @@ import 'package:byebyesleep/alarm/alarm_platform.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
+import 'package:byebyesleep/challenges/core/battery.dart';
 import 'package:byebyesleep/challenges/core/capabilities.dart';
 import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
@@ -19,6 +20,15 @@ import '../support/challenge_solvers.dart';
 import '../support/fake_alarm_platform.dart';
 import '../support/fake_env_sensors.dart';
 import '../support/fake_motion_source.dart';
+
+/// Battery that cannot be read (broken plugin, odd device).
+class BrokenCharge implements ChargeSource {
+  @override
+  Future<bool> isPlugged() async => throw StateError('no battery info');
+
+  @override
+  Stream<bool> get plugged => const Stream.empty();
+}
 
 void main() {
   late FakeAlarmPlatform fake;
@@ -35,6 +45,7 @@ void main() {
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
           envSensorProvider.overrideWithValue(FakeEnvSensors()),
           extraCapabilitiesProvider.overrideWithValue(const []),
+          chargeSourceProvider.overrideWithValue(BrokenCharge()),
         ],
         child: MaterialApp(
           home: RingScreen(
@@ -187,5 +198,23 @@ void main() {
     );
     await pumpRing(tester);
     expect(find.text('Turn on the light'), findsOneWidget);
+  });
+
+  testWidgets('a challenge that cannot run is replaced at once', (
+    tester,
+  ) async {
+    fake = FakeAlarmPlatform(
+      seed: [
+        Alarm(
+          id: 7,
+          hour: 7,
+          minute: 0,
+          stages: const [StageConfig(ChallengeId.charger, difficulty: 1)],
+        ),
+      ],
+    );
+    await pumpRing(tester);
+    await tester.pump();
+    expect(find.byKey(const Key('calc-problem')), findsOneWidget);
   });
 }

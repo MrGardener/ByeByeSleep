@@ -29,7 +29,13 @@ class _ChargerChallengeState extends ConsumerState<ChargerChallenge> {
 
   Future<void> _start() async {
     final source = ref.read(chargeSourceProvider);
-    final pluggedNow = await source.isPlugged();
+    bool pluggedNow;
+    try {
+      pluggedNow = await source.isPlugged();
+    } catch (_) {
+      widget.args.onUnavailable?.call();
+      return;
+    }
     if (!mounted) return;
     setState(() => _d = ChargerDetector(pluggedAtStart: pluggedNow));
     _sub = source.plugged.listen((plugged) {

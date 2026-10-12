@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
@@ -13,18 +14,31 @@ abstract class Authenticator {
 }
 
 class LocalAuthAuthenticator implements Authenticator {
-  final _auth = LocalAuthentication();
+  LocalAuthAuthenticator({
+    Future<bool> Function()? isSupported,
+    Future<bool> Function(String reason)? authenticate,
+  }) : _isSupported = isSupported ?? LocalAuthentication().isDeviceSupported,
+       _authenticate =
+           authenticate ??
+           ((reason) =>
+               LocalAuthentication().authenticate(localizedReason: reason));
+
+  final Future<bool> Function() _isSupported;
+  final Future<bool> Function(String reason) _authenticate;
 
   @override
   Future<bool> confirm(String reason) async {
     try {
       // A phone without any lock cannot be asked; don't block its owner.
-      if (!await _auth.isDeviceSupported()) return true;
-      return await _auth.authenticate(localizedReason: reason);
-    } on PlatformException {
-      return false;
+      if (!await _isSupported()) return true;
+      return await _authenticate(reason);
+    } on LocalAuthException catch (e) {
+      // Cancelled, timed out, locked out… mean "no" — except no lock at all.
+      return e.code == LocalAuthExceptionCode.noCredentialsSet;
     } on MissingPluginException {
       return true;
+    } on PlatformException {
+      return false;
     }
   }
 }
@@ -54,8 +68,23 @@ bool needsGuard(Alarm a, DateTime now) {
   return next != null && next.difference(now) <= guardWindow;
 }
 
+/// Whether changing [before] into [after] makes it ring later (or not at
+/// all) or swaps its challenges — the edits that need confirmation when the
+/// alarm is imminent.
+bool weakens(Alarm before, Alarm after, DateTime now) {
+  if (!listEquals(before.stages, after.stages)) return true;
+  final was = nextRing(before, now);
+  final will = nextRing(after, now);
+  if (was == null) return false;
+  return will == null || will.isAfter(was);
+}
+
 /// True when the change may go ahead: not guarded, or confirmed.
 Future<bool> confirmWeakening(WidgetRef ref, Alarm a, String reason) async {
   if (!needsGuard(a, ref.read(nowProvider)())) return true;
-  return ref.read(authenticatorProvider).confirm(reason);
+  try {
+    return await ref.read(authenticatorProvider).confirm(reason);
+  } catch (_) {
+    return false; // when in doubt, keep the alarm as it is
+  }
 }

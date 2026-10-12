@@ -30,9 +30,19 @@ void main() {
     for (var i = 0; i <= 30; i++) {
       d.onStep(ms(i * 100)); // 10 "steps" per second
     }
-    // 3 s of shaking → at most one step per 0.25 s, i.e. ≤ 13.
-    expect(d.counted, lessThanOrEqualTo(13));
-    expect(d.counted, greaterThan(0));
+    // Every event comes 0.1 s after the previous one: none is a real step.
+    expect(d.counted, lessThanOrEqualTo(1));
+  });
+
+  test('a burst of shaking between real steps does not count', () {
+    final d = WalkDetector();
+    d.onStep(ms(0));
+    d.onStep(ms(600));
+    for (var t = 650; t < 1000; t += 50) {
+      d.onStep(ms(t));
+    }
+    d.onStep(ms(1600));
+    expect(d.counted, 3);
   });
 
   test('walk_normalPacePasses', () {

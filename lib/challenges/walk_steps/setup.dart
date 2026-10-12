@@ -41,11 +41,8 @@ class _WalkSetupScreenState extends ConsumerState<_WalkSetupScreen> {
       _error = null;
     });
     _sub = sensors.steps.listen((t) {
-      final last = _last;
-      if (last == null || t - last >= minStepInterval) {
-        _last = t;
-        setState(() => _steps++);
-      }
+      if (isRealStep(_last, t)) setState(() => _steps++);
+      _last = t;
     });
   }
 

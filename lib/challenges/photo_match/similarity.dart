@@ -19,8 +19,9 @@ double photoSimilarity(Uint8List a, Uint8List b) {
   if (ia == null || ib == null) return 0;
   final colour = _correlation(_histogram(ia), _histogram(ib));
   final structure = _correlation(_edges(ia), _edges(ib));
-  // Pearson r in −1..1 → 0..1.
-  return (0.5 * (colour + 1) / 2 + 0.5 * (structure + 1) / 2).clamp(0.0, 1.0);
+  // Unrelated (r ≈ 0) or opposite (r < 0) counts as no similarity; mapping
+  // −1..1 onto 0..1 instead gave unrelated rooms a floor of about 0.75.
+  return (0.5 * max(0.0, colour) + 0.5 * max(0.0, structure)).clamp(0.0, 1.0);
 }
 
 img.Image? _prepare(Uint8List bytes) {

@@ -27,28 +27,39 @@ class _LightsChallengeState extends ConsumerState<LightsChallenge> {
   );
   final _stopwatch = Stopwatch()..start();
   StreamSubscription<double>? _sub;
+  Timer? _ticker;
   ChallengeProgress _progress = ChallengeProgress.none;
   double _lux = 0;
   bool _reported = false;
 
+  Duration _elapsed() => (widget.elapsed ?? () => _stopwatch.elapsed)();
+
+  void _evaluate() {
+    setState(() => _progress = _d.onLux(_lux, _elapsed()));
+    if (_progress.passed && !_reported) {
+      _reported = true;
+      _ticker?.cancel();
+      widget.args.onPassed();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    final elapsed = widget.elapsed ?? () => _stopwatch.elapsed;
     _sub = ref.read(envSensorProvider).lux.listen((lux) {
-      setState(() {
-        _lux = lux;
-        _progress = _d.onLux(lux, elapsed());
-      });
-      if (_progress.passed && !_reported) {
-        _reported = true;
-        widget.args.onPassed();
-      }
+      _lux = lux;
+      _evaluate();
+    });
+    // The light sensor only reports changes; in a steadily lit room no more
+    // events come, so keep re-checking the last reading.
+    _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      if (_lux > 0) _evaluate();
     });
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _sub?.cancel();
     super.dispose();
   }

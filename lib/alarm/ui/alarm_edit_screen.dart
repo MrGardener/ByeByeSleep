@@ -98,15 +98,22 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     if (_saving) return; // ignore double taps
     setState(() => _saving = true);
     final existing = widget.alarm;
-    final timeChanged =
-        existing != null &&
-        (existing.hour != _time.hour || existing.minute != _time.minute);
     if (existing != null &&
-        timeChanged &&
+        weakens(
+          existing,
+          existing.copyWith(
+            hour: _time.hour,
+            minute: _time.minute,
+            repeatDays: _days,
+            stages: _stages,
+            enabled: true,
+          ),
+          ref.read(nowProvider)(),
+        ) &&
         !await confirmWeakening(
           ref,
           existing,
-          'Confirm moving an alarm that rings soon',
+          'Confirm changing an alarm that rings soon',
         )) {
       if (mounted) setState(() => _saving = false);
       return;

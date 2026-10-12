@@ -25,6 +25,9 @@ class _NfcChallengeState extends ConsumerState<NfcChallenge> {
   @override
   void initState() {
     super.initState();
+    _reader.isAvailable().then((ok) {
+      if (!ok && mounted) widget.args.onUnavailable?.call();
+    }, onError: (Object _) => widget.args.onUnavailable?.call());
     _sub = _reader.tagIds().listen((id) {
       if (_done) return;
       if (id == widget.args.params['tagId']) {

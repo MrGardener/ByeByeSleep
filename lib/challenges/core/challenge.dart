@@ -12,7 +12,12 @@ class ChallengeArgs {
     required this.random,
     required this.onPassed,
     this.params = const {},
+    this.onUnavailable,
   });
+
+  /// Called when the challenge cannot run right now (camera failed, no
+  /// permission, sensor broken); the ring screen swaps in a fallback at once.
+  final VoidCallback? onUnavailable;
 
   final int difficulty;
 

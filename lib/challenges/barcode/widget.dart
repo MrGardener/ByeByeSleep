@@ -32,7 +32,12 @@ class _BarcodeChallengeState extends ConsumerState<BarcodeChallenge> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: ref.read(barcodeScannerProvider)(_onCode)),
+        Expanded(
+          child: ref.read(barcodeScannerProvider)(
+            _onCode,
+            onError: widget.args.onUnavailable,
+          ),
+        ),
         const SizedBox(height: 8),
         const Text('Scan your registered barcode.'),
         if (_message != null) Text(_message!),

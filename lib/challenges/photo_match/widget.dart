@@ -34,8 +34,11 @@ class _PhotoMatchChallengeState extends ConsumerState<PhotoMatchChallenge> {
     super.initState();
     _camera.init().then(
       (_) => mounted ? setState(() => _ready = true) : null,
-      onError: (Object e) =>
-          mounted ? setState(() => _error = 'Camera unavailable') : null,
+      onError: (Object e) {
+        if (!mounted) return;
+        setState(() => _error = 'Camera unavailable');
+        widget.args.onUnavailable?.call();
+      },
     );
   }
 

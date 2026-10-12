@@ -35,7 +35,11 @@ class _WalkChallengeState extends ConsumerState<WalkChallenge> {
     final ok = await sensors.requestActivityPermission();
     if (!mounted) return;
     setState(() => _permitted = ok);
-    if (!ok || _sub != null) return;
+    if (!ok) {
+      widget.args.onUnavailable?.call();
+      return;
+    }
+    if (_sub != null) return;
     _sub = sensors.steps.listen((t) {
       final progress = _d.onStep(t);
       setState(() {});
