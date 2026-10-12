@@ -2,9 +2,11 @@ package com.mrgardener.byebyesleep.alarm
 
 import android.app.Activity
 import android.app.AlarmManager
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
@@ -21,8 +23,13 @@ object Permissions {
             "notifications" to nm.areNotificationsEnabled(),
             "ignoreBatteryOptimizations" to context.getSystemService(PowerManager::class.java)
                 .isIgnoringBatteryOptimizations(context.packageName),
+            "activityRecognition" to granted(context, Manifest.permission.ACTIVITY_RECOGNITION),
+            "camera" to granted(context, Manifest.permission.CAMERA),
         )
     }
+
+    private fun granted(context: Context, permission: String): Boolean =
+        context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
     fun openSettings(activity: Activity, kind: String) {
         val pkg = Uri.parse("package:${activity.packageName}")

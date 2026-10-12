@@ -60,6 +60,25 @@ void main() {
     ]);
   });
 
+  test('permissions include activity recognition and camera', () async {
+    mock(
+      (_) async => {
+        'exactAlarm': true,
+        'fullScreenIntent': true,
+        'notifications': true,
+        'ignoreBatteryOptimizations': true,
+        'activityRecognition': false,
+        'camera': false,
+      },
+    );
+    final status = await platform.permissions();
+    expect(status.missing, [
+      PermissionKind.activityRecognition,
+      PermissionKind.camera,
+    ]);
+    expect(status.coreMissing, isEmpty);
+  });
+
   test('snooze and openSettings send arguments', () async {
     final calls = <MethodCall>[];
     mock((call) async {

@@ -8,7 +8,19 @@ enum PermissionKind {
   fullScreenIntent,
   notifications,
   ignoreBatteryOptimizations,
+
+  /// Needed only by challenges that use them; asked for during setup.
+  activityRecognition,
+  camera,
 }
+
+/// Permissions every alarm needs to ring at all.
+const corePermissionKinds = {
+  PermissionKind.exactAlarm,
+  PermissionKind.fullScreenIntent,
+  PermissionKind.notifications,
+  PermissionKind.ignoreBatteryOptimizations,
+};
 
 class PermissionStatus {
   const PermissionStatus(this.granted);
@@ -24,6 +36,9 @@ class PermissionStatus {
   ];
 
   bool get allGranted => missing.isEmpty;
+
+  List<PermissionKind> get coreMissing =>
+      missing.where(corePermissionKinds.contains).toList();
 }
 
 /// How far the user got through a ringing alarm's stages. Kept natively so it

@@ -9,6 +9,8 @@ const _labels = {
   PermissionKind.fullScreenIntent: 'Full-screen alarm',
   PermissionKind.notifications: 'Notifications',
   PermissionKind.ignoreBatteryOptimizations: 'Battery optimisation off',
+  PermissionKind.activityRecognition: 'Physical activity (step challenges)',
+  PermissionKind.camera: 'Camera (photo and barcode challenges)',
 };
 
 /// Warns when alarms cannot ring: no alarm engine on this platform, or
@@ -30,7 +32,11 @@ class PreflightBanner extends ConsumerWidget {
       );
     }
     final status = ref.watch(permissionStatusProvider).value;
-    if (status == null || status.allGranted) return const SizedBox.shrink();
+    // Challenge-specific permissions are asked for during setup and checked
+    // by the pre-flight check; the banner covers what every alarm needs.
+    if (status == null || status.coreMissing.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final scheme = Theme.of(context).colorScheme;
     return Card(
       key: const Key('preflight-banner'),
@@ -48,7 +54,7 @@ class PreflightBanner extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-            for (final kind in status.missing)
+            for (final kind in status.coreMissing)
               ListTile(
                 dense: true,
                 title: Text(_labels[kind]!),

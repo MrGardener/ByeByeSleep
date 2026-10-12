@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
+import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.EXTRA_ALARM_ID
 import io.flutter.embedding.android.FlutterActivity
@@ -25,6 +26,7 @@ class RingActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        EnvSensorsChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 
     // Volume keys must not silence or turn down the alarm.

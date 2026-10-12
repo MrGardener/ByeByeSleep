@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
+import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
@@ -43,5 +44,6 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        EnvSensorsChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 }
