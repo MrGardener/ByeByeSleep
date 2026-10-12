@@ -53,6 +53,7 @@ class StageRunner extends StatelessWidget {
                 difficulty: phase.stage.difficulty,
                 random: random,
                 onPassed: onPassed,
+                params: phase.stage.params,
               ),
             ),
           ),

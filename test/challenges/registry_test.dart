@@ -52,4 +52,46 @@ void main() {
       expect(definitionFor(id).title, isNotEmpty);
     }
   });
+
+  test('resolveStage_missingSetupSubstitutes', () {
+    const all = {
+      SensorKind.camera,
+      SensorKind.accelerometer,
+      SensorKind.gyroscope,
+    };
+    expect(
+      resolveStage(
+        const StageConfig(ChallengeId.photoMatch, difficulty: 4),
+        all,
+      ),
+      const StageConfig(ChallengeId.brokenCalculator, difficulty: 4),
+    );
+    const setUp = StageConfig(ChallengeId.nfcTag, params: {'tagId': 'AB12'});
+    expect(resolveStage(setUp, const {SensorKind.nfc}), setUp);
+  });
+
+  test('maze5_withoutMagnetometer_isLevel3', () {
+    expect(
+      resolveStage(
+        const StageConfig(ChallengeId.tiltMaze, difficulty: 5),
+        const {SensorKind.accelerometer, SensorKind.gyroscope},
+      ),
+      const StageConfig(ChallengeId.tiltMaze, difficulty: 3),
+    );
+  });
+
+  test('everyNewChallengeHasDefinitionAndRequirements', () {
+    expect(definitionFor(ChallengeId.lightsOn).requires(2), {SensorKind.light});
+    expect(definitionFor(ChallengeId.walkSteps).requires(2), {
+      SensorKind.stepDetector,
+    });
+    expect(definitionFor(ChallengeId.charger).requires(2), {
+      SensorKind.battery,
+    });
+    expect(definitionFor(ChallengeId.barcode).requires(2), {SensorKind.camera});
+    expect(definitionFor(ChallengeId.tiltMaze).requires(5), {
+      SensorKind.accelerometer,
+      SensorKind.magnetometer,
+    });
+  });
 }

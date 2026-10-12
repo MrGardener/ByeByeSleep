@@ -24,7 +24,16 @@ class ChallengeProgress {
   String toString() => 'ChallengeProgress($value${passed ? ', passed' : ''})';
 }
 
-enum SensorKind { accelerometer, gyroscope }
+enum SensorKind {
+  accelerometer,
+  gyroscope,
+  light,
+  stepDetector,
+  magnetometer,
+  camera,
+  nfc,
+  battery,
+}
 
 class Vec3 {
   const Vec3(this.x, this.y, this.z);

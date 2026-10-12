@@ -11,9 +11,13 @@ class ChallengeArgs {
     required this.difficulty,
     required this.random,
     required this.onPassed,
+    this.params = const {},
   });
 
   final int difficulty;
+
+  /// The stage's setup data (see each challenge's setup screen).
+  final Map<String, Object?> params;
   final Random random;
   final VoidCallback onPassed;
 }
@@ -25,11 +29,26 @@ class ChallengeDefinition {
     required this.instructions,
     required this.requires,
     required this.build,
+    this.isSetUp = _alwaysSetUp,
+    this.setup,
   });
+
+  static bool _alwaysSetUp(Map<String, Object?> params) => true;
 
   final ChallengeId id;
   final String title;
   final String instructions;
   final Set<SensorKind> Function(int difficulty) requires;
   final Widget Function(ChallengeArgs args) build;
+
+  /// Whether [params] hold everything the challenge needs to run.
+  final bool Function(Map<String, Object?> params) isSetUp;
+
+  /// Opens the setup screen; resolves to new params, or null if cancelled.
+  /// Null when the challenge needs no setup.
+  final Future<Map<String, Object?>?> Function(
+    BuildContext context,
+    Map<String, Object?> current,
+  )?
+  setup;
 }

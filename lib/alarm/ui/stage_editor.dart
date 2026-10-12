@@ -153,6 +153,7 @@ class PracticeScreen extends StatelessWidget {
                   ChallengeArgs(
                     difficulty: stage.difficulty,
                     random: Random(),
+                    params: stage.params,
                     onPassed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Passed! 🎉')),
