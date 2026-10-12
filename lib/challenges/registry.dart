@@ -1,5 +1,3 @@
-import 'package:flutter/widgets.dart';
-
 import '../alarm/stage_config.dart';
 import 'broken_calculator/widget.dart';
 import 'core/challenge.dart';
@@ -7,8 +5,7 @@ import 'core/challenge_id.dart';
 import 'core/types.dart';
 import 'orientation_hopscotch/widget.dart';
 import 'stroop_tap/widget.dart';
-
-Widget _placeholder(ChallengeArgs args) => const Center(child: Text('…'));
+import 'tilt_maze/widget.dart';
 
 final Map<ChallengeId, ChallengeDefinition> _definitions = {
   ChallengeId.orientationHopscotch: ChallengeDefinition(
@@ -27,7 +24,7 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
       2 || 3 => const {SensorKind.accelerometer},
       _ => const {SensorKind.accelerometer, SensorKind.gyroscope},
     },
-    build: _placeholder,
+    build: (args) => TiltMazeChallenge(args: args),
   ),
   ChallengeId.brokenCalculator: ChallengeDefinition(
     id: ChallengeId.brokenCalculator,
