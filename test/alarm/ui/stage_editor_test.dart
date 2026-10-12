@@ -150,6 +150,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('save-alarm')));
     await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('preflight-save')),
+    ); // photo not set up
+    await tester.pumpAndSettle();
     expect(fake.stored.values.single.stages.map((s) => s.challenge), [
       ChallengeId.lightsOn,
       ChallengeId.walkSteps,
@@ -181,6 +185,8 @@ void main() {
     await tester.tap(find.byKey(const Key('setup-save')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('preflight-save')));
     await tester.pumpAndSettle();
     expect(fake.stored.values.single.stages.first.params, {'lux': 250.0});
   });

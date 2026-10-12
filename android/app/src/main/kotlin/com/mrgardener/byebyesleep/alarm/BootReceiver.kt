@@ -13,7 +13,10 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
-            -> AlarmGraph.lifecycle(context).rescheduleAll()
+            -> {
+                AlarmGraph.lifecycle(context).rescheduleAll()
+                PreflightReceiver.schedule(context)
+            }
         }
     }
 }

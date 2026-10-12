@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../alarm.dart';
+import '../alarm_platform.dart';
 import '../alarm_providers.dart';
+import '../preflight.dart';
 import '../stage_config.dart';
 import 'repeat_summary.dart';
 import 'stage_editor.dart';
@@ -47,9 +49,57 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     if (picked != null) setState(() => _time = picked);
   }
 
+  /// Shows pre-flight problems; true when the user still wants to save.
+  Future<bool> _confirmPreflight() async {
+    PermissionStatus permissions;
+    try {
+      permissions = await ref.read(alarmPlatformProvider).permissions();
+    } catch (_) {
+      permissions = PermissionStatus.unknownAllGranted;
+    }
+    final draft = Alarm(
+      id: widget.alarm?.id ?? 0,
+      hour: _time.hour,
+      minute: _time.minute,
+      repeatDays: _days,
+      stages: _stages,
+    );
+    final problems = preflightProblems(draft, permissions);
+    if (problems.isEmpty || !mounted) return true;
+    final save = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const Key('preflight-dialog'),
+        title: const Text('This alarm may not work'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [for (final p in problems) Text('• $p')],
+        ),
+        actions: [
+          TextButton(
+            key: const Key('preflight-fix'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Fix'),
+          ),
+          TextButton(
+            key: const Key('preflight-save'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save anyway'),
+          ),
+        ],
+      ),
+    );
+    return save ?? false;
+  }
+
   Future<void> _save() async {
     if (_saving) return; // ignore double taps
     setState(() => _saving = true);
+    if (!await _confirmPreflight()) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     try {
       await _persist();
     } catch (_) {

@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
 import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
+import com.mrgardener.byebyesleep.alarm.PreflightReceiver
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
@@ -18,6 +19,7 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         // Force-stop clears AlarmManager; opening the app restores every alarm.
         AlarmGraph.lifecycle(this).rescheduleAll()
+        PreflightReceiver.schedule(this)
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
