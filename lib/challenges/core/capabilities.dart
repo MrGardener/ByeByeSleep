@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'camera.dart';
 import 'env_sensors.dart';
 import 'motion.dart';
+import 'nfc.dart';
 import 'types.dart';
 
 /// Everything this phone can do for challenges, gathered from each source.
@@ -28,5 +29,5 @@ final deviceCapabilitiesProvider = FutureProvider<Set<SensorKind>>((ref) async {
 /// Further capability probes (camera, NFC) registered by their challenges.
 final extraCapabilitiesProvider =
     Provider<List<Future<Set<SensorKind>> Function()>>(
-      (_) => const [cameraCapability],
+      (_) => const [cameraCapability, nfcCapability],
     );

@@ -12,6 +12,8 @@ import 'photo_match/setup.dart';
 import 'photo_match/widget.dart';
 import 'lights_on/setup.dart';
 import 'lights_on/widget.dart';
+import 'nfc_tag/setup.dart';
+import 'nfc_tag/widget.dart';
 import 'orientation_hopscotch/widget.dart';
 import 'stroop_tap/widget.dart';
 import 'tilt_maze/widget.dart';
@@ -87,7 +89,8 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'NFC sticker',
     instructions: 'Touch the back of the phone to your sticker.',
     requires: (_) => const {SensorKind.nfc},
-    build: _todo,
+    build: (args) => NfcChallenge(args: args),
+    setup: setupNfc,
     isSetUp: (p) => (p['tagId'] as String?)?.isNotEmpty ?? false,
   ),
   ChallengeId.barcode: ChallengeDefinition(
