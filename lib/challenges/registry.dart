@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-
 import '../alarm/stage_config.dart';
+import 'barcode/setup.dart';
+import 'barcode/widget.dart';
 import 'broken_calculator/widget.dart';
 import 'charger/widget.dart';
 import 'core/challenge.dart';
@@ -98,7 +98,8 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     title: 'Barcode',
     instructions: 'Scan your registered barcode.',
     requires: (_) => const {SensorKind.camera},
-    build: _todo,
+    build: (args) => BarcodeChallenge(args: args),
+    setup: setupBarcode,
     isSetUp: (p) => (p['code'] as String?)?.isNotEmpty ?? false,
   ),
   ChallengeId.charger: ChallengeDefinition(
@@ -109,10 +110,6 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     build: (args) => ChargerChallenge(args: args),
   ),
 };
-
-/// Until each challenge's task lands; never reached at ring time because
-/// these challenges are listed only after their widgets exist.
-Widget _todo(ChallengeArgs args) => const Text('Coming soon');
 
 ChallengeDefinition definitionFor(ChallengeId id) => _definitions[id]!;
 
