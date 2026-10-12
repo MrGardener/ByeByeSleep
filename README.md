@@ -18,6 +18,26 @@ challenge after 5, and after 15 minutes an emergency stop lets you type a fixed
 sentence to turn the alarm off. Stages are edited per alarm, and every challenge has
 a "Try it" practice button.
 
+## Challenges
+
+| Challenge | What you do | Setup needed |
+|---|---|---|
+| Orientation hopscotch | Turn the phone through the positions shown | — |
+| Tilt maze (levels 1–5) | Roll the ball to the exit (drag, tilt, reversed tilt, rotating maze, compass) | — |
+| Broken calculator | Solve sums on a keypad that reshuffles | — |
+| Colour words | Tap the ink colour, not the word | — |
+| Lights on | Switch on the room light | Measure the room with the light on (optional) |
+| Walk | Walk to your spot | Walk bed → spot once (optional) |
+| Photo match | Photograph your spot | Two reference photos |
+| NFC sticker | Touch your sticker | Register the sticker |
+| Barcode | Scan your product | Register the barcode |
+| Charger | Plug in at a charger away from bed | — |
+
+"Use wake-up routine" in the alarm editor sets Lights → Walk → Photo → Maze → Calculator.
+Before saving, and every evening at 21:00, ByeByeSleep checks that tomorrow's alarm can
+work (permissions, setup). Turning off, deleting or moving an alarm that rings within 30
+minutes asks for your fingerprint or PIN.
+
 ## Build
 
 ```sh

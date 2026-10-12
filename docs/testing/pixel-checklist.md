@@ -36,3 +36,19 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 24 | Tilt maze at difficulty 1, 2, 3 and 4. | 1: finger drag; 2: tilt; 3: tilt reversed; 4: turning the phone turns the maze. |
 | 25 | Alarm editor: reorder, change difficulty, add/remove stages, tap ▶ "Try it". | Changes are saved; "Try it" plays the challenge without sound and returns when passed. |
 | 26 | Long-press the "ByeByeSleep" title. | Sensor trace recorder opens; recording shares a JSON file. |
+
+## Phase 1B — location challenges, setup, safety
+
+| # | Check | Expected |
+|---|---|---|
+| 27 | Alarm editor → "Use wake-up routine". | Stages become Lights on, Walk, Photo match, Tilt maze, Broken calculator; Photo match shows "Needs setup". |
+| 28 | Set up **Lights on** with the bedroom light on, then let the alarm ring in the dark. | Black screen "Turn on the light"; switching the light on passes after 2 s. |
+| 29 | Set up **Walk** by walking bed → kitchen. At ring time walk there; also try shaking the phone. | Steps count while walking (allow the "physical activity" permission); shaking barely counts. |
+| 30 | Set up **Photo match** (two photos of the same view). Ring in the morning, take the photo there. | Passes from the same view even with different light; a different room shows "Not quite — N% match". |
+| 31 | Set up **NFC sticker** with a tag; at ring time touch it, then try another tag. | Right tag passes; another tag says "That's a different sticker". |
+| 32 | Set up **Barcode** (e.g. toothpaste). Ring and scan it, then another product. | Right code passes; another says "That's a different barcode". |
+| 33 | **Charger** stage with the phone on the bedside charger. | Asks to unplug first, then passes when plugged in again. |
+| 34 | Save an alarm with an unset Photo match stage. | "This alarm may not work" dialog lists the problem; "Save anyway" saves. |
+| 35 | Leave such an alarm for tomorrow and wait until 21:00. | Notification "Tomorrow's alarm may not work — tap to fix". |
+| 36 | With an alarm due in under 30 min, switch it off / swipe-delete / change its time. | Fingerprint/PIN prompt; cancelling keeps the alarm unchanged. Over 30 min away: no prompt. |
+| 37 | Tilt maze difficulty 5. | Arrow + "On course"; when the phone turns away from the arrow the ball freezes ("Turn to the arrow!"). |
