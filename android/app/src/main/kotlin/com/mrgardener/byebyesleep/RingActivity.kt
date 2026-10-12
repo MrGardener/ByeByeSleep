@@ -23,10 +23,17 @@ class RingActivity : FlutterActivity() {
 
     override fun getInitialRoute(): String = "/ring/$alarmId"
 
+    private val envSensors = EnvSensorsChannel(this)
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        envSensors.onPermissionResult(requestCode, grantResults)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
-        EnvSensorsChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 
     // Volume keys must not silence or turn down the alarm.

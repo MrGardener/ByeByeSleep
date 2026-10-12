@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'types.dart';
 
@@ -30,8 +29,14 @@ class ChannelEnvSensorSource implements EnvSensorSource {
 
   final Future<bool> Function() _requestPermission;
 
-  static Future<bool> _requestWithPlugin() async =>
-      (await Permission.activityRecognition.request()).isGranted;
+  static Future<bool> _requestWithPlugin() async {
+    try {
+      return await _methods.invokeMethod<bool>('requestActivityPermission') ??
+          false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
 
   /// Native sensor errors are dropped so a challenge keeps listening.
   static Stream<Object?> _events(EventChannel c) => c

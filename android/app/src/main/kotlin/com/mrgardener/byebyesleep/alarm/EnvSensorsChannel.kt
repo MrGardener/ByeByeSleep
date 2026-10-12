@@ -1,6 +1,8 @@
 package com.mrgardener.byebyesleep.alarm
 
-import android.content.Context
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -11,11 +13,15 @@ import io.flutter.plugin.common.MethodChannel
 
 /**
  * Native side of lib/challenges/core/env_sensors.dart: ambient light (lux) and
- * the step detector (one event per step, carrying its timestamp in ns).
+ * the step detector (one event per step, carrying its timestamp in ns), and the
+ * "physical activity" permission the step detector needs. One instance per
+ * activity, which forwards onRequestPermissionsResult here.
  */
-object EnvSensorsChannel {
-    fun register(messenger: BinaryMessenger, context: Context) {
-        val sensors = context.getSystemService(SensorManager::class.java)
+class EnvSensorsChannel(private val activity: Activity) {
+    private var pendingPermission: MethodChannel.Result? = null
+
+    fun register(messenger: BinaryMessenger) {
+        val sensors = activity.getSystemService(SensorManager::class.java)
         val light = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
         val steps = sensors.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
 
@@ -24,6 +30,7 @@ object EnvSensorsChannel {
                 "available" -> result.success(
                     listOfNotNull(light?.let { "light" }, steps?.let { "stepDetector" }),
                 )
+                "requestActivityPermission" -> requestActivityPermission(result)
                 else -> result.notImplemented()
             }
         }
@@ -33,6 +40,28 @@ object EnvSensorsChannel {
         EventChannel(messenger, "byebyesleep/steps").setStreamHandler(
             SensorStream(sensors, steps, SensorManager.SENSOR_DELAY_FASTEST) { it.timestamp },
         )
+    }
+
+    private fun requestActivityPermission(result: MethodChannel.Result) {
+        val permission = Manifest.permission.ACTIVITY_RECOGNITION
+        if (activity.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+            result.success(true)
+            return
+        }
+        pendingPermission?.success(false)
+        pendingPermission = result
+        activity.requestPermissions(arrayOf(permission), REQUEST_CODE)
+    }
+
+    /** Call from the activity's onRequestPermissionsResult. */
+    fun onPermissionResult(requestCode: Int, grantResults: IntArray) {
+        if (requestCode != REQUEST_CODE) return
+        pendingPermission?.success(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+        pendingPermission = null
+    }
+
+    private companion object {
+        const val REQUEST_CODE = 4711
     }
 
     private class SensorStream(

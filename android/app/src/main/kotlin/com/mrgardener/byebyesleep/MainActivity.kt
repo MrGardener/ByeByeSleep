@@ -41,9 +41,16 @@ class MainActivity : FlutterActivity() {
         AndroidAlarmClockScheduler(this).schedule(9999, System.currentTimeMillis() + seconds * 1000L)
     }
 
+    private val envSensors = EnvSensorsChannel(this)
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        envSensors.onPermissionResult(requestCode, grantResults)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
-        EnvSensorsChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
+        envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 }
