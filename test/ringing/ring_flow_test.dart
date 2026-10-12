@@ -5,6 +5,7 @@ import 'package:byebyesleep/alarm/alarm_platform.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
+import 'package:byebyesleep/challenges/core/capabilities.dart';
 import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
@@ -33,6 +34,7 @@ void main() {
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
           envSensorProvider.overrideWithValue(FakeEnvSensors()),
+          extraCapabilitiesProvider.overrideWithValue(const []),
         ],
         child: MaterialApp(
           home: RingScreen(

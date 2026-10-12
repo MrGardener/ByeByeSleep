@@ -6,11 +6,12 @@ import 'motion.dart';
 import 'types.dart';
 
 /// Everything this phone can do for challenges, gathered from each source.
-/// A source that fails contributes nothing (its challenges get substituted).
+/// A source that fails or takes over 2 s contributes nothing (its challenges
+/// get substituted).
 final deviceCapabilitiesProvider = FutureProvider<Set<SensorKind>>((ref) async {
   Future<Set<SensorKind>> safe(Future<Set<SensorKind>> Function() f) async {
     try {
-      return await f();
+      return await f().timeout(const Duration(seconds: 2));
     } catch (_) {
       return {};
     }
