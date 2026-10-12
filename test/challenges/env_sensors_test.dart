@@ -10,12 +10,16 @@ void main() {
   const methods = MethodChannel('byebyesleep/sensors');
   const light = EventChannel('byebyesleep/light');
   const steps = EventChannel('byebyesleep/steps');
+  const pressure = EventChannel('byebyesleep/pressure');
+  const proximity = EventChannel('byebyesleep/proximity');
   final source = ChannelEnvSensorSource(requestPermission: () async => true);
 
   tearDown(() {
     messenger.setMockMethodCallHandler(methods, null);
     messenger.setMockStreamHandler(light, null);
     messenger.setMockStreamHandler(steps, null);
+    messenger.setMockStreamHandler(pressure, null);
+    messenger.setMockStreamHandler(proximity, null);
   });
 
   test('channel source maps lux and step events', () async {
@@ -61,5 +65,38 @@ void main() {
   test('missing plugin → no sensors and empty streams', () async {
     expect(await source.available(), isEmpty);
     expect(await source.lux.toList(), isEmpty);
+  });
+
+  test('barometer and proximity are mapped and streamed', () async {
+    messenger.setMockMethodCallHandler(
+      methods,
+      (call) async =>
+          call.method == 'available' ? ['barometer', 'proximity'] : null,
+    );
+    messenger.setMockStreamHandler(
+      pressure,
+      MockStreamHandler.inline(
+        onListen: (_, sink) {
+          sink.success(1013.25);
+          sink.endOfStream();
+        },
+      ),
+    );
+    messenger.setMockStreamHandler(
+      proximity,
+      MockStreamHandler.inline(
+        onListen: (_, sink) {
+          sink.success(true);
+          sink.success(false);
+          sink.endOfStream();
+        },
+      ),
+    );
+    expect(await source.available(), {
+      SensorKind.barometer,
+      SensorKind.proximity,
+    });
+    expect(await source.pressure.toList(), [1013.25]);
+    expect(await source.proximityNear.toList(), [true, false]);
   });
 }

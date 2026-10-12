@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'types.dart';
 
-/// Ambient light and step detector, from the native `byebyesleep/sensors`
+/// Ambient light, step detector, barometer and proximity, from the native `byebyesleep/sensors`
 /// channels (Android). Behind an interface so tests can inject readings.
 abstract class EnvSensorSource {
   /// Ambient light in lux.
@@ -12,7 +12,13 @@ abstract class EnvSensorSource {
   /// One event per detected step; monotonic timestamp.
   Stream<Duration> get steps;
 
-  /// Subset of {light, stepDetector} present on this device.
+  /// Air pressure in hPa.
+  Stream<double> get pressure;
+
+  /// True while something covers the proximity sensor.
+  Stream<bool> get proximityNear;
+
+  /// Subset of {light, stepDetector, barometer, proximity} on this device.
   Future<Set<SensorKind>> available();
 
   /// Asks for the "physical activity" permission the step detector needs.
@@ -26,6 +32,8 @@ class ChannelEnvSensorSource implements EnvSensorSource {
   static const _methods = MethodChannel('byebyesleep/sensors');
   static const _light = EventChannel('byebyesleep/light');
   static const _steps = EventChannel('byebyesleep/steps');
+  static const _pressure = EventChannel('byebyesleep/pressure');
+  static const _proximity = EventChannel('byebyesleep/proximity');
 
   final Future<bool> Function() _requestPermission;
 
@@ -59,16 +67,29 @@ class ChannelEnvSensorSource implements EnvSensorSource {
   }
 
   @override
+  Stream<double> get pressure async* {
+    if (!(await available()).contains(SensorKind.barometer)) return;
+    yield* _events(_pressure).map((e) => (e! as num).toDouble());
+  }
+
+  @override
+  Stream<bool> get proximityNear async* {
+    if (!(await available()).contains(SensorKind.proximity)) return;
+    yield* _events(_proximity).map((e) => e! as bool);
+  }
+
+  static const _kinds = {
+    'light': SensorKind.light,
+    'stepDetector': SensorKind.stepDetector,
+    'barometer': SensorKind.barometer,
+    'proximity': SensorKind.proximity,
+  };
+
+  @override
   Future<Set<SensorKind>> available() async {
     try {
       final names = await _methods.invokeListMethod<String>('available') ?? [];
-      return {
-        for (final n in names)
-          if (n == 'light')
-            SensorKind.light
-          else if (n == 'stepDetector')
-            SensorKind.stepDetector,
-      };
+      return {for (final n in names) ?_kinds[n]};
     } on MissingPluginException {
       return {};
     }
