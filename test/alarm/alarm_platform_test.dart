@@ -91,6 +91,17 @@ void main() {
     expect(calls[1].arguments, {'kind': 'notifications'});
   });
 
+  test('skipNext sends the alarm id', () async {
+    final calls = <MethodCall>[];
+    mock((call) async {
+      calls.add(call);
+      return null;
+    });
+    await platform.skipNext(5);
+    expect(calls.single.method, 'skipNext');
+    expect(calls.single.arguments, {'id': 5});
+  });
+
   test('isSupported is true when the native engine answers', () async {
     mock((call) async => call.method == 'list' ? <Object?>[] : null);
     expect(await platform.isSupported(), isTrue);

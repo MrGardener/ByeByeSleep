@@ -51,6 +51,12 @@ class FakeAlarmPlatform implements AlarmPlatform {
   }
 
   @override
+  Future<void> skipNext(int id) async {
+    calls.add('skipNext:$id');
+    _maybeFail();
+  }
+
+  @override
   Future<void> delete(int id) async {
     calls.add('delete:$id');
     _maybeFail();

@@ -29,6 +29,10 @@ object AlarmChannel {
                         val ids = AlarmService.ringingAlarmIds.ifEmpty { setOf(id) }
                         result.success(lifecycle.snoozeAll(ids, call.argument<Number>("minutes")!!.toInt()))
                     }
+                    "skipNext" -> {
+                        lifecycle.skipNext(call.argument<Number>("id")!!.toInt())
+                        result.success(null)
+                    }
                     "getRingProgress" -> result.success(AlarmService.ringProgress(activity)?.toChannelMap())
                     "saveRingProgress" -> {
                         AlarmService.saveRingProgress(activity, RingProgress.fromChannelMap(call.arguments as Map<*, *>))

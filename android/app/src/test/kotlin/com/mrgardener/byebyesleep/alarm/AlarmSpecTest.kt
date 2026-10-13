@@ -17,7 +17,7 @@ class AlarmSpecTest {
         val s = full.copy(snoozeUntilMs = null)
         val map = s.toChannelMap()
         assertEquals(listOf(1, 5), map["repeatDays"])
-        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages", "pauseSeconds"), map.keys)
+        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages", "pauseSeconds", "extras"), map.keys)
         assertEquals(s, AlarmSpec.fromChannelMap(map))
     }
 
@@ -46,5 +46,12 @@ class AlarmSpecTest {
         // Alarms saved before the setting existed get no pause.
         val old = full.toJson().apply { remove("pauseSeconds") }
         assertEquals(0, AlarmSpec.fromJson(old).pauseSeconds)
+    }
+
+    @Test fun extras_and_skip_roundTrip() {
+        val s = full.copy(extrasJson = "{\"reminder\":{\"caption\":\"Keys\"}}", skipUntilMs = 5L)
+        assertEquals(s, AlarmSpec.fromJson(s.toJson()))
+        assertEquals(s.extrasJson, s.toChannelMap()["extras"])
+        assertEquals(s.copy(snoozeUntilMs = null, skipUntilMs = null), AlarmSpec.fromChannelMap(s.toChannelMap()))
     }
 }

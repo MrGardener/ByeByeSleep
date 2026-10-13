@@ -132,4 +132,39 @@ class AlarmLifecycleTest {
         assertEquals(at, sched.scheduled[1])
         assertEquals(at, sched.scheduled[2])
     }
+
+    // 2026-10-12 is a Monday (ISO 1).
+    @Test fun skipNext_repeating_skipsExactlyOneRing() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        lifecycle.skipNext(1)
+        assertEquals(ms(at(2026, 10, 13, 7, 0)), sched.scheduled[1])
+        assertEquals(ms(at(2026, 10, 12, 7, 0)), repo.get(1)!!.skipUntilMs)
+    }
+
+    @Test fun skipNext_oneShot_disables() {
+        lifecycle.upsert(spec(7, 0))
+        lifecycle.skipNext(1)
+        assertFalse(repo.get(1)!!.enabled)
+        assertEquals("cancel:1", sched.calls.last())
+    }
+
+    @Test fun skipNext_survivesReschedule() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        lifecycle.skipNext(1)
+        sched.scheduled.clear()
+        lifecycle.rescheduleAll()
+        assertEquals(ms(at(2026, 10, 13, 7, 0)), sched.scheduled[1])
+    }
+
+    @Test fun skipNext_isClearedByUpsertAndFiring() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        lifecycle.skipNext(1)
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        assertNull(repo.get(1)!!.skipUntilMs)
+        assertEquals(ms(at(2026, 10, 12, 7, 0)), sched.scheduled[1])
+        lifecycle.skipNext(1)
+        now = at(2026, 10, 13, 7, 0)
+        lifecycle.onFired(1)
+        assertNull(repo.get(1)!!.skipUntilMs)
+    }
 }
