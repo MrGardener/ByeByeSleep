@@ -38,6 +38,23 @@ Before saving, and every evening at 21:00, ByeByeSleep checks that tomorrow's al
 work (permissions, setup). Turning off, deleting or moving an alarm that rings within 30
 minutes asks for your fingerprint or PIN.
 
+## Sensor Quest
+
+A game whose worlds each use a different phone sensor (game-controller icon on the alarm list).
+Worlds unlock in order; one the phone cannot play is skipped.
+
+| World | Do this | Sensor |
+|---|---|---|
+| Battery Oracle | Guess the battery level (within 25%) with the status bar hidden | Battery |
+| Labyrinth | Three tilt mazes: normal, reversed, turning | Accelerometer, gyroscope |
+| Compass Temple | Face four directions in turn | Magnetometer |
+| Solar Garden | Grow a plant with real light | Light sensor |
+| Ghost Hide | Cover the top of the phone when the ghost looks | Proximity |
+| Sky Tower | Climb one floor of real stairs | Barometer |
+| Rune Hunt | Touch three different NFC tags | NFC |
+
+**Practice** (dumbbell icon) runs any alarm challenge on demand.
+
 ## Build
 
 ```sh

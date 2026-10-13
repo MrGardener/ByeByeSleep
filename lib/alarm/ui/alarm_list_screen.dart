@@ -54,6 +54,20 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
           ),
           child: const Text('ByeByeSleep'),
         ),
+        actions: [
+          IconButton(
+            key: const Key('open-quest'),
+            tooltip: 'Sensor Quest',
+            icon: const Icon(Icons.sports_esports),
+            onPressed: () => Navigator.of(context).pushNamed(questRoute),
+          ),
+          IconButton(
+            key: const Key('open-practice'),
+            tooltip: 'Practice',
+            icon: const Icon(Icons.fitness_center),
+            onPressed: () => Navigator.of(context).pushNamed(practiceRoute),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('add-alarm'),

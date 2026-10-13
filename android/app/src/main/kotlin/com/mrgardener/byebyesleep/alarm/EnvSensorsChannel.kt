@@ -12,8 +12,9 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * Native side of lib/challenges/core/env_sensors.dart: ambient light (lux) and
- * the step detector (one event per step, carrying its timestamp in ns), and the
+ * Native side of lib/challenges/core/env_sensors.dart: ambient light (lux),
+ * the step detector (one event per step, carrying its timestamp in ns), air
+ * pressure (hPa), proximity (true while covered), and the
  * "physical activity" permission the step detector needs. One instance per
  * activity, which forwards onRequestPermissionsResult here.
  */
@@ -24,11 +25,18 @@ class EnvSensorsChannel(private val activity: Activity) {
         val sensors = activity.getSystemService(SensorManager::class.java)
         val light = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
         val steps = sensors.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+        val pressure = sensors.getDefaultSensor(Sensor.TYPE_PRESSURE)
+        val proximity = sensors.getDefaultSensor(Sensor.TYPE_PROXIMITY)
 
         MethodChannel(messenger, "byebyesleep/sensors").setMethodCallHandler { call, result ->
             when (call.method) {
                 "available" -> result.success(
-                    listOfNotNull(light?.let { "light" }, steps?.let { "stepDetector" }),
+                    listOfNotNull(
+                        light?.let { "light" },
+                        steps?.let { "stepDetector" },
+                        pressure?.let { "barometer" },
+                        proximity?.let { "proximity" },
+                    ),
                 )
                 "requestActivityPermission" -> requestActivityPermission(result)
                 else -> result.notImplemented()
@@ -39,6 +47,15 @@ class EnvSensorsChannel(private val activity: Activity) {
         )
         EventChannel(messenger, "byebyesleep/steps").setStreamHandler(
             SensorStream(sensors, steps, SensorManager.SENSOR_DELAY_FASTEST) { it.timestamp },
+        )
+        EventChannel(messenger, "byebyesleep/pressure").setStreamHandler(
+            SensorStream(sensors, pressure, SensorManager.SENSOR_DELAY_UI) { it.values[0].toDouble() },
+        )
+        // Many phones (Pixel included) only report 0 or maximumRange: near or far.
+        EventChannel(messenger, "byebyesleep/proximity").setStreamHandler(
+            SensorStream(sensors, proximity, SensorManager.SENSOR_DELAY_NORMAL) {
+                it.values[0] < it.sensor.maximumRange
+            },
         )
     }
 
