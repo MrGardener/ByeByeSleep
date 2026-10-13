@@ -43,6 +43,10 @@ class MemoryPhotoStore implements PhotoStore {
 
   @override
   Future<Uint8List?> load(String path) async => files[path];
+
+  @override
+  Future<void> keepOnly(Set<String> used) async =>
+      files.removeWhere((path, _) => !used.contains(path));
 }
 
 /// Same scene byte → 0.95, otherwise 0.4.
