@@ -6,6 +6,7 @@ import '../alarm_platform.dart';
 import '../alarm_providers.dart';
 import '../guard.dart';
 import '../preflight.dart';
+import '../series.dart';
 import '../stage_config.dart';
 import 'repeat_summary.dart';
 import 'stage_editor.dart';
@@ -28,6 +29,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late Set<int> _days;
   late List<StageConfig> _stages;
   late int _pauseSeconds;
+  SeriesConfig? _series;
   late final TextEditingController _label;
   bool _saving = false;
 
@@ -41,6 +43,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     _days = {...?a?.repeatDays};
     _stages = a?.stages ?? defaultStages;
     _pauseSeconds = a?.pauseSeconds ?? 0;
+    _series = a?.series;
     _label = TextEditingController(text: a?.label ?? '');
   }
 
@@ -141,31 +144,197 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  /// The alarm as currently edited.
+  Alarm _draft() => Alarm(
+    id: widget.alarm?.id ?? 0,
+    hour: _time.hour,
+    minute: _time.minute,
+    repeatDays: _days,
+    label: _label.text.trim(),
+    stages: _stages,
+    pauseSeconds: _pauseSeconds,
+    reminder: widget.alarm?.reminder,
+    series: _series,
+  );
+
   Future<void> _persist() async {
     final notifier = ref.read(alarmListProvider.notifier);
-    final existing = widget.alarm;
-    if (existing == null) {
-      await notifier.add(
-        hour: _time.hour,
-        minute: _time.minute,
-        repeatDays: _days,
-        label: _label.text.trim(),
-        stages: _stages,
-        pauseSeconds: _pauseSeconds,
-      );
+    if (widget.alarm == null) {
+      await notifier.addAlarm(_draft());
     } else {
-      await notifier.save(
-        existing.copyWith(
-          hour: _time.hour,
-          minute: _time.minute,
-          repeatDays: _days,
-          label: _label.text.trim(),
-          enabled: true,
-          stages: _stages,
-          pauseSeconds: _pauseSeconds,
-        ),
-      );
+      await notifier.save(_draft());
     }
+  }
+
+  Future<void> _split() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const Key('split-dialog'),
+        title: const Text('Split into separate alarms?'),
+        content: const Text(
+          'Every alarm of this series becomes its own alarm at the same time. '
+          'They will no longer follow this alarm: each one is edited, switched '
+          'off and deleted on its own. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            key: const Key('split-confirm'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Split'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(alarmListProvider.notifier).split(widget.alarm!.id);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not split the series.')),
+      );
+      return;
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Widget _seriesSection() {
+    final series = _series;
+    final draft = _draft();
+    final times = [
+      if (series?.direction != SeriesDirection.before) draft.timeLabel,
+      for (final c in seriesChildren(draft)) c.timeLabel,
+      if (series?.direction == SeriesDirection.before) draft.timeLabel,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          key: const Key('series-switch'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Ring as a series'),
+          subtitle: const Text(
+            'One alarm that rings again every few minutes, instead of adding '
+            'several alarms.',
+          ),
+          value: series != null,
+          onChanged: (on) => setState(
+            () => _series = on
+                ? const SeriesConfig(count: 3, everyMinutes: 5)
+                : null,
+          ),
+        ),
+        if (series != null) ...[
+          Row(
+            children: [
+              const Text('Alarms'),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                key: const Key('series-count'),
+                value: series.count,
+                items: [
+                  for (var n = 2; n <= SeriesConfig.maxCount; n++)
+                    DropdownMenuItem(value: n, child: Text('$n')),
+                ],
+                onChanged: (n) => setState(
+                  () => _series = SeriesConfig(
+                    count: n!,
+                    everyMinutes: series.everyMinutes,
+                    direction: series.direction,
+                    followUp: series.followUp,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text('every'),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                key: const Key('series-every'),
+                value: series.everyMinutes,
+                items: [
+                  for (final m in const [1, 2, 3, 5, 10, 15, 20, 30])
+                    DropdownMenuItem(value: m, child: Text('$m min')),
+                ],
+                onChanged: (m) => setState(
+                  () => _series = SeriesConfig(
+                    count: series.count,
+                    everyMinutes: m!,
+                    direction: series.direction,
+                    followUp: series.followUp,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<SeriesDirection>(
+            key: const Key('series-direction'),
+            segments: const [
+              ButtonSegment(
+                value: SeriesDirection.after,
+                label: Text('Starts at this time'),
+              ),
+              ButtonSegment(
+                value: SeriesDirection.before,
+                label: Text('Ends at this time'),
+              ),
+            ],
+            selected: {series.direction},
+            onSelectionChanged: (d) => setState(
+              () => _series = SeriesConfig(
+                count: series.count,
+                everyMinutes: series.everyMinutes,
+                direction: d.single,
+                followUp: series.followUp,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<FollowUp>(
+            key: const Key('series-followup'),
+            segments: const [
+              ButtonSegment(
+                value: FollowUp.same,
+                label: Text('Same challenges'),
+              ),
+              ButtonSegment(
+                value: FollowUp.quick,
+                label: Text('One quick sum'),
+              ),
+            ],
+            selected: {series.followUp},
+            onSelectionChanged: (f) => setState(
+              () => _series = SeriesConfig(
+                count: series.count,
+                everyMinutes: series.everyMinutes,
+                direction: series.direction,
+                followUp: f.single,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Rings at ${times.join(', ')}',
+            key: const Key('series-preview'),
+          ),
+          if (widget.alarm?.series != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('series-split'),
+                onPressed: _split,
+                icon: const Icon(Icons.call_split),
+                label: const Text('Split into separate alarms'),
+              ),
+            ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -225,6 +394,8 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             pauseSeconds: _pauseSeconds,
             onChanged: (s) => setState(() => _stages = s),
           ),
+          const SizedBox(height: 16),
+          _seriesSection(),
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,

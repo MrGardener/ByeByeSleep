@@ -91,6 +91,7 @@ class Alarm {
       '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
   Alarm copyWith({
+    int? id,
     int? hour,
     int? minute,
     Set<int>? repeatDays,
@@ -102,7 +103,7 @@ class Alarm {
     SeriesConfig? Function()? series,
     int? Function()? parentId,
   }) => Alarm(
-    id: id,
+    id: id ?? this.id,
     hour: hour ?? this.hour,
     minute: minute ?? this.minute,
     repeatDays: repeatDays ?? this.repeatDays,

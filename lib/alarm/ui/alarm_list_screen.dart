@@ -6,6 +6,7 @@ import '../../sensors/trace_recorder_screen.dart';
 import '../alarm.dart';
 import '../alarm_providers.dart';
 import '../estimate.dart';
+import '../series.dart';
 import '../guard.dart';
 import 'preflight_banner.dart';
 import 'repeat_summary.dart';
@@ -85,12 +86,56 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
               data: (list) => list.isEmpty
                   ? const Center(child: Text('No alarms yet'))
                   : ListView(
-                      children: [for (final a in list) _AlarmTile(alarm: a)],
+                      children: [
+                        for (final a in list)
+                          if (!_hasParentIn(a, list)) ...[
+                            _AlarmTile(alarm: a),
+                            for (final c in list.where(
+                              (c) => c.parentId == a.id,
+                            ))
+                              _SeriesChildTile(alarm: c, main: a),
+                          ],
+                      ],
                     ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A series alarm is listed under its main alarm, not on its own.
+bool _hasParentIn(Alarm a, List<Alarm> list) =>
+    a.parentId != null && list.any((m) => m.id == a.parentId);
+
+String seriesSummary(SeriesConfig s) =>
+    'Series of ${s.count} · every ${s.everyMinutes} min'
+    '${s.direction == SeriesDirection.before ? ' · this is the last' : ''}';
+
+/// One alarm of a series: follows its main alarm, which is edited instead.
+class _SeriesChildTile extends StatelessWidget {
+  const _SeriesChildTile({required this.alarm, required this.main});
+
+  final Alarm alarm;
+  final Alarm main;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return ListTile(
+      key: Key('series-child-${alarm.id}'),
+      contentPadding: const EdgeInsets.only(left: 40, right: 16),
+      dense: true,
+      leading: Icon(Icons.subdirectory_arrow_right, color: muted),
+      title: Text(
+        alarm.timeLabel,
+        key: const Key('alarm-time'),
+        style: Theme.of(context).textTheme.titleLarge
+            ?.copyWith(color: alarm.enabled ? null : muted),
+      ),
+      subtitle: Text('Part of the ${main.timeLabel} series'),
+      onTap: () => Navigator.of(context).pushNamed(editRoute, arguments: main),
     );
   }
 }
@@ -107,6 +152,9 @@ class _AlarmTile extends ConsumerWidget {
       if (alarm.label.isNotEmpty) alarm.label,
       repeatSummary(alarm.repeatDays),
       estimateLabel(alarm.stages, alarm.pauseSeconds),
+      if (alarm.series case final s?) seriesSummary(s),
+      if (alarm.reminder case final r? when !r.isEmpty)
+        'Reminder: ${r.caption.isEmpty ? 'photo' : r.caption}',
     ];
     return Dismissible(
       key: Key('alarm-tile-${alarm.id}'),
@@ -133,6 +181,7 @@ class _AlarmTile extends ConsumerWidget {
       child: ListTile(
         title: Text(
           alarm.timeLabel,
+          key: const Key('alarm-time'),
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         subtitle: Column(

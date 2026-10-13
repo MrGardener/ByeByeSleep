@@ -1,4 +1,5 @@
 import 'package:byebyesleep/alarm/alarm.dart';
+import 'package:byebyesleep/alarm/series.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -35,6 +36,33 @@ void main() {
     await pumpApp(tester, fake);
     expect(find.textContaining('min to turn off'), findsOneWidget);
     expect(find.text('Stops at once'), findsOneWidget);
+  });
+
+  testWidgets('seriesAlarmsAreNestedUnderTheirMainAlarm', (tester) async {
+    final main = Alarm(
+      id: 4,
+      hour: 17,
+      minute: 0,
+      series: const SeriesConfig(count: 3, everyMinutes: 5),
+    );
+    final fake = FakeAlarmPlatform(
+      seed: [Alarm(id: 1, hour: 17, minute: 7), main, ...seriesChildren(main)],
+    );
+    await pumpApp(tester, fake);
+    // Order: the main alarm, its series, then the next alarm.
+    final rows = tester
+        .widgetList<Text>(find.byKey(const Key('alarm-time')))
+        .map((t) => t.data)
+        .toList();
+    expect(rows, ['17:00', '17:05', '17:10', '17:07']);
+    expect(find.byKey(const Key('series-child-401')), findsOneWidget);
+    expect(find.text('Series of 3 · every 5 min'), findsOneWidget);
+    // A series alarm has no switch of its own; tapping it edits the main one.
+    expect(find.byKey(const Key('alarm-switch-401')), findsNothing);
+    await tester.tap(find.byKey(const Key('series-child-401')));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit alarm'), findsOneWidget);
+    expect(find.text('17:00'), findsOneWidget);
   });
 
   testWidgets('toggleSwitchDisablesAlarm', (tester) async {
