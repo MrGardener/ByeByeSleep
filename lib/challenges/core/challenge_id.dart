@@ -15,4 +15,5 @@ enum ChallengeId {
   compass,
   watchSwing,
   watchSteps,
+  stairs,
 }

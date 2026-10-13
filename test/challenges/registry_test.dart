@@ -94,4 +94,17 @@ void main() {
       SensorKind.magnetometer,
     });
   });
+
+  test('stairs needs a barometer, otherwise it is replaced', () {
+    expect(
+      resolveStage(const StageConfig(ChallengeId.stairs), const {}).challenge,
+      ChallengeId.brokenCalculator,
+    );
+    expect(
+      resolveStage(const StageConfig(ChallengeId.stairs), const {
+        SensorKind.barometer,
+      }).challenge,
+      ChallengeId.stairs,
+    );
+  });
 }
