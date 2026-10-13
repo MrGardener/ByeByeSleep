@@ -64,9 +64,17 @@ class AlarmService : Service() {
         val progress = RingProgress.onRing(storedProgress(this), id, System.currentTimeMillis(), redelivered, followUp)
         ringingState().edit().putString(KEY_PROGRESS, progress.toJson().toString()).commit()
 
+        // Nobody there (owner away, phone forgotten): stop by itself after
+        // the alarm's limit, counted from when this ring started.
+        val limit = runCatching {
+            PrefsAlarmRepository(applicationContext).get(id)?.let { RingLimit.minutes(it.extrasJson) }
+        }.getOrNull() ?: RingLimit.DEFAULT_MINUTES
+        val left = RingLimit.remainingMs(limit, progress.startedAtMs, System.currentTimeMillis())
+        timeout.postDelayed({ ringTimedOut(id, limit) }, left)
+
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "byebyesleep:ring")
-            .apply { acquire(30 * 60 * 1000L) }
+            .apply { acquire(left + 60_000L) }
 
         // Remember the user's volume once (survives a process restart while ringing).
         runCatching {
@@ -145,7 +153,32 @@ class AlarmService : Service() {
         return notification
     }
 
+    private val timeout = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /** The ring limit passed with nobody stopping it: silence, and say so. */
+    private fun ringTimedOut(id: Int, minutes: Int) {
+        if (player == null) return
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(
+            NotificationChannel(MISSED_CHANNEL_ID, "Missed alarms", NotificationManager.IMPORTANCE_DEFAULT),
+        )
+        val time = PrefsAlarmRepository(applicationContext).get(id)
+            ?.let { "%02d:%02d ".format(it.hour, it.minute) } ?: ""
+        nm.notify(
+            MISSED_NOTIFICATION_ID,
+            Notification.Builder(this, MISSED_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle("Missed alarm")
+                .setContentText("The ${time}alarm rang for $minutes min and nobody stopped it, so it stopped itself.")
+                .setAutoCancel(true)
+                .build(),
+        )
+        RingActivity.closeIfShowing()
+        stopRinging()
+    }
+
     private fun stopRinging() {
+        timeout.removeCallbacksAndMessages(null)
         ringingAlarmId = null
         ringingAlarmIds = emptySet()
         player?.run { runCatching { stop() }; release() }
@@ -195,6 +228,8 @@ class AlarmService : Service() {
         @Volatile var ringingAlarmIds: Set<Int> = emptySet()
             private set
 
+        private const val MISSED_CHANNEL_ID = "missed"
+        private const val MISSED_NOTIFICATION_ID = 4712
         private const val EXTRA_FOLLOW_UP = "follow_up"
 
         fun ringIntent(context: Context, id: Int, followUp: Boolean = false): Intent =

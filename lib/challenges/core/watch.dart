@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'types.dart';
-
 /// One message from the watch.
 sealed class WatchReading {
   const WatchReading();
@@ -99,9 +97,3 @@ final watchClockProvider = Provider<Duration Function()>((_) {
   final watch = Stopwatch()..start();
   return () => watch.elapsed;
 });
-
-/// Capability probe: the watch app streams heart rate, motion and steps.
-Future<Set<SensorKind>> watchCapability() async =>
-    await ChannelWatchSource().available()
-    ? {SensorKind.heartRate, SensorKind.watchMotion, SensorKind.watchSteps}
-    : {};

@@ -8,6 +8,8 @@ import '../challenges/core/challenge.dart';
 import '../challenges/core/challenge_id.dart';
 import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
+import '../watch_setup/watch_settings.dart';
+import '../watch_setup/watch_setup_screen.dart';
 
 const _permissionGated = {SensorKind.camera, SensorKind.stepDetector};
 
@@ -18,34 +20,78 @@ class PracticeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final caps = ref.watch(deviceCapabilitiesProvider).value;
+    final watch =
+        ref.watch(watchSettingsProvider).value ?? const WatchSettings();
+    final watchIds = [
+      for (final id in ChallengeId.values)
+        if (isWatchChallenge(id) &&
+            watch.ready &&
+            watch.sensors.containsAll(watchSensorsFor(id)))
+          id,
+    ];
     return Scaffold(
       appBar: AppBar(title: const Text('Practice')),
       body: ListView(
         children: [
-          for (final id in ChallengeId.values)
-            Builder(
-              builder: (context) {
-                final d = definitionFor(id);
-                // Camera and step counting may only lack a permission, which
-                // the challenge asks for itself, so they stay playable.
-                final missing = caps == null
-                    ? const <SensorKind>{}
-                    : d.requires(1).difference(caps);
-                final playable = missing.every(_permissionGated.contains);
-                return ListTile(
-                  enabled: playable,
-                  title: Text(d.title),
-                  subtitle: Text(
-                    playable ? d.instructions : 'Not on this phone',
+          for (final id in [
+            for (final id in ChallengeId.values)
+              if (!isWatchChallenge(id)) id,
+            null, // the watch section starts here
+            ...watchIds,
+          ])
+            if (id == null) ...[
+              Padding(
+                key: const Key('watch-section'),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.watch),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Watch challenges',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              if (watchIds.isEmpty)
+                ListTile(
+                  key: const Key('practice-watch-setup'),
+                  leading: const Icon(Icons.settings),
+                  title: const Text('Set up your watch first'),
+                  subtitle: const Text(
+                    'Watch challenges appear here once the watch is tested.',
                   ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => PracticeRunScreen(id: id),
+                      builder: (_) => const WatchSetupScreen(),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+            ] else
+              Builder(
+                builder: (context) {
+                  final d = definitionFor(id);
+                  // Camera and step counting may only lack a permission, which
+                  // the challenge asks for itself, so they stay playable.
+                  final missing = caps == null
+                      ? const <SensorKind>{}
+                      : d.requires(1).difference(caps);
+                  final playable = missing.every(_permissionGated.contains);
+                  return ListTile(
+                    enabled: playable,
+                    title: Text(d.title),
+                    subtitle: Text(
+                      playable ? d.instructions : 'Not on this phone',
+                    ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PracticeRunScreen(id: id),
+                      ),
+                    ),
+                  );
+                },
+              ),
         ],
       ),
     );

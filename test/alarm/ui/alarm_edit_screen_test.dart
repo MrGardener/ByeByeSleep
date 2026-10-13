@@ -167,6 +167,22 @@ void main() {
     expect(fake.stored.values.single.followUpMinutes, 10);
   });
 
+  testWidgets('ringLimitDefaultsTo30AndIsConfigurable', (tester) async {
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await reveal(tester, const Key('maxring-dropdown'));
+    expect(find.text('After 30 min'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('maxring-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('After 10 min').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(fake.stored.values.single.maxRingMinutes, 10);
+  });
+
   testWidgets('editFlowUpdatesExistingAlarm', (tester) async {
     final fake = FakeAlarmPlatform(
       seed: [

@@ -32,6 +32,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late List<StageConfig> _stages;
   late int _pauseSeconds;
   late int _followUp;
+  late int _maxRing;
   SeriesConfig? _series;
   String? _reminderPhoto;
   late final TextEditingController _reminderCaption;
@@ -52,6 +53,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     _stages = a?.stages ?? defaultStages;
     _pauseSeconds = a?.pauseSeconds ?? 0;
     _followUp = a?.followUpMinutes ?? 0;
+    _maxRing = a?.maxRingMinutes ?? Alarm.defaultMaxRing;
     _series = a?.series;
     _reminderPhoto = a?.reminder?.photoPath;
     _reminderCaption = TextEditingController(text: a?.reminder?.caption ?? '')
@@ -170,6 +172,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     label: _label.text.trim(),
     pauseSeconds: _pauseSeconds,
     followUpMinutes: _followUp,
+    maxRingMinutes: _maxRing,
     reminder: _reminder.isEmpty ? null : _reminder,
     // Without a reminder an alarm needs at least one challenge.
     stages: _stages.isEmpty && _reminder.isEmpty ? defaultStages : _stages,
@@ -526,6 +529,24 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
                   ),
               ],
               onChanged: (m) => setState(() => _followUp = m ?? 0),
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Stop ringing after'),
+            subtitle: const Text(
+              'If nobody stops it (you are away), it stops by itself and '
+              'leaves a "missed alarm" notification.',
+            ),
+            trailing: DropdownButton<int>(
+              key: const Key('maxring-dropdown'),
+              value: _maxRing,
+              items: [
+                for (final m in const [10, 20, 30, 45, 60])
+                  DropdownMenuItem(value: m, child: Text('After $m min')),
+              ],
+              onChanged: (m) =>
+                  setState(() => _maxRing = m ?? Alarm.defaultMaxRing),
             ),
           ),
           const _SectionTitle(Icons.repeat, 'Series'),

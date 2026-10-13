@@ -8,6 +8,7 @@ import 'watch.dart';
 import 'motion.dart';
 import 'nfc.dart';
 import 'types.dart';
+import '../../watch_setup/watch_settings.dart';
 
 /// Everything this phone can do for challenges, gathered from each source.
 /// A source that fails or takes over 2 s contributes nothing (its challenges
@@ -27,6 +28,22 @@ final deviceCapabilitiesProvider = FutureProvider<Set<SensorKind>>((ref) async {
     for (final extra in ref.read(extraCapabilitiesProvider)) safe(extra),
   ]);
   final caps = {SensorKind.battery, for (final p in parts) ...p};
+  // Watch sensors only after the owner set the watch up and it passed the
+  // test — and only while it answers now.
+  try {
+    final watch = await ref
+        .read(watchSettingsProvider.future)
+        .timeout(const Duration(seconds: 2));
+    if (watch.ready &&
+        await ref
+            .read(watchSourceProvider)
+            .available()
+            .timeout(const Duration(seconds: 2))) {
+      caps.addAll(watch.sensors);
+    }
+  } catch (_) {
+    // Unknown: no watch challenges.
+  }
   // Hardware without its permission is as good as missing.
   try {
     final granted =
@@ -48,5 +65,5 @@ final deviceCapabilitiesProvider = FutureProvider<Set<SensorKind>>((ref) async {
 /// Further capability probes (camera, NFC) registered by their challenges.
 final extraCapabilitiesProvider =
     Provider<List<Future<Set<SensorKind>> Function()>>(
-      (_) => const [cameraCapability, nfcCapability, watchCapability],
+      (_) => const [cameraCapability, nfcCapability],
     );

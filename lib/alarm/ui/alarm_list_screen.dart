@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
+import '../../app/settings_screen.dart';
 import '../../sensors/trace_recorder_screen.dart';
 import '../alarm.dart';
 import '../alarm_providers.dart';
@@ -56,6 +57,16 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
           ),
           child: const Text('ByeByeSleep'),
         ),
+        actions: [
+          IconButton(
+            key: const Key('open-settings'),
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         key: const Key('add-alarm'),

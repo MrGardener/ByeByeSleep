@@ -37,6 +37,14 @@ void main() {
     });
   });
 
+  test('stricter at higher difficulty', () {
+    expect(batteryToleranceFor(1), 25);
+    expect(batteryToleranceFor(5), 10);
+    expect(oracleAccepts(60, 50, tolerance: 10), isTrue);
+    expect(oracleAccepts(61, 50, tolerance: 10), isFalse);
+    expect(oracleRange(50, tolerance: 10), (low: 40, high: 60));
+  });
+
   group('world', () {
     late FakeLevel battery;
     late List<String> uiModes;

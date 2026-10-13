@@ -8,7 +8,8 @@ import '../core/watch.dart';
 import 'detectors.dart';
 
 /// Shared plumbing for wrist challenges: checks a watch is there, opens its
-/// sensor screen, and gives up (fallback) if nothing arrives in 30 s.
+/// sensor screen, and gives up (fallback) whenever 30 s pass without a
+/// reading — at the start or half way (watch taken off, out of range, flat).
 abstract class _WatchChallengeState<T extends ConsumerStatefulWidget>
     extends ConsumerState<T> {
   ChallengeArgs get args;
@@ -16,6 +17,7 @@ abstract class _WatchChallengeState<T extends ConsumerStatefulWidget>
   Timer? _silence;
   bool _done = false;
   bool connected = false;
+  static const _quiet = Duration(seconds: 30);
 
   void onReading(WatchReading r);
 
@@ -46,10 +48,11 @@ abstract class _WatchChallengeState<T extends ConsumerStatefulWidget>
     final watch = ref.read(watchSourceProvider);
     if (!await watch.available()) return _unavailable();
     if (!mounted) return;
-    _silence = Timer(const Duration(seconds: 30), _unavailable);
+    _silence = Timer(_quiet, _unavailable);
     _sub = watch.readings.listen((r) {
       if (!uses(r)) return;
       _silence?.cancel();
+      _silence = Timer(_quiet, _unavailable);
       if (!mounted) return;
       setState(() {
         connected = true;

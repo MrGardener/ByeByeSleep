@@ -109,10 +109,6 @@ double headingDegrees(Vec3 gravity, Vec3 magnetic) {
   return (azimuth + 360) % 360;
 }
 
-/// Level 5 target: sweeps ±60° around [start], at most ~9.4°/s.
-double targetHeading(double start, Duration t) =>
-    start + 60 * sin(2 * pi * t.inMicroseconds / 40e6);
-
 /// Within ±15° of [target], wrap-around safe.
 bool headingOk(double heading, double target) {
   final diff = ((heading - target) % 360 + 540) % 360 - 180;

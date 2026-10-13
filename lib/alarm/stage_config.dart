@@ -14,7 +14,10 @@ class StageConfig {
   });
 
   factory StageConfig.fromJson(Map<String, Object?> j) => StageConfig(
-    ChallengeId.values.byName(j['challenge']! as String),
+    switch (j['challenge']! as String) {
+      'charger' => ChallengeId.batteryGuess, // retired challenge
+      final name => ChallengeId.values.byName(name),
+    },
     difficulty: ((j['difficulty'] as num?)?.toInt() ?? 2).clamp(1, 5),
     params: (j['params'] as Map<String, Object?>?) ?? const {},
   );

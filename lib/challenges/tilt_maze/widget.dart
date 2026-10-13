@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/challenge.dart';
 import '../core/motion.dart';
+import '../compass/trial.dart';
 import '../core/types.dart';
 import 'maze.dart';
 import 'physics.dart';
@@ -34,11 +35,12 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
   double _rotationRate = 0; // rad/s around the screen axis
   double _angle = 0; // maze rotation (level 4+)
   Offset? _finger; // level 1, in cell units
-  Vec3? _magnetic; // level 5
-  double? _startHeading;
-  bool _onHeading = true;
-  double _arrow = 0; // degrees from where the phone points to the target
-  Duration _elapsed = Duration.zero;
+  // Level 5: face a named compass point (chosen at least 90° from where you
+  // start) to unfreeze the ball. Smoothed like Compass runes, ±30°.
+  final _heading = HeadingFilter();
+  double? _target;
+  bool _onHeading = false;
+  double _arrow = 0; // turn needed, degrees (positive = right)
   Duration _last = Duration.zero;
   bool _reported = false;
 
@@ -67,15 +69,22 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
     super.dispose();
   }
 
-  /// Level 5: the ball only moves while the phone points at the target.
+  static const _tolerance = 30.0;
+
+  /// Level 5: the ball only moves while you face the target direction.
   void _onMagnetic(Vec3 m) {
-    _magnetic = m;
-    final heading = headingDegrees(_gravity, m);
-    final start = _startHeading ??= heading;
-    final target = targetHeading(start, _elapsed);
-    _arrow = ((target - heading) % 360 + 540) % 360 - 180;
-    final ok = headingOk(heading, target);
-    if (ok != _onHeading) setState(() => _onHeading = ok);
+    _heading.add(headingDegrees(_gravity, m));
+    final heading = _heading.heading!;
+    final target = _target ??=
+        (widget.args.params['faceTarget'] as num?)?.toDouble() ??
+        CompassTrial.randomTargets(
+          widget.args.random,
+          count: 1,
+          from: heading,
+        ).first;
+    _arrow = turnTo(heading, target);
+    final ok = _arrow.abs() <= _tolerance;
+    if (ok != _onHeading) _onHeading = ok;
   }
 
   Offset _accel() {
@@ -90,9 +99,7 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
   void _tick(Duration elapsed) {
     final dt = (elapsed - _last).inMicroseconds / 1e6;
     _last = elapsed;
-    _elapsed = elapsed;
     if (_level == 4) _angle += _rotationRate * dt;
-    if (_level == 5 && _magnetic != null) _onMagnetic(_magnetic!);
     if (_level == 5 && !_onHeading) {
       _ball.vel = Offset.zero; // frozen until the phone faces the target
     } else {
@@ -113,12 +120,19 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
       1 => 'Drag your finger to pull the ball.',
       3 => 'Controls are reversed!',
       4 => 'Turning the phone turns the maze.',
-      5 => 'Keep facing the moving arrow, or the ball freezes.',
+      5 =>
+        _target == null
+            ? 'Hold the phone flat…'
+            : _onHeading
+            ? 'Facing ${compassPointName(_target!)} — tilt to roll.'
+            : 'Face ${compassPointName(_target!)}: turn '
+                  '${_arrow > 0 ? 'right' : 'left'} ${_arrow.abs().round()}°. '
+                  'The ball moves only while you face it.',
       _ => 'Tilt the phone to roll the ball.',
     };
     return LayoutBuilder(
       builder: (context, box) {
-        final hintHeight = _level == 5 ? 56.0 : 32.0;
+        final hintHeight = _level == 5 ? 84.0 : 32.0;
         final side = min(
           box.maxWidth,
           box.maxHeight.isFinite ? box.maxHeight - hintHeight : box.maxWidth,
@@ -142,7 +156,7 @@ class _TiltMazeChallengeState extends ConsumerState<TiltMazeChallenge>
                           child: const Icon(Icons.navigation, size: 20),
                         ),
                         Text(
-                          _onHeading ? 'On course' : 'Turn to the arrow!',
+                          _onHeading ? 'On course' : 'Turn to the arrow',
                           key: Key(_onHeading ? 'heading-ok' : 'heading-off'),
                         ),
                       ],

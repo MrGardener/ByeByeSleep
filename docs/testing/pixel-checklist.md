@@ -81,3 +81,8 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 64 | Add "Climb the stairs"; let it ring downstairs. | "Measuring the ground floor" 3 s, then climbing one floor and waiting there passes. |
 | 65 | Retake a reminder photo, save; delete an alarm with photos. | Old photo files are removed (Settings → Apps → ByeByeSleep → storage stays small). |
 | 66 | Sensor Quest → Solar Garden in bright light, lock the phone 30 s, unlock. | The plant did not grow while locked. |
+| 67 | Tilt maze level 5. | "Face east: turn right 40°"; arrow steady; once facing it (±30°) "Facing east — tilt to roll" and the ball moves. |
+| 68 | Add "Battery guess" (difficulty 1, then 5). | Status bar hidden; ±25% accepted at 1, ±10% at 5; old alarms that had "Charger" now show "Battery guess". |
+| 69 | Settings → Smartwatch → No; then Yes + test with the watch. | "No": the picker's Watch section only says so. "Yes": install steps, live test ticks watch found / heart rate / wrist movement / steps; only passed sensors unlock watch challenges. |
+| 70 | Watch challenge running; take the watch off for 30 s. | The stage switches to the fallback challenge. |
+| 71 | Alarm with "Stop ringing after 10 min"; let it ring untouched. | After 10 min it stops, the ring screen closes, "Missed alarm" notification. |

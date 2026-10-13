@@ -204,18 +204,13 @@ void main() {
     expect(headingOk(100, 114), isTrue);
   });
 
-  test('targetHeading_speedBelow10DegPerSecond', () {
-    var maxRate = 0.0;
-    for (var ms = 0; ms < 60000; ms += 100) {
-      final a = targetHeading(200, Duration(milliseconds: ms));
-      final b = targetHeading(200, Duration(milliseconds: ms + 100));
-      maxRate = max(maxRate, (b - a).abs() * 10);
-    }
-    expect(maxRate, lessThanOrEqualTo(10));
-    expect(targetHeading(200, Duration.zero), closeTo(200, 1e-9));
-  });
+  /// Magnetic field a flat phone sees when its top points to [heading]°.
+  Vec3 facing(double heading) {
+    final r = heading * pi / 180;
+    return Vec3(-30 * sin(r), 30 * cos(r), -40);
+  }
 
-  testWidgets('maze5_frozenWhenOffHeading', (tester) async {
+  testWidgets('maze5_facingTheNamedDirectionUnfreezesTheBall', (tester) async {
     final motion = FakeMotionSource();
     await tester.pumpWidget(
       ProviderScope(
@@ -227,18 +222,32 @@ void main() {
                 difficulty: 5,
                 random: Random(5),
                 onPassed: () {},
+                params: const {'faceTarget': 90.0},
               ),
             ),
           ),
         ),
       ),
     );
-    motion.accel.add(const Vec3(0, 0, 9.8));
-    motion.mag.add(const Vec3(0, 30, -40)); // start heading 0°
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('heading-ok')), findsOneWidget);
-    motion.mag.add(const Vec3(30, 0, -40)); // turned to 270°
-    await tester.pump(const Duration(milliseconds: 50));
+    Future<void> face(double heading, int readings) async {
+      for (var i = 0; i < readings; i++) {
+        motion.accel.add(const Vec3(0, 0, 9.8));
+        motion.mag.add(facing(heading));
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+    }
+
+    await face(0, 30);
     expect(find.byKey(const Key('heading-off')), findsOneWidget);
+    expect(find.textContaining('Face east'), findsOneWidget);
+    expect(find.textContaining('turn right'), findsOneWidget);
+    // Jittery readings around east (±20°) still count as facing it.
+    for (var i = 0; i < 60; i++) {
+      motion.accel.add(const Vec3(0, 0, 9.8));
+      motion.mag.add(facing(90 + (i.isEven ? 20 : -20)));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(find.byKey(const Key('heading-ok')), findsOneWidget);
+    expect(find.textContaining('tilt to roll'), findsOneWidget);
   });
 }

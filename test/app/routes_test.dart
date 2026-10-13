@@ -41,4 +41,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlarmListScreen), findsOneWidget);
   });
+
+  testWidgets('settings → smartwatch opens the watch setup', (tester) async {
+    await pumpApp(tester, FakeAlarmPlatform());
+    await tester.tap(find.byKey(const Key('open-settings')));
+    await tester.pumpAndSettle();
+    expect(find.text('Not set up'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('settings-watch')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Do you have a smartwatch'), findsOneWidget);
+  });
+
+  testWidgets('practice keeps watch challenges in their own section', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      FakeAlarmPlatform(),
+      extraOverrides: [
+        progressStoreProvider.overrideWithValue(MemoryStore()),
+        deviceCapabilitiesProvider.overrideWith(
+          (_) async => SensorKind.values.toSet(),
+        ),
+      ],
+    );
+    await tester.tap(find.byKey(const Key('tab-practice')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('practice-watch-setup')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('watch-section')), findsOneWidget);
+    expect(find.text('Get your heart going'), findsNothing);
+  });
 }

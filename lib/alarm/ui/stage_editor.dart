@@ -1,10 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../challenges/core/challenge.dart';
 import '../../challenges/core/challenge_id.dart';
 import '../../challenges/registry.dart';
+import '../../watch_setup/watch_settings.dart';
+import '../../watch_setup/watch_setup_screen.dart';
 import '../estimate.dart';
 import '../stage_config.dart';
 
@@ -12,7 +15,7 @@ const maxStages = 8;
 
 /// Ordered list of an alarm's stages: reorder, set difficulty, add, remove,
 /// and practise each one.
-class StageEditor extends StatelessWidget {
+class StageEditor extends ConsumerWidget {
   const StageEditor({
     super.key,
     required this.stages,
@@ -45,7 +48,28 @@ class StageEditor extends StatelessWidget {
           r,
   ]);
 
-  Future<void> _add(BuildContext context) async {
+  Future<void> _add(BuildContext context, WatchSettings watch) async {
+    final phone = [
+      for (final id in ChallengeId.values)
+        if (!isWatchChallenge(id)) id,
+    ];
+    final watchReady = [
+      for (final id in ChallengeId.values)
+        if (isWatchChallenge(id) &&
+            watch.ready &&
+            watch.sensors.containsAll(watchSensorsFor(id)))
+          id,
+    ];
+    Widget tile(BuildContext context, ChallengeId id) => ListTile(
+      key: Key('pick-${id.name}'),
+      title: Text(definitionFor(id).title),
+      subtitle: Text(definitionFor(id).instructions),
+      trailing: definitionFor(id).setup != null
+          ? const Text('needs setup')
+          : null,
+      onTap: () => Navigator.of(context).pop(id),
+    );
+    var setUpWatch = false;
     final picked = await showModalBottomSheet<ChallengeId>(
       context: context,
       isScrollControlled: true,
@@ -64,25 +88,56 @@ class StageEditor extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            for (final id in ChallengeId.values)
+            for (final id in phone) tile(context, id),
+            Padding(
+              key: const Key('watch-section'),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.watch),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Watch challenges',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+            for (final id in watchReady) tile(context, id),
+            if (watchReady.isEmpty)
               ListTile(
-                key: Key('pick-${id.name}'),
-                title: Text(definitionFor(id).title),
-                subtitle: Text(definitionFor(id).instructions),
-                trailing: definitionFor(id).setup != null
-                    ? const Text('needs setup')
-                    : null,
-                onTap: () => Navigator.of(context).pop(id),
+                key: const Key('pick-watch-setup'),
+                leading: const Icon(Icons.settings),
+                title: Text(
+                  watch.choice == WatchChoice.none
+                      ? 'You said you have no watch'
+                      : 'Set up your watch first',
+                ),
+                subtitle: const Text(
+                  'These need a smartwatch with the ByeByeSleep watch app, '
+                  'tested once in Settings → Smartwatch.',
+                ),
+                onTap: () {
+                  setUpWatch = true;
+                  Navigator.of(context).pop();
+                },
               ),
           ],
         ),
       ),
     );
     if (picked != null) onChanged([...stages, StageConfig(picked)]);
+    if (setUpWatch && context.mounted) {
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const WatchSetupScreen()));
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final watch =
+        ref.watch(watchSettingsProvider).value ?? const WatchSettings();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -195,7 +250,9 @@ class StageEditor extends StatelessWidget {
         const SizedBox(height: 8),
         FilledButton.tonalIcon(
           key: const Key('add-stage'),
-          onPressed: stages.length < maxStages ? () => _add(context) : null,
+          onPressed: stages.length < maxStages
+              ? () => _add(context, watch)
+              : null,
           icon: const Icon(Icons.add),
           label: Text(
             stages.length < maxStages
