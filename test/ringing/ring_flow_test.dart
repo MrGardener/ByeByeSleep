@@ -12,12 +12,14 @@ import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:byebyesleep/ringing/emergency.dart';
 import 'package:byebyesleep/ringing/safety_exit.dart';
+import 'package:byebyesleep/watch_setup/watch_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'emergency_test.dart' show FakeEmergencySource;
+import '../support/memory_watch_store.dart';
 import '../support/challenge_solvers.dart';
 import '../support/fake_alarm_platform.dart';
 import '../support/fake_env_sensors.dart';
@@ -41,6 +43,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          watchSettingsStoreProvider.overrideWithValue(MemoryWatchStore()),
           alarmPlatformProvider.overrideWithValue(fake),
           motionSourceProvider.overrideWithValue(FakeMotionSource()),
           envSensorProvider.overrideWithValue(FakeEnvSensors()),

@@ -4,7 +4,11 @@ import 'package:byebyesleep/alarm/ui/stage_editor.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
 import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:byebyesleep/challenges/core/types.dart';
+import 'package:byebyesleep/watch_setup/watch_settings.dart';
 
 import '../../support/fake_alarm_platform.dart';
 import '../../support/fake_env_sensors.dart';
@@ -40,11 +44,13 @@ void main() {
   testWidgets('editor_cannotRemoveLastStage', (tester) async {
     var changed = <StageConfig>[];
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: StageEditor(
-            stages: const [StageConfig(ChallengeId.stroopTap)],
-            onChanged: (s) => changed = s,
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: StageEditor(
+              stages: const [StageConfig(ChallengeId.stroopTap)],
+              onChanged: (s) => changed = s,
+            ),
           ),
         ),
       ),
@@ -149,15 +155,17 @@ void main() {
 
   testWidgets('editor_maxSixStages', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: StageEditor(
-              stages: List.filled(
-                maxStages,
-                const StageConfig(ChallengeId.stroopTap),
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: StageEditor(
+                stages: List.filled(
+                  maxStages,
+                  const StageConfig(ChallengeId.stroopTap),
+                ),
+                onChanged: (_) {},
               ),
-              onChanged: (_) {},
             ),
           ),
         ),
@@ -181,15 +189,17 @@ void main() {
 
   testWidgets('editor_showsNeedsSetupForPhoto', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: StageEditor(
-              stages: const [
-                StageConfig(ChallengeId.photoMatch),
-                StageConfig(ChallengeId.stroopTap),
-              ],
-              onChanged: (_) {},
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: StageEditor(
+                stages: const [
+                  StageConfig(ChallengeId.photoMatch),
+                  StageConfig(ChallengeId.stroopTap),
+                ],
+                onChanged: (_) {},
+              ),
             ),
           ),
         ),
@@ -247,5 +257,61 @@ void main() {
     await tester.tap(find.byKey(const Key('preflight-save')));
     await tester.pumpAndSettle();
     expect(fake.stored.values.single.stages.first.params, {'lux': 250.0});
+  });
+
+  group('watch challenges', () {
+    Future<void> openPicker(WidgetTester tester, WatchSettings watch) async {
+      await tester.binding.setSurfaceSize(const Size(500, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpApp(tester, FakeAlarmPlatform(), watch: watch);
+      await tester.tap(find.byKey(const Key('add-alarm')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('add-stage')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('add-stage')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('watch-section')),
+        200,
+        scrollable: find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      // The watch section is last: show all of it.
+      await tester.drag(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byType(Scrollable),
+        ),
+        const Offset(0, -2000),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('not set up: only an invitation to set the watch up', (
+      tester,
+    ) async {
+      await openPicker(tester, const WatchSettings());
+      expect(find.byKey(const Key('pick-watch-setup')), findsOneWidget);
+      expect(find.byKey(const Key('pick-heartRate')), findsNothing);
+      expect(find.byKey(const Key('pick-watchSteps')), findsNothing);
+    });
+
+    testWidgets('set up: the verified watch challenges, grouped', (
+      tester,
+    ) async {
+      await openPicker(
+        tester,
+        const WatchSettings(
+          choice: WatchChoice.verified,
+          sensors: {SensorKind.heartRate},
+        ),
+      );
+      expect(find.byKey(const Key('pick-heartRate')), findsOneWidget);
+      // Steps did not pass the watch test: not offered.
+      expect(find.byKey(const Key('pick-watchSteps')), findsNothing);
+      expect(find.byKey(const Key('pick-watch-setup')), findsNothing);
+    });
   });
 }

@@ -9,6 +9,7 @@ import 'core/challenge_id.dart';
 import '../game/worlds/battery_oracle.dart';
 import '../game/worlds/sky_tower.dart';
 import '../game/worlds/world_kit.dart';
+import '../watch_setup/watch_settings.dart';
 import 'compass/widget.dart';
 import 'core/types.dart';
 import 'heart_rate/widget.dart';
@@ -170,6 +171,14 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
 };
 
 ChallengeDefinition definitionFor(ChallengeId id) => _definitions[id]!;
+
+/// Watch sensors a challenge needs (empty: a phone-only challenge).
+Set<SensorKind> watchSensorsFor(ChallengeId id) =>
+    definitionFor(id).requires(3).intersection(watchKinds);
+
+/// Challenges that need a watch, shown in their own section and only once
+/// the watch is set up and tested (lib/watch_setup).
+bool isWatchChallenge(ChallengeId id) => watchSensorsFor(id).isNotEmpty;
 
 /// The stage to actually run given the sensors this device has (spec §6.2).
 StageConfig resolveStage(StageConfig s, Set<SensorKind> available) {
