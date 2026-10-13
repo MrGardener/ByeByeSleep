@@ -81,5 +81,5 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.1.0")
     testImplementation("junit:junit:4.13.2")
     // Real org.json for JVM unit tests (android.jar only ships stubs).
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
 }
