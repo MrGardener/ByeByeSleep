@@ -82,6 +82,13 @@ class FakeAlarmPlatform implements AlarmPlatform {
   Future<void> stopRinging() async => calls.add('stopRinging');
 
   @override
+  Future<int> followUp(int id, int minutes) async {
+    calls.add('followUp:$id:$minutes');
+    _maybeFail();
+    return 0;
+  }
+
+  @override
   Future<int> snooze(int id, int minutes) async {
     calls.add('snooze:$id:$minutes');
     _maybeFail();

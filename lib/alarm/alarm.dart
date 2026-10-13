@@ -22,6 +22,7 @@ class Alarm {
     this.series,
     this.parentId,
     this.onceAt,
+    this.followUpMinutes = 0,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -49,6 +50,7 @@ class Alarm {
           )
         : null,
     parentId: (_extras(m)['parent'] as num?)?.toInt(),
+    followUpMinutes: (_extras(m)['followUp'] as num?)?.toInt() ?? 0,
     onceAt: m['atMs'] is num
         ? DateTime.fromMillisecondsSinceEpoch((m['atMs']! as num).toInt())
         : null,
@@ -89,6 +91,9 @@ class Alarm {
 
   bool get isSeriesChild => parentId != null;
 
+  /// Minutes after Stop to ring once more and check you are awake; 0 = off.
+  final int followUpMinutes;
+
   /// A one-shot series alarm rings exactly here (its date included), so it
   /// stays with its main alarm's ring instead of the next free time of day.
   final DateTime? onceAt;
@@ -111,6 +116,7 @@ class Alarm {
     SeriesConfig? Function()? series,
     int? Function()? parentId,
     DateTime? Function()? onceAt,
+    int? followUpMinutes,
   }) => Alarm(
     id: id ?? this.id,
     hour: hour ?? this.hour,
@@ -124,6 +130,7 @@ class Alarm {
     series: series != null ? series() : this.series,
     parentId: parentId != null ? parentId() : this.parentId,
     onceAt: onceAt != null ? onceAt() : this.onceAt,
+    followUpMinutes: followUpMinutes ?? this.followUpMinutes,
   );
 
   Map<String, Object?> toMap() => {
@@ -140,6 +147,7 @@ class Alarm {
       if (reminder != null) 'reminder': reminder!.toJson(),
       if (series != null) 'series': series!.toJson(),
       if (parentId != null) 'parent': parentId,
+      if (followUpMinutes > 0) 'followUp': followUpMinutes,
     }),
   };
 
@@ -157,7 +165,8 @@ class Alarm {
       other.reminder == reminder &&
       other.series == series &&
       other.parentId == parentId &&
-      other.onceAt == onceAt;
+      other.onceAt == onceAt &&
+      other.followUpMinutes == followUpMinutes;
 
   @override
   int get hashCode => Object.hash(

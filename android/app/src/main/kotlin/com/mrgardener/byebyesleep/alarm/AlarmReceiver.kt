@@ -9,7 +9,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getIntExtra(EXTRA_ALARM_ID, -1)
         if (id < 0) return
-        AlarmGraph.lifecycle(context).onFired(id)
-        context.startForegroundService(AlarmService.ringIntent(context, id))
+        val check = AlarmGraph.lifecycle(context).onFired(id)
+        context.startForegroundService(AlarmService.ringIntent(context, id, followUp = check))
     }
 }

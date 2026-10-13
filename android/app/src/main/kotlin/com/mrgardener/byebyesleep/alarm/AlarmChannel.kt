@@ -29,6 +29,12 @@ object AlarmChannel {
                         val ids = AlarmService.ringingAlarmIds.ifEmpty { setOf(id) }
                         result.success(lifecycle.snoozeAll(ids, call.argument<Number>("minutes")!!.toInt()))
                     }
+                    "followUp" -> result.success(
+                        lifecycle.followUp(
+                            call.argument<Number>("id")!!.toInt(),
+                            call.argument<Number>("minutes")!!.toInt(),
+                        ),
+                    )
                     "ringingAlarmIds" -> result.success(AlarmService.ringingAlarmIds.toList())
                     "skipNext" -> {
                         lifecycle.skipNext(call.argument<Number>("id")!!.toInt())

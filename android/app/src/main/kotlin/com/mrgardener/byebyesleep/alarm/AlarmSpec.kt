@@ -12,6 +12,7 @@ import org.json.JSONObject
  * [skipUntilMs] is native-only: the ring at that instant is skipped ("skip the rest
  * of the series today"), surviving a reboot.
  * [atMs] pins a one-shot alarm (one of a series) to an exact instant, date included.
+ * [followUpAtMs] is native-only: the "check I'm awake" ring scheduled after a Stop.
  */
 data class AlarmSpec(
     val id: Int,
@@ -26,6 +27,7 @@ data class AlarmSpec(
     val extrasJson: String = "",
     val skipUntilMs: Long? = null,
     val atMs: Long? = null,
+    val followUpAtMs: Long? = null,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -39,6 +41,7 @@ data class AlarmSpec(
         .put("extras", extrasJson)
         .apply { if (skipUntilMs != null) put("skipUntilMs", skipUntilMs) }
         .apply { if (atMs != null) put("atMs", atMs) }
+        .apply { if (followUpAtMs != null) put("followUpAtMs", followUpAtMs) }
         .apply { if (snoozeUntilMs != null) put("snoozeUntilMs", snoozeUntilMs) }
 
     /** Map sent over the `byebyesleep/alarm` channel (keys match Dart's Alarm.toMap). */
@@ -70,6 +73,7 @@ data class AlarmSpec(
                 extrasJson = o.optString("extras", ""),
                 skipUntilMs = if (o.has("skipUntilMs")) o.getLong("skipUntilMs") else null,
                 atMs = if (o.has("atMs")) o.getLong("atMs") else null,
+                followUpAtMs = if (o.has("followUpAtMs")) o.getLong("followUpAtMs") else null,
             )
         }
 

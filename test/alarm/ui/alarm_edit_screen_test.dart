@@ -151,6 +151,22 @@ void main() {
     expect(sw.onChanged, isNull);
   });
 
+  testWidgets('awakeCheckIsOffByDefaultAndConfigurable', (tester) async {
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await reveal(tester, const Key('followup-dropdown'));
+    expect(find.text('Off'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('followup-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('After 10 min').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(fake.stored.values.single.followUpMinutes, 10);
+  });
+
   testWidgets('editFlowUpdatesExistingAlarm', (tester) async {
     final fake = FakeAlarmPlatform(
       seed: [

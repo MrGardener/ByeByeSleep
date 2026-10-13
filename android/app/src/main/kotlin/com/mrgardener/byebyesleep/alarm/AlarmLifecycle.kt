@@ -22,7 +22,7 @@ class AlarmLifecycle(
 ) {
     /** Saves [spec] and returns its next trigger (epoch ms), or null if disabled. */
     fun upsert(spec: AlarmSpec): Long? {
-        val saved = spec.copy(snoozeUntilMs = null, skipUntilMs = null)
+        val saved = spec.copy(snoozeUntilMs = null, skipUntilMs = null, followUpAtMs = null)
         repo.put(saved)
         scheduler.cancel(saved.id)
         return scheduleRegular(saved)
@@ -33,16 +33,31 @@ class AlarmLifecycle(
         scheduler.cancel(id)
     }
 
-    fun onFired(id: Int) {
-        val spec = repo.get(id) ?: return
+    /** Returns true when this ring is the "check I'm awake" ring after a Stop. */
+    fun onFired(id: Int): Boolean {
+        val spec = repo.get(id) ?: return false
+        val pending = spec.followUpAtMs
+        val check = pending != null && pending <= clock().toInstant().toEpochMilli() + 60_000
         if (spec.repeatDays.isEmpty()) {
-            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null))
+            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null, followUpAtMs = null))
             scheduler.cancel(id)
         } else {
-            val cleared = spec.copy(snoozeUntilMs = null, skipUntilMs = null)
+            val cleared = spec.copy(snoozeUntilMs = null, skipUntilMs = null, followUpAtMs = null)
             repo.put(cleared)
             scheduleRegular(cleared)
         }
+        return check
+    }
+
+    /**
+     * After a Stop: ring once more in [minutes] to check the user is awake. Uses
+     * the snooze slot, so it survives a reboot like a snooze; returns the instant.
+     */
+    fun followUp(id: Int, minutes: Int): Long {
+        val at = clock().plusMinutes(minutes.toLong()).toInstant().toEpochMilli()
+        repo.get(id)?.let { repo.put(it.copy(snoozeUntilMs = at, followUpAtMs = at)) }
+        scheduler.schedule(id, at)
+        return at
     }
 
     /**

@@ -195,4 +195,13 @@ void main() {
       expect(Alarm.fromMap(a.toMap()).onceAt, a.onceAt);
     });
   });
+
+  test('the awake check setting round-trips and defaults to off', () {
+    final a = Alarm(id: 1, hour: 7, minute: 0, followUpMinutes: 15);
+    expect(Alarm.fromMap(a.toMap()).followUpMinutes, 15);
+    expect(
+      Alarm.fromMap(Alarm(id: 1, hour: 7, minute: 0).toMap()).followUpMinutes,
+      0,
+    );
+  });
 }
