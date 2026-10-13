@@ -16,7 +16,7 @@ Future<Map<String, Object?>?> setupPhoto(
   MaterialPageRoute(
     builder: (_) => _PhotoSetupScreen(
       threshold:
-          (current['threshold'] as num?)?.toDouble() ?? defaultPhotoThreshold,
+          (current['minMatch'] as num?)?.toDouble() ?? defaultPhotoThreshold,
     ),
   ),
 );
@@ -79,7 +79,7 @@ class _PhotoSetupScreenState extends ConsumerState<_PhotoSetupScreen> {
       onSave: _paths.length == 2
           ? () => {
               'photos': [..._paths],
-              'threshold': _threshold,
+              'minMatch': _threshold,
             }
           : null,
       child: Column(
@@ -92,7 +92,7 @@ class _PhotoSetupScreenState extends ConsumerState<_PhotoSetupScreen> {
           Text('Photos taken: ${_shots.length} of 2'),
           if (mutual != null)
             Text('The two photos match ${(mutual * 100).round()}%'),
-          if (mutual != null && mutual < _threshold + 0.03)
+          if (mutual != null && mutual < _threshold + 0.1)
             Text(
               'These two photos differ a lot — pick a steadier view or lower '
               'the required match.',
@@ -106,9 +106,9 @@ class _PhotoSetupScreenState extends ConsumerState<_PhotoSetupScreen> {
                 child: Slider(
                   key: const Key('photo-threshold'),
                   value: _threshold,
-                  min: 0.75,
-                  max: 0.95,
-                  divisions: 20,
+                  min: 0.4,
+                  max: 0.9,
+                  divisions: 10,
                   onChanged: (v) => setState(() => _threshold = v),
                 ),
               ),
