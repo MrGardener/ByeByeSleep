@@ -54,7 +54,13 @@ combines these tools, in labelled sections of the editor:
 | Photo match | Photograph your spot | Two reference photos |
 | NFC sticker | Touch your sticker | Register the sticker |
 | Barcode | Scan your product | Register the barcode |
-| Charger | Plug in at a charger away from bed | — |
+| Battery guess | Guess the battery level with the status bar hidden (±25% → ±10%) | — |
+| Compass runes | Face each direction shown and hold still | — |
+| Climb the stairs | Climb one floor (barometer) | — |
+| Time sense | Stop a hidden timer at exactly 20–45 s, counting in your head | — |
+| Pulse code | Watch short/long flashes and tap them back | — |
+| Colour hunt | Photograph something of the colour shown | — |
+| Watch challenges | Wrist workout, walk with your watch, heart rate (own section, only after Settings → Smartwatch test) | Watch set up and tested |
 
 "Use wake-up routine" in the alarm editor sets Lights → Walk → Photo → Maze → Calculator.
 Before saving, and every evening at 21:00, ByeByeSleep checks that tomorrow's alarm can

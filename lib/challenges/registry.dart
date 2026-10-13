@@ -10,7 +10,10 @@ import '../game/worlds/battery_oracle.dart';
 import '../game/worlds/sky_tower.dart';
 import '../game/worlds/world_kit.dart';
 import '../watch_setup/watch_settings.dart';
+import 'colour_hunt/widget.dart';
 import 'compass/widget.dart';
+import 'pulse_code/widget.dart';
+import 'time_sense/widget.dart';
 import 'core/types.dart';
 import 'heart_rate/widget.dart';
 import 'watch/widgets.dart';
@@ -116,6 +119,27 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
         'and keep still for 2 seconds.',
     requires: (_) => const {SensorKind.accelerometer, SensorKind.magnetometer},
     build: (args) => CompassRunes(args: args),
+  ),
+  ChallengeId.timeSense: ChallengeDefinition(
+    id: ChallengeId.timeSense,
+    title: 'Time sense',
+    instructions: 'Count the seconds in your head and stop on time.',
+    requires: (_) => const {},
+    build: (args) => TimeSenseChallenge(args: args),
+  ),
+  ChallengeId.pulseCode: ChallengeDefinition(
+    id: ChallengeId.pulseCode,
+    title: 'Pulse code',
+    instructions: 'Watch the short and long flashes, then tap them back.',
+    requires: (_) => const {},
+    build: (args) => PulseCodeChallenge(args: args),
+  ),
+  ChallengeId.colourHunt: ChallengeDefinition(
+    id: ChallengeId.colourHunt,
+    title: 'Colour hunt',
+    instructions: 'Find something of the colour shown and photograph it.',
+    requires: (_) => const {SensorKind.camera},
+    build: (args) => ColourHuntChallenge(args: args),
   ),
   ChallengeId.stairs: ChallengeDefinition(
     id: ChallengeId.stairs,

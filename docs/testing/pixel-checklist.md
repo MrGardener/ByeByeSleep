@@ -86,3 +86,6 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 69 | Settings → Smartwatch → No; then Yes + test with the watch. | "No": the picker's Watch section only says so. "Yes": install steps, live test ticks watch found / heart rate / wrist movement / steps; only passed sensors unlock watch challenges. |
 | 70 | Watch challenge running; take the watch off for 30 s. | The stage switches to the fallback challenge. |
 | 71 | Alarm with "Stop ringing after 10 min"; let it ring untouched. | After 10 min it stops, the ring screen closes, "Missed alarm" notification. |
+| 72 | Practice → Time sense at difficulty 1 and 5. | Start, count silently, Stop: within ±3 s of 20 s passes at 1; ±1 s of 45 s at 5; misses say "Too fast/slow by X s". |
+| 73 | Practice → Pulse code. | Flashes play (long ≈ 3× short); tapping them back passes; a wrong tap replays the code. |
+| 74 | Practice → Colour hunt in a lit room. | Pointing at an object of the asked colour and tapping Check passes; a grey/dark scene says no clear colour. |
