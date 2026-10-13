@@ -22,8 +22,22 @@ object WatchProtocol {
     /** Watch → phone: steps counted since the sensor screen opened. */
     const val PATH_STEPS = "/steps/count"
 
-    /** Phone → watch: close the sensor screen. */
+    /** Phone → watch: close the sensor screen; payload = the session it ends. */
     const val PATH_STOP = "/hr/stop"
+
+    /**
+     * Each start opens a new session. Two watch stages in a row send stop(1)
+     * then start(2); if they arrive swapped, the stale stop must not close
+     * the new screen.
+     */
+    fun startUri(session: Int) = "$START_URI?s=$session"
+
+    fun sessionOf(uri: String?): Int? =
+        uri?.substringAfter("?s=", "")?.takeWhile { it.isDigit() }?.toIntOrNull()
+
+    /** Whether a stop for [stopSession] closes a screen showing [current]. */
+    fun stopApplies(stopSession: Int?, current: Int?): Boolean =
+        stopSession == null || current == null || stopSession == current
 
     fun encodeBpm(bpm: Int): ByteArray = bpm.toString().toByteArray(Charsets.UTF_8)
 

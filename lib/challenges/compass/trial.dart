@@ -34,8 +34,18 @@ class CompassTrial {
 
   /// [count] compass points (multiples of 45°), each at least 90° from the
   /// one before, so every rune needs a real turn.
-  static List<double> randomTargets(Random random, {int count = 4}) {
-    final out = <double>[random.nextInt(8) * 45.0];
+  /// With [from] (where you face now), the first one needs a turn too.
+  static List<double> randomTargets(
+    Random random, {
+    int count = 4,
+    double? from,
+  }) {
+    final far = [
+      for (var i = 0; i < 8; i++)
+        if (from == null || turnTo(from, i * 45.0).abs() >= 90) i * 45.0,
+    ];
+    final start = far[random.nextInt(far.length)];
+    final out = <double>[start];
     while (out.length < count) {
       final steps = 2 + random.nextInt(5); // 90°…270°
       out.add((out.last + steps * 45) % 360);

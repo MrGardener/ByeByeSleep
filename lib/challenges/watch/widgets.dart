@@ -19,6 +19,11 @@ abstract class _WatchChallengeState<T extends ConsumerStatefulWidget>
 
   void onReading(WatchReading r);
 
+  /// Whether [r] is what this challenge needs. Only those keep it waiting:
+  /// motion alone must not hold a steps challenge open for ever (steps
+  /// refused on the watch, or no step sensor).
+  bool uses(WatchReading r);
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +48,7 @@ abstract class _WatchChallengeState<T extends ConsumerStatefulWidget>
     if (!mounted) return;
     _silence = Timer(const Duration(seconds: 30), _unavailable);
     _sub = watch.readings.listen((r) {
+      if (!uses(r)) return;
       _silence?.cancel();
       if (!mounted) return;
       setState(() {
@@ -95,6 +101,9 @@ class _SwingState extends _WatchChallengeState<WatchSwingChallenge> {
   ChallengeArgs get args => widget.args;
 
   @override
+  bool uses(WatchReading r) => r is MotionReading;
+
+  @override
   void onReading(WatchReading r) {
     if (r is! MotionReading) return;
     _counter.addAll(r.magnitudes);
@@ -129,6 +138,9 @@ class _StepsState extends _WatchChallengeState<WatchStepsChallenge> {
 
   @override
   ChallengeArgs get args => widget.args;
+
+  @override
+  bool uses(WatchReading r) => r is StepsReading;
 
   @override
   void onReading(WatchReading r) {

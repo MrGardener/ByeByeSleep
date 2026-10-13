@@ -36,4 +36,20 @@ class WatchProtocolTest {
         )
         assertNull(WatchProtocol.toEvent("/other", ByteArray(0)))
     }
+
+    @Test fun session_travelsInTheStartLinkAndTheStop() {
+        val uri = WatchProtocol.startUri(7)
+        assertEquals("byebyesleep://heart-rate?s=7", uri)
+        assertEquals(7, WatchProtocol.sessionOf(uri))
+        assertNull(WatchProtocol.sessionOf("byebyesleep://heart-rate"))
+        assertEquals(7, WatchProtocol.decodeCount(WatchProtocol.encodeCount(7)))
+    }
+
+    @Test fun stop_onlyForTheCurrentSession() {
+        assertEquals(true, WatchProtocol.stopApplies(stopSession = 2, current = 2))
+        assertEquals(false, WatchProtocol.stopApplies(stopSession = 1, current = 2))
+        // Opened by hand on the watch, or an old phone app: any stop closes it.
+        assertEquals(true, WatchProtocol.stopApplies(stopSession = 1, current = null))
+        assertEquals(true, WatchProtocol.stopApplies(stopSession = null, current = 2))
+    }
 }

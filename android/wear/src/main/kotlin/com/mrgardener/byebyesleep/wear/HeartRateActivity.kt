@@ -46,13 +46,24 @@ class HeartRateActivity : Activity(), SensorEventListener {
     private val motion = mutableListOf<Double>()
     private var linear = true
 
+    /** The phone's session that opened this screen (null: opened by hand). */
+    private var session: Int? = null
+    private var announceSteps = false
+
     private val stop = MessageClient.OnMessageReceivedListener {
-        if (it.path == WatchProtocol.PATH_STOP) main.post { finish() }
+        if (it.path != WatchProtocol.PATH_STOP) return@OnMessageReceivedListener
+        val ended = WatchProtocol.decodeCount(it.data)
+        main.post { if (WatchProtocol.stopApplies(ended, session)) finish() }
     }
 
     // Every 100 ms: keep the strongest movement; every 5 of them, send.
     private val sampler = object : Runnable {
         override fun run() {
+            if (phones.isEmpty()) {
+                windowPeak = 0.0
+                main.postDelayed(this, 100)
+                return
+            }
             motion += windowPeak
             windowPeak = 0.0
             if (motion.size >= 5) {
@@ -71,6 +82,7 @@ class HeartRateActivity : Activity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        session = WatchProtocol.sessionOf(intent?.dataString)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         bpmText = text(34f).apply { text = "♥ …" }
         stepsText = text(18f).apply { text = "0 steps" }
@@ -92,7 +104,11 @@ class HeartRateActivity : Activity(), SensorEventListener {
             },
         )
         Wearable.getNodeClient(this).connectedNodes
-            .addOnSuccessListener { nodes -> phones = nodes.map { it.id } }
+            .addOnSuccessListener { nodes ->
+                phones = nodes.map { it.id }
+                // Phones may be found after the step sensor started.
+                if (announceSteps) send(WatchProtocol.PATH_STEPS, WatchProtocol.encodeCount(steps))
+            }
         Wearable.getMessageClient(this).addListener(stop)
         // Never measure for ever if the phone does not say stop.
         main.postDelayed({ finish() }, 15 * 60 * 1000L)
@@ -102,6 +118,13 @@ class HeartRateActivity : Activity(), SensorEventListener {
         val missing = arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.ACTIVITY_RECOGNITION)
             .filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (missing.isEmpty()) startGuarded() else requestPermissions(missing.toTypedArray(), REQUEST_SENSORS)
+    }
+
+    // The phone started the next watch challenge while this screen is open.
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        session = WatchProtocol.sessionOf(intent.dataString)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -125,6 +148,9 @@ class HeartRateActivity : Activity(), SensorEventListener {
         if (checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
             manager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)?.let {
                 manager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST)
+                // Announce 0, so the phone counts from here and knows steps work.
+                announceSteps = true
+                send(WatchProtocol.PATH_STEPS, WatchProtocol.encodeCount(0))
             }
         }
     }

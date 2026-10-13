@@ -57,6 +57,20 @@ void main() {
       expect(c.swings, lessThanOrEqualTo(7));
     });
 
+    test('continuous swinging counts, it never needs a pause', () {
+      // Window peaks (10 Hz) of an arm swinging without stopping, 1 s per
+      // back-and-forth: large at both ends of the swing, never near zero
+      // in between (reviewer's pendulum simulation: lowest 6–25 m/s²).
+      for (final (low, high) in [(6.0, 22.0), (12.0, 30.0), (25.0, 45.0)]) {
+        final c = SwingCounter();
+        for (var i = 0; i < 100; i++) {
+          final phase = sin(2 * pi * i / 10).abs(); // two peaks per second
+          c.add(low + (high - low) * phase);
+        }
+        expect(c.swings, inInclusiveRange(15, 22), reason: '$low–$high');
+      }
+    });
+
     test('target grows with difficulty', () {
       expect(swingsFor(1), lessThan(swingsFor(5)));
     });
@@ -66,6 +80,23 @@ void main() {
     test('counts steps from the first reading', () {
       final g = StepGoal(30);
       g.update(12); // the watch had already counted some
+      g.update(30);
+      expect(g.walked, 18);
+      expect(g.passed, isFalse);
+      g.update(42);
+      expect(g.passed, isTrue);
+    });
+
+    test('the watch announces 0 steps, so the first step counts', () {
+      final g = StepGoal(1);
+      g.update(0);
+      g.update(1);
+      expect(g.passed, isTrue);
+    });
+
+    test('(old)', () {
+      final g = StepGoal(30);
+      g.update(12);
       g.update(30);
       expect(g.walked, 18);
       expect(g.passed, isFalse);
@@ -125,6 +156,18 @@ void main() {
       watch.readings$.add(StepsReading(stepsFor(1)));
       await tester.pump();
       expect(passed, 1);
+    });
+
+    testWidgets('steps never arriving (only motion): falls back', (
+      tester,
+    ) async {
+      watch = FakeWatch();
+      await pump(tester, (a) => WatchStepsChallenge(args: a));
+      for (var i = 0; i < 70; i++) {
+        watch.readings$.add(const MotionReading([1, 2]));
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+      expect(unavailable, 1);
     });
 
     testWidgets('no watch: unavailable at once', (tester) async {

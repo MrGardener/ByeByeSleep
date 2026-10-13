@@ -68,6 +68,13 @@ void main() {
       }
     });
 
+    test('the first rune always needs a turn from where you face', () {
+      for (var seed = 0; seed < 50; seed++) {
+        final t = CompassTrial.randomTargets(Random(seed), count: 2, from: 100);
+        expect(turnTo(100, t.first).abs(), greaterThanOrEqualTo(90));
+      }
+    });
+
     test('compass point names', () {
       expect(compassPointName(0), 'north');
       expect(compassPointName(135), 'south-east');

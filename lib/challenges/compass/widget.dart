@@ -39,13 +39,18 @@ class CompassRunes extends ConsumerStatefulWidget {
 }
 
 class _CompassRunesState extends ConsumerState<CompassRunes> {
-  late final CompassTrial _trial = CompassTrial(
-    widget.targets ??
-        CompassTrial.randomTargets(
-          widget.args.random,
-          count: widget.runes ?? compassRunesFor(widget.args.difficulty),
-        ),
+  /// Made at the first reading, so the first rune is never the direction
+  /// you already face (fixed [CompassRunes.targets] start at once).
+  late CompassTrial? _t = widget.targets == null
+      ? null
+      : CompassTrial(widget.targets!);
+
+  /// Placeholder until the first reading: shows the rune count.
+  late final CompassTrial _waiting = CompassTrial(
+    List.filled(widget.runes ?? compassRunesFor(widget.args.difficulty), 0),
   );
+
+  CompassTrial get _trial => _t ?? _waiting;
   final _filter = HeadingFilter();
   final _subs = <StreamSubscription<Vec3>>[];
   final _watch = Stopwatch()..start();
@@ -69,7 +74,15 @@ class _CompassRunesState extends ConsumerState<CompassRunes> {
 
   void _onMagnetic(Vec3 m) {
     _filter.add(headingDegrees(_gravity, m));
-    _trial.update(_filter.heading!, _now());
+    final heading = _filter.heading!;
+    final trial = _t ??= CompassTrial(
+      CompassTrial.randomTargets(
+        widget.args.random,
+        count: widget.runes ?? compassRunesFor(widget.args.difficulty),
+        from: heading,
+      ),
+    );
+    trial.update(heading, _now());
     if (!mounted) return;
     setState(() {});
     if (_trial.passed && !_reported) {
@@ -92,7 +105,7 @@ class _CompassRunesState extends ConsumerState<CompassRunes> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final heading = _filter.heading;
-    final target = _trial.target;
+    final target = _t == null ? null : _trial.target;
     final turn = heading == null || target == null
         ? 0.0
         : turnTo(heading, target);
@@ -108,7 +121,9 @@ class _CompassRunesState extends ConsumerState<CompassRunes> {
       child: Column(
         children: [
           Text(
-            target == null
+            _t == null
+                ? 'Hold the phone flat'
+                : target == null
                 ? 'Done'
                 : 'Rune ${_trial.index + 1} of ${_trial.targets.length}: '
                       'face ${compassPointName(target)}',
