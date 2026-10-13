@@ -20,10 +20,14 @@ class AlarmEditScreen extends ConsumerStatefulWidget {
   ConsumerState<AlarmEditScreen> createState() => _AlarmEditScreenState();
 }
 
+/// Pause lengths offered between stages, in seconds.
+const pauseChoices = [0, 5, 10, 15, 20, 30, 60];
+
 class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late TimeOfDay _time;
   late Set<int> _days;
   late List<StageConfig> _stages;
+  late int _pauseSeconds;
   late final TextEditingController _label;
   bool _saving = false;
 
@@ -36,6 +40,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         : TimeOfDay(hour: (DateTime.now().hour + 1) % 24, minute: 0);
     _days = {...?a?.repeatDays};
     _stages = a?.stages ?? defaultStages;
+    _pauseSeconds = a?.pauseSeconds ?? 0;
     _label = TextEditingController(text: a?.label ?? '');
   }
 
@@ -106,6 +111,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             minute: _time.minute,
             repeatDays: _days,
             stages: _stages,
+            pauseSeconds: _pauseSeconds,
             enabled: true,
           ),
           ref.read(nowProvider)(),
@@ -145,6 +151,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         repeatDays: _days,
         label: _label.text.trim(),
         stages: _stages,
+        pauseSeconds: _pauseSeconds,
       );
     } else {
       await notifier.save(
@@ -155,6 +162,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           label: _label.text.trim(),
           enabled: true,
           stages: _stages,
+          pauseSeconds: _pauseSeconds,
         ),
       );
     }
@@ -215,6 +223,24 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           StageEditor(
             stages: _stages,
             onChanged: (s) => setState(() => _stages = s),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Pause between challenges'),
+            subtitle: const Text('The alarm rings quieter during the pause.'),
+            trailing: DropdownButton<int>(
+              key: const Key('pause-dropdown'),
+              value: _pauseSeconds,
+              items: [
+                for (final s in pauseChoices)
+                  DropdownMenuItem(
+                    value: s,
+                    child: Text(s == 0 ? 'No pause' : '$s seconds'),
+                  ),
+              ],
+              onChanged: (s) => setState(() => _pauseSeconds = s ?? 0),
+            ),
           ),
         ],
       ),

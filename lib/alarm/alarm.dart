@@ -14,6 +14,7 @@ class Alarm {
     this.label = '',
     this.enabled = true,
     this.stages = defaultStages,
+    this.pauseSeconds = 0,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -29,6 +30,7 @@ class Alarm {
     label: m['label'] as String? ?? '',
     enabled: m['enabled'] as bool? ?? true,
     stages: decodeStages(m['stages'] as String?),
+    pauseSeconds: (m['pauseSeconds'] as num?)?.toInt() ?? 0,
   );
 
   final int id;
@@ -40,6 +42,9 @@ class Alarm {
 
   /// Challenges that must be completed before Stop/Snooze appear.
   final List<StageConfig> stages;
+
+  /// Quieter pause between two stages, in seconds; 0 = straight on.
+  final int pauseSeconds;
 
   bool get isRepeating => repeatDays.isNotEmpty;
 
@@ -53,6 +58,7 @@ class Alarm {
     String? label,
     bool? enabled,
     List<StageConfig>? stages,
+    int? pauseSeconds,
   }) => Alarm(
     id: id,
     hour: hour ?? this.hour,
@@ -61,6 +67,7 @@ class Alarm {
     label: label ?? this.label,
     enabled: enabled ?? this.enabled,
     stages: stages ?? this.stages,
+    pauseSeconds: pauseSeconds ?? this.pauseSeconds,
   );
 
   Map<String, Object?> toMap() => {
@@ -71,6 +78,7 @@ class Alarm {
     'label': label,
     'enabled': enabled,
     'stages': encodeStages(stages),
+    'pauseSeconds': pauseSeconds,
   };
 
   @override
@@ -82,7 +90,8 @@ class Alarm {
       setEquals(other.repeatDays, repeatDays) &&
       other.label == label &&
       other.enabled == enabled &&
-      listEquals(other.stages, stages);
+      listEquals(other.stages, stages) &&
+      other.pauseSeconds == pauseSeconds;
 
   @override
   int get hashCode => Object.hash(

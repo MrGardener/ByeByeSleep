@@ -33,6 +33,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
     Set<int> repeatDays = const {},
     String label = '',
     List<StageConfig> stages = defaultStages,
+    int pauseSeconds = 0,
   }) async {
     final current = await future;
     final nextId = current.fold(0, (m, a) => a.id > m ? a.id : m) + 1;
@@ -43,6 +44,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
       repeatDays: repeatDays,
       label: label,
       stages: stages,
+      pauseSeconds: pauseSeconds,
     );
     await save(alarm);
     return alarm;

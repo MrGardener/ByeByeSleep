@@ -123,6 +123,7 @@ class _RingScreenState extends ConsumerState<RingScreen> {
         ),
         startIndex: progress.stageIndex,
         clock: widget.clock,
+        breather: Duration(seconds: alarm?.pauseSeconds ?? 0),
       );
     });
     _sync();

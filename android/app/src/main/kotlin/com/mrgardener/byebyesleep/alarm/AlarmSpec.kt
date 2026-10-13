@@ -7,6 +7,7 @@ import org.json.JSONObject
  * A stored alarm. Weekdays are ISO-8601 (1 = Monday … 7 = Sunday); empty = one-shot.
  * [snoozeUntilMs] is native-only state so a snooze survives a reboot.
  * [stagesJson] is the Dart stage list, stored and passed through untouched.
+ * [pauseSeconds] is the quieter pause between stages (0 = none), used by Dart.
  */
 data class AlarmSpec(
     val id: Int,
@@ -17,6 +18,7 @@ data class AlarmSpec(
     val enabled: Boolean,
     val snoozeUntilMs: Long? = null,
     val stagesJson: String = "",
+    val pauseSeconds: Int = 0,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -26,6 +28,7 @@ data class AlarmSpec(
         .put("label", label)
         .put("enabled", enabled)
         .put("stages", stagesJson)
+        .put("pauseSeconds", pauseSeconds)
         .apply { if (snoozeUntilMs != null) put("snoozeUntilMs", snoozeUntilMs) }
 
     /** Map sent over the `byebyesleep/alarm` channel (keys match Dart's Alarm.toMap). */
@@ -37,6 +40,7 @@ data class AlarmSpec(
         "label" to label,
         "enabled" to enabled,
         "stages" to stagesJson,
+        "pauseSeconds" to pauseSeconds,
     )
 
     companion object {
@@ -51,6 +55,7 @@ data class AlarmSpec(
                 enabled = o.optBoolean("enabled", true),
                 snoozeUntilMs = if (o.has("snoozeUntilMs")) o.getLong("snoozeUntilMs") else null,
                 stagesJson = o.optString("stages", ""),
+                pauseSeconds = o.optInt("pauseSeconds", 0),
             )
         }
 
@@ -62,6 +67,7 @@ data class AlarmSpec(
             label = m["label"] as? String ?: "",
             enabled = m["enabled"] as? Boolean ?: true,
             stagesJson = m["stages"] as? String ?: "",
+            pauseSeconds = (m["pauseSeconds"] as? Number)?.toInt() ?: 0,
         )
     }
 }

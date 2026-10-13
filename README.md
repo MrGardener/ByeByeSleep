@@ -12,7 +12,8 @@ contains Sensor Quest, a game that uses every sensor of the phone.
 
 Each alarm has a list of stages (by default four challenges: orientation hopscotch,
 tilt maze, broken calculator and colour words). When it rings you must finish every
-stage; between stages the sound drops for a 20-second breather. Stop and Snooze only
+stage; the next one starts straight away, unless the alarm has a pause between
+challenges (Off, 5–60 s; the sound drops during it). Stop and Snooze only
 appear after the last stage. Stuck? A hint appears after 2 minutes, a different
 challenge after 5, and after 15 minutes an emergency stop lets you type a fixed
 sentence to turn the alarm off. Stages are edited per alarm, and every challenge has

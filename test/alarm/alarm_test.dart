@@ -16,6 +16,15 @@ void main() {
     expect(a.toMap()['repeatDays'], [1, 5]);
   });
 
+  test('pause between stages round-trips and defaults to none', () {
+    final a = Alarm(id: 3, hour: 7, minute: 5, pauseSeconds: 15);
+    expect(Alarm.fromMap(a.toMap()), a);
+    expect(a.toMap()['pauseSeconds'], 15);
+    final old = Map<Object?, Object?>.of(a.toMap())..remove('pauseSeconds');
+    expect(Alarm.fromMap(old).pauseSeconds, 0);
+    expect(a.copyWith(pauseSeconds: 0).pauseSeconds, 0);
+  });
+
   test('timeLabel is zero padded', () {
     expect(Alarm(id: 1, hour: 7, minute: 5).timeLabel, '07:05');
   });

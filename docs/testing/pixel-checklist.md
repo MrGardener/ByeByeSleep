@@ -28,7 +28,7 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | # | Check | Expected |
 |---|---|---|
 | 18 | New alarm, keep the default stages, let it ring. | Stage 1 of 4 (orientation hopscotch) shows; no Stop/Snooze buttons. |
-| 19 | Complete each stage. | Between stages the sound drops for about 20 s ("Next stage in N s"), then full volume again. After stage 4: Stop and Snooze appear. |
+| 19 | Complete each stage (pause between challenges: No pause). Then set the pause to 15 seconds and repeat. | No pause: the next stage starts at once. 15 s: the sound drops for 15 s ("Next stage in N s"), then full volume again. After stage 4: Stop and Snooze appear. |
 | 20 | While on stage 2, run `adb shell am kill com.mrgardener.byebyesleep`. | The alarm keeps (or resumes) ringing and the ring screen reopens on stage 2, not stage 1. |
 | 21 | Stay on one stage for 2 min, then 5 min. | A hint appears at 2 min; "Try a different challenge" at 5 min swaps the challenge. |
 | 22 | Let an alarm ring 15 min without finishing. | "I can't finish — emergency stop" appears; a wrong sentence keeps ringing; the exact sentence stops the alarm (no snooze). |

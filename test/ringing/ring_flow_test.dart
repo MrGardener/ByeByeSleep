@@ -81,6 +81,7 @@ void main() {
             StageConfig(ChallengeId.brokenCalculator, difficulty: 1),
             StageConfig(ChallengeId.stroopTap, difficulty: 1),
           ],
+          pauseSeconds: 20,
         ),
       ],
     );
@@ -106,6 +107,15 @@ void main() {
     expect(find.byKey(const Key('stop')), findsOneWidget);
     expect(find.byKey(const Key('snooze')), findsOneWidget);
     expect(fake.calls, contains('saveRingProgress:7:2'));
+  });
+
+  testWidgets('ringFlow_withoutPause_nextStageStartsAtOnce', (tester) async {
+    fake.stored[7] = fake.stored[7]!.copyWith(pauseSeconds: 0);
+    await pumpRing(tester);
+    await solveCalculator(tester);
+    expect(find.byKey(const Key('breather')), findsNothing);
+    expect(fake.calls, isNot(contains('setRingLevel:0.2')));
+    expect(find.text('Stage 2 of 2'), findsOneWidget);
   });
 
   testWidgets('ringFlow_resumesAtSavedStage', (tester) async {
