@@ -46,10 +46,16 @@ adb shell dumpsys audio | grep -E "AudioPlaybackConfiguration" | grep "USAGE_ALA
 echo "RINGING OK"
 
 # Tap the Stop button on the Flutter ring screen (found through accessibility).
-sleep 3
-adb shell uiautomator dump /sdcard/ui.xml >/dev/null
-bounds=$(adb shell cat /sdcard/ui.xml | grep -oE '(text|content-desc)="Stop"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' \
-  | grep -oE '\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]' | head -1)
+# uiautomator sometimes catches the window mid-change ("null root node"),
+# so try a few times.
+bounds=""
+for _ in 1 2 3 4 5; do
+  sleep 3
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || continue
+  bounds=$(adb shell cat /sdcard/ui.xml 2>/dev/null | grep -oE '(text|content-desc)="Stop"[^>]*bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' \
+    | grep -oE '\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]' | head -1)
+  [ -n "$bounds" ] && break
+done
 [ -n "$bounds" ] || fail "Stop button not found on the ring screen"
 read -r x1 y1 x2 y2 <<<"$(echo "$bounds" | tr -c '0-9' ' ')"
 adb shell input tap $(((x1 + x2) / 2)) $(((y1 + y2) / 2))
