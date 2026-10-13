@@ -8,8 +8,10 @@ import '../guard.dart';
 import '../preflight.dart';
 import '../series.dart';
 import '../stage_config.dart';
+import 'reminder_photo_screen.dart';
 import 'repeat_summary.dart';
 import 'stage_editor.dart';
+import 'stored_photo.dart';
 
 /// Creates a new alarm ([alarm] == null) or edits an existing one.
 class AlarmEditScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,11 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late List<StageConfig> _stages;
   late int _pauseSeconds;
   SeriesConfig? _series;
+  String? _reminderPhoto;
+  late final TextEditingController _reminderCaption;
+
+  /// Challenges to restore when "reminder only" is switched off again.
+  List<StageConfig> _stagesBeforeReminderOnly = defaultStages;
   late final TextEditingController _label;
   bool _saving = false;
 
@@ -44,12 +51,16 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     _stages = a?.stages ?? defaultStages;
     _pauseSeconds = a?.pauseSeconds ?? 0;
     _series = a?.series;
+    _reminderPhoto = a?.reminder?.photoPath;
+    _reminderCaption = TextEditingController(text: a?.reminder?.caption ?? '')
+      ..addListener(() => setState(() {}));
     _label = TextEditingController(text: a?.label ?? '');
   }
 
   @override
   void dispose() {
     _label.dispose();
+    _reminderCaption.dispose();
     super.dispose();
   }
 
@@ -151,11 +162,85 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     minute: _time.minute,
     repeatDays: _days,
     label: _label.text.trim(),
-    stages: _stages,
     pauseSeconds: _pauseSeconds,
-    reminder: widget.alarm?.reminder,
+    reminder: _reminder.isEmpty ? null : _reminder,
+    // Without a reminder an alarm needs at least one challenge.
+    stages: _stages.isEmpty && _reminder.isEmpty ? defaultStages : _stages,
     series: _series,
   );
+
+  Reminder get _reminder => Reminder(
+    photoPath: _reminderPhoto,
+    caption: _reminderCaption.text.trim(),
+  );
+
+  Widget _reminderSection() {
+    final photo = _reminderPhoto;
+    final reminderOnly = _stages.isEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            if (photo != null)
+              SizedBox(width: 72, height: 72, child: StoredPhoto(photo)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    key: const Key('reminder-photo'),
+                    onPressed: () async {
+                      final path = await Navigator.of(context).push<String>(
+                        MaterialPageRoute(
+                          builder: (_) => const ReminderPhotoScreen(),
+                        ),
+                      );
+                      if (path != null) setState(() => _reminderPhoto = path);
+                    },
+                    icon: const Icon(Icons.add_a_photo_outlined),
+                    label: Text(photo == null ? 'Add photo' : 'Retake'),
+                  ),
+                  if (photo != null)
+                    TextButton(
+                      key: const Key('reminder-photo-remove'),
+                      onPressed: () => setState(() => _reminderPhoto = null),
+                      child: const Text('Remove'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        TextField(
+          key: const Key('reminder-caption'),
+          controller: _reminderCaption,
+          maxLength: Reminder.maxCaption,
+          decoration: const InputDecoration(
+            labelText: "What not to forget (e.g. 'Passport and keys')",
+          ),
+        ),
+        SwitchListTile(
+          key: const Key('reminder-only'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Reminder only — no challenges'),
+          subtitle: const Text('Stop shows at once, then the reminder.'),
+          value: reminderOnly,
+          onChanged: _reminder.isEmpty && !reminderOnly
+              ? null
+              : (on) => setState(() {
+                  if (on) {
+                    _stagesBeforeReminderOnly = _stages;
+                    _stages = const [];
+                  } else {
+                    _stages = _stagesBeforeReminderOnly;
+                  }
+                }),
+        ),
+      ],
+    );
+  }
 
   Future<void> _persist() async {
     final notifier = ref.read(alarmListProvider.notifier);
@@ -389,13 +474,16 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             decoration: const InputDecoration(labelText: 'Label'),
           ),
           const SizedBox(height: 24),
-          StageEditor(
-            stages: _stages,
-            pauseSeconds: _pauseSeconds,
-            onChanged: (s) => setState(() => _stages = s),
-          ),
+          if (_stages.isNotEmpty)
+            StageEditor(
+              stages: _stages,
+              pauseSeconds: _pauseSeconds,
+              onChanged: (s) => setState(() => _stages = s),
+            ),
           const SizedBox(height: 16),
           _seriesSection(),
+          const SizedBox(height: 16),
+          _reminderSection(),
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,

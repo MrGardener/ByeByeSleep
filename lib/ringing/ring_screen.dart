@@ -13,6 +13,7 @@ import '../alarm/stage_config.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
+import 'after_stop.dart';
 import 'emergency_screen.dart';
 import 'safety_exit.dart';
 import 'stage_engine.dart';
@@ -168,12 +169,18 @@ class _RingScreenState extends ConsumerState<RingScreen> {
 
   void _finish() => (widget.onFinished ?? SystemNavigator.pop)();
 
+  /// The alarm stopped for good (not snoozed): reminder, series, then close.
+  Future<void> _stopped() async {
+    await afterStop(context, _platform, _alarm, widget.clock());
+    _finish();
+  }
+
   Future<void> _emergency() async {
     final confirmed = await Navigator.of(context)
         .push<bool>(MaterialPageRoute(builder: (_) => const EmergencyScreen()));
     if (confirmed != true) return;
     await _platform.stopRinging();
-    _finish();
+    await _stopped();
   }
 
   Future<void> _safetyExit() async {
@@ -182,7 +189,7 @@ class _RingScreenState extends ConsumerState<RingScreen> {
     ).push<bool>(MaterialPageRoute(builder: (_) => const SafetyExitScreen()));
     if (confirmed != true) return;
     await _platform.stopRinging();
-    _finish();
+    await _stopped();
   }
 
   @override
@@ -205,6 +212,8 @@ class _RingScreenState extends ConsumerState<RingScreen> {
                   style: text.displayMedium,
                 ),
                 if (label.isNotEmpty) Text(label, style: text.titleMedium),
+                if (_alarm?.reminder case final r? when !r.isEmpty)
+                  RingReminderCard(reminder: r),
                 const SizedBox(height: 12),
                 Expanded(
                   child: engine == null
@@ -263,17 +272,26 @@ class _RingScreenState extends ConsumerState<RingScreen> {
         ),
       ),
       Done() => Center(
-        child: _ActionButtons(alarmId: widget.alarmId, onFinished: _finish),
+        child: _ActionButtons(
+          alarmId: widget.alarmId,
+          onSnoozed: _finish,
+          onStopped: _stopped,
+        ),
       ),
     };
   }
 }
 
 class _ActionButtons extends ConsumerWidget {
-  const _ActionButtons({required this.alarmId, required this.onFinished});
+  const _ActionButtons({
+    required this.alarmId,
+    required this.onSnoozed,
+    required this.onStopped,
+  });
 
   final int alarmId;
-  final VoidCallback onFinished;
+  final VoidCallback onSnoozed;
+  final VoidCallback onStopped;
 
   /// Runs [action]; on failure keeps the screen (the alarm keeps ringing)
   /// and tells the user.
@@ -281,6 +299,7 @@ class _ActionButtons extends ConsumerWidget {
     BuildContext context,
     Future<void> Function() action,
     String error,
+    VoidCallback onDone,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -289,7 +308,7 @@ class _ActionButtons extends ConsumerWidget {
       messenger.showSnackBar(SnackBar(content: Text(error)));
       return;
     }
-    onFinished();
+    onDone();
   }
 
   @override
@@ -307,6 +326,7 @@ class _ActionButtons extends ConsumerWidget {
               context,
               platform.stopRinging,
               'Stop failed — try again.',
+              onStopped,
             ),
             child: const Padding(
               padding: EdgeInsets.all(16),
@@ -316,10 +336,15 @@ class _ActionButtons extends ConsumerWidget {
           const SizedBox(height: 16),
           OutlinedButton(
             key: const Key('snooze'),
-            onPressed: () => _attempt(context, () async {
-              await platform.snooze(alarmId, snoozeMinutes);
-              await platform.stopRinging();
-            }, 'Snooze failed — the alarm keeps ringing.'),
+            onPressed: () => _attempt(
+              context,
+              () async {
+                await platform.snooze(alarmId, snoozeMinutes);
+                await platform.stopRinging();
+              },
+              'Snooze failed — the alarm keeps ringing.',
+              onSnoozed,
+            ),
             child: const Padding(
               padding: EdgeInsets.all(16),
               child: Text('Snooze $snoozeMinutes min'),
