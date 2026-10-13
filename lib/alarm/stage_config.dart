@@ -74,11 +74,13 @@ String encodeStages(List<StageConfig> stages) =>
     jsonEncode([for (final s in stages) s.toJson()]);
 
 /// Lenient decoding: unknown challenges are dropped, and anything unusable
-/// (missing, invalid, or empty after dropping) yields [defaultStages].
+/// (missing, invalid, or empty after dropping) yields [defaultStages]. An
+/// explicitly empty list stays empty (a reminder-only alarm).
 List<StageConfig> decodeStages(String? json) {
   if (json == null || json.isEmpty) return defaultStages;
   try {
     final raw = jsonDecode(json) as List<Object?>;
+    if (raw.isEmpty) return const [];
     final stages = <StageConfig>[];
     for (final item in raw) {
       try {
