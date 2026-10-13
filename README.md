@@ -12,10 +12,17 @@ contains Sensor Quest, a game that uses every sensor of the phone.
 
 Each alarm has a list of stages (by default four challenges: orientation hopscotch,
 tilt maze, broken calculator and colour words). When it rings you must finish every
-stage; between stages the sound drops for a 20-second breather. Stop and Snooze only
-appear after the last stage. Stuck? A hint appears after 2 minutes, a different
-challenge after 5, and after 15 minutes an emergency stop lets you type a fixed
-sentence to turn the alarm off. Stages are edited per alarm, and every challenge has
+stage; the next one starts straight away, unless the alarm has a pause between
+challenges (Off, 5–60 s; the sound drops during it). Stop and Snooze only
+appear after the last stage.
+
+**Emergency stop.** Anyone can stop a ringing alarm without the challenges: tap
+*Emergency stop* on the ring screen and, in any order, press a volume button, turn
+Wi-Fi off, turn Bluetooth off and turn airplane mode on. The stop button appears once
+all four are done.
+
+Stuck? A hint appears after 2 minutes, a different challenge after 5, and after
+15 minutes you can also type a fixed sentence to turn the alarm off. Stages are edited per alarm, and every challenge has
 a "Try it" practice button.
 
 ## Challenges

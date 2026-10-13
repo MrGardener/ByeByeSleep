@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:byebyesleep/challenges/photo_match/similarity.dart';
+import 'package:byebyesleep/challenges/photo_match/widget.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
@@ -168,18 +170,55 @@ void main() {
     );
   });
 
+  test('similarity_handheldShiftStillMatches', () {
+    // A 6% sideways step, like retaking the photo by hand.
+    expect(
+      photoSimilarity(jpg(sceneA()), jpg(sceneA(dx: 16, brightness: 0.8))),
+      greaterThanOrEqualTo(0.75),
+    );
+  });
+
+  group('real photos', () {
+    Uint8List photo(String name) =>
+        File('test/fixtures/photos/$name.jpg').readAsBytesSync();
+    const scenes = ['boston', 'kalimba', 'cat'];
+
+    test('handheld retakes (shift, tilt, zoom, light, blur) match', () {
+      for (final s in scenes) {
+        for (final v in ['v3', 'v5']) {
+          expect(
+            photoSimilarity(photo('${s}_ref'), photo('${s}_$v')),
+            greaterThanOrEqualTo(0.7),
+            reason: '$s $v',
+          );
+        }
+      }
+    });
+
+    test('other places stay far below the default threshold', () {
+      for (final a in scenes) {
+        for (final b in scenes.where((b) => b != a)) {
+          expect(
+            photoSimilarity(photo('${a}_ref'), photo('${b}_v3')),
+            lessThan(defaultPhotoThreshold - 0.15),
+            reason: '$a vs $b',
+          );
+        }
+      }
+    });
+  });
+
   test('similarity_differentSceneFails', () {
-    expect(photoSimilarity(jpg(sceneA()), jpg(sceneB())), lessThan(0.65));
+    expect(photoSimilarity(jpg(sceneA()), jpg(sceneB())), lessThan(0.45));
   });
 
   test('similarity_dullDifferentRoomsFail', () {
-    // Below 0.65 keeps a margin under the lowest allowed threshold (0.75).
-    expect(photoSimilarity(jpg(beigeRoom()), jpg(greyRoom())), lessThan(0.65));
+    expect(photoSimilarity(jpg(beigeRoom()), jpg(greyRoom())), lessThan(0.45));
   });
 
   test('similarity_blankWallFails', () {
-    expect(photoSimilarity(jpg(beigeRoom()), jpg(blankWall())), lessThan(0.65));
-    expect(photoSimilarity(jpg(blankWall()), jpg(greyRoom())), lessThan(0.65));
+    expect(photoSimilarity(jpg(beigeRoom()), jpg(blankWall())), lessThan(0.45));
+    expect(photoSimilarity(jpg(blankWall()), jpg(greyRoom())), lessThan(0.45));
   });
 
   test('similarity_sameDullRoomShiftedMatches', () {

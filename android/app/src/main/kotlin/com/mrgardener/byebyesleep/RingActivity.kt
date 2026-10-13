@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
+import com.mrgardener.byebyesleep.alarm.EmergencyChannel
 import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.EXTRA_ALARM_ID
@@ -24,6 +25,7 @@ class RingActivity : FlutterActivity() {
     override fun getInitialRoute(): String = "/ring/$alarmId"
 
     private val envSensors = EnvSensorsChannel(this)
+    private val emergency = EmergencyChannel(this)
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -34,11 +36,16 @@ class RingActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
         envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
+        emergency.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 
-    // Volume keys must not silence or turn down the alarm.
+    // Volume keys must not silence or turn down the alarm; a press counts as
+    // a step of the emergency protocol.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean = when (event.keyCode) {
-        KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE -> true
+        KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE -> {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) emergency.volumeKeyPressed()
+            true
+        }
         else -> super.dispatchKeyEvent(event)
     }
 

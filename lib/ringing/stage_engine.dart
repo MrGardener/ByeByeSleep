@@ -36,7 +36,7 @@ class Done extends StagePhase {
 }
 
 /// Walks a ringing alarm through its stages: each stage runs until passed,
-/// then a quieter breather leads into the next one. Pure; time comes from
+/// then an optional quieter breather (the alarm's pause) leads into the next. Pure; time comes from
 /// [clock] so tests control it.
 class StageEngine {
   StageEngine({
@@ -44,7 +44,7 @@ class StageEngine {
     required this.ringStartedAt,
     int startIndex = 0,
     required this.clock,
-    this.breather = const Duration(seconds: 20),
+    this.breather = Duration.zero,
   }) : _stages = [...stages],
        _index = startIndex.clamp(0, stages.length) {
     _stageStartedAt = clock();
@@ -93,6 +93,9 @@ class StageEngine {
     if (_done || _breatherEndsAt != null) return;
     if (_index == _stages.length - 1) {
       _index = _stages.length;
+    } else if (breather <= Duration.zero) {
+      _index++;
+      _stageStartedAt = clock();
     } else {
       _breatherEndsAt = clock().add(breather);
     }

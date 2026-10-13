@@ -12,11 +12,13 @@ void main() {
     List<StageConfig> stages, {
     Duration ago = Duration.zero,
     int startIndex = 0,
+    Duration breather = const Duration(seconds: 20),
   }) => StageEngine(
     stages: stages,
     ringStartedAt: now.subtract(ago),
     startIndex: startIndex,
     clock: () => now,
+    breather: breather,
   );
 
   setUp(() => now = DateTime(2026, 10, 12, 7));
@@ -48,6 +50,24 @@ void main() {
     expect(e.currentIndex, 1);
     e.stagePassed();
     expect(e.phase, isA<Done>());
+  });
+
+  test('engine_withoutPause_startsTheNextStageAtOnce', () {
+    final e = StageEngine(
+      stages: [calc, stroop],
+      ringStartedAt: now,
+      clock: () => now,
+    );
+    now = now.add(const Duration(minutes: 3));
+    e.stagePassed();
+    expect(
+      e.phase,
+      isA<Running>()
+          .having((r) => r.index, 'index', 1)
+          .having((r) => r.hintVisible, 'hint (timer restarted)', isFalse),
+    );
+    expect(e.ringLevel, 1.0);
+    expect(e.currentIndex, 1);
   });
 
   test('engine_singleStage_passGoesStraightToDone', () {

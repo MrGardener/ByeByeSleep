@@ -22,6 +22,30 @@ void main() {
     expect(find.text('Work'), findsOneWidget); // back on the list
   });
 
+  testWidgets('pauseBetweenStagesIsOffByDefaultAndConfigurable', (
+    tester,
+  ) async {
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('pause-dropdown')),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.byKey(const Key('pause-dropdown')));
+    await tester.pumpAndSettle();
+    expect(find.text('No pause'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('pause-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('15 seconds').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    expect(fake.stored.values.single.pauseSeconds, 15);
+  });
+
   testWidgets('editFlowUpdatesExistingAlarm', (tester) async {
     final fake = FakeAlarmPlatform(
       seed: [

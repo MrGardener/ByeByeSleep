@@ -17,7 +17,7 @@ class AlarmSpecTest {
         val s = full.copy(snoozeUntilMs = null)
         val map = s.toChannelMap()
         assertEquals(listOf(1, 5), map["repeatDays"])
-        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages"), map.keys)
+        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages", "pauseSeconds"), map.keys)
         assertEquals(s, AlarmSpec.fromChannelMap(map))
     }
 
@@ -36,5 +36,15 @@ class AlarmSpecTest {
         val s = full.copy(snoozeUntilMs = null, stagesJson = "[]")
         assertEquals("[]", s.toChannelMap()["stages"])
         assertEquals(s, AlarmSpec.fromChannelMap(s.toChannelMap()))
+    }
+
+    @Test fun pauseSeconds_roundTripsAndDefaultsToNoPause() {
+        val s = full.copy(pauseSeconds = 15)
+        assertEquals(s, AlarmSpec.fromJson(s.toJson()))
+        assertEquals(15, s.toChannelMap()["pauseSeconds"])
+        assertEquals(s.copy(snoozeUntilMs = null), AlarmSpec.fromChannelMap(s.toChannelMap()))
+        // Alarms saved before the setting existed get no pause.
+        val old = full.toJson().apply { remove("pauseSeconds") }
+        assertEquals(0, AlarmSpec.fromJson(old).pauseSeconds)
     }
 }

@@ -13,6 +13,7 @@ import '../alarm/stage_config.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
+import 'emergency_screen.dart';
 import 'safety_exit.dart';
 import 'stage_engine.dart';
 import 'stage_runner.dart';
@@ -123,6 +124,7 @@ class _RingScreenState extends ConsumerState<RingScreen> {
         ),
         startIndex: progress.stageIndex,
         clock: widget.clock,
+        breather: Duration(seconds: alarm?.pauseSeconds ?? 0),
       );
     });
     _sync();
@@ -166,6 +168,14 @@ class _RingScreenState extends ConsumerState<RingScreen> {
 
   void _finish() => (widget.onFinished ?? SystemNavigator.pop)();
 
+  Future<void> _emergency() async {
+    final confirmed = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const EmergencyScreen()));
+    if (confirmed != true) return;
+    await _platform.stopRinging();
+    _finish();
+  }
+
   Future<void> _safetyExit() async {
     final confirmed = await Navigator.of(
       context,
@@ -201,13 +211,23 @@ class _RingScreenState extends ConsumerState<RingScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _body(engine),
                 ),
-                if (engine != null &&
-                    engine.safetyExitAvailable &&
-                    engine.phase is! Done)
-                  TextButton(
-                    key: const Key('safety-exit'),
-                    onPressed: _safetyExit,
-                    child: const Text("I can't finish — emergency stop"),
+                if (engine != null && engine.phase is! Done)
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        key: const Key('emergency'),
+                        onPressed: _emergency,
+                        icon: const Icon(Icons.emergency_outlined),
+                        label: const Text('Emergency stop'),
+                      ),
+                      if (engine.safetyExitAvailable)
+                        TextButton(
+                          key: const Key('safety-exit'),
+                          onPressed: _safetyExit,
+                          child: const Text("I can't finish — type to stop"),
+                        ),
+                    ],
                   ),
               ],
             ),

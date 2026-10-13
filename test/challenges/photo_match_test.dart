@@ -70,11 +70,15 @@ void main() {
         await store.save(Uint8List.fromList([1])),
         await store.save(Uint8List.fromList([1])),
       ],
-      'threshold': 0.9,
+      'minMatch': 0.9,
     };
   });
 
-  Future<int> run(WidgetTester tester, List<int> shots) async {
+  Future<int> run(
+    WidgetTester tester,
+    List<int> shots, {
+    bool check = true,
+  }) async {
     var passed = 0;
     await tester.pumpWidget(
       host(
@@ -91,6 +95,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (!check) return passed;
     await tester.tap(find.byKey(const Key('photo-check')));
     await tester.pumpAndSettle();
     return passed;
@@ -143,7 +148,7 @@ void main() {
 
   testWidgets('photoSetup_savesParams', (tester) async {
     final saved = await runSetup(tester, [3, 3]);
-    expect(saved!['threshold'], 0.9);
+    expect(saved!['minMatch'], defaultPhotoThreshold);
     expect(saved['photos'], hasLength(2));
     expect(find.byKey(const Key('photo-warning')), findsNothing);
   });
@@ -156,7 +161,7 @@ void main() {
     expect(
       def.isSetUp({
         'photos': [a.path, b.path],
-        'threshold': 0.9,
+        'minMatch': 0.9,
       }),
       isTrue,
     );
@@ -164,10 +169,25 @@ void main() {
     expect(
       def.isSetUp({
         'photos': [a.path, b.path],
-        'threshold': 0.9,
+        'minMatch': 0.9,
       }),
       isFalse,
     );
     expect(def.isSetUp(const {}), isFalse);
+  });
+
+  testWidgets('photo_showsTheReferencePhoto', (tester) async {
+    await run(tester, [], check: false);
+    expect(find.byKey(const Key('photo-reference')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('photo-reference')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('photo-reference-large')), findsOneWidget);
+  });
+
+  testWidgets('photo_ignoresTheOldStricterSetting', (tester) async {
+    // Alarms saved before the new scoring kept 'threshold': 0.9 on the
+    // old scale, which no retake could reach.
+    params = {'photos': params['photos'], 'threshold': 0.99};
+    expect(await run(tester, [1]), 1);
   });
 }
