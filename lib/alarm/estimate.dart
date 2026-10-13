@@ -16,7 +16,7 @@ const _typical = <ChallengeId, (int, int)>{
   ChallengeId.photoMatch: (20, 90),
   ChallengeId.nfcTag: (15, 60),
   ChallengeId.barcode: (15, 60),
-  ChallengeId.charger: (15, 60),
+  ChallengeId.batteryGuess: (10, 45),
   ChallengeId.heartRate: (60, 180),
   ChallengeId.compass: (20, 90),
   ChallengeId.watchSwing: (20, 60),

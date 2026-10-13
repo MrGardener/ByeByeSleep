@@ -85,7 +85,7 @@ void main() {
     expect(definitionFor(ChallengeId.walkSteps).requires(2), {
       SensorKind.stepDetector,
     });
-    expect(definitionFor(ChallengeId.charger).requires(2), {
+    expect(definitionFor(ChallengeId.batteryGuess).requires(2), {
       SensorKind.battery,
     });
     expect(definitionFor(ChallengeId.barcode).requires(2), {SensorKind.camera});
@@ -105,6 +105,13 @@ void main() {
         SensorKind.barometer,
       }).challenge,
       ChallengeId.stairs,
+    );
+  });
+
+  test('saved charger stages become battery guesses', () {
+    expect(
+      StageConfig.fromJson(const {'challenge': 'charger', 'difficulty': 2}),
+      const StageConfig(ChallengeId.batteryGuess, difficulty: 2),
     );
   });
 }

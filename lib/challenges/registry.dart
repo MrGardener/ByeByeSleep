@@ -4,9 +4,9 @@ import '../alarm/stage_config.dart';
 import 'barcode/setup.dart';
 import 'barcode/widget.dart';
 import 'broken_calculator/widget.dart';
-import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
+import '../game/worlds/battery_oracle.dart';
 import '../game/worlds/sky_tower.dart';
 import '../game/worlds/world_kit.dart';
 import 'compass/widget.dart';
@@ -154,12 +154,18 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     requires: (_) => const {SensorKind.heartRate},
     build: (args) => HeartRateChallenge(args: args),
   ),
-  ChallengeId.charger: ChallengeDefinition(
-    id: ChallengeId.charger,
-    title: 'Charger',
-    instructions: 'Plug the phone into a charger away from your bed.',
+  ChallengeId.batteryGuess: ChallengeDefinition(
+    id: ChallengeId.batteryGuess,
+    title: 'Battery guess',
+    instructions:
+        'Guess the battery level without looking (the status bar is hidden).',
     requires: (_) => const {SensorKind.battery},
-    build: (args) => ChargerChallenge(args: args),
+    build: (args) => BatteryOracleWorld(
+      tolerance: batteryToleranceFor(args.difficulty),
+      checkAtStart: true,
+      onPassed: args.onPassed,
+      onUnavailable: args.onUnavailable,
+    ),
   ),
 };
 

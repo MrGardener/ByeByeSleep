@@ -4,11 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../challenges/core/battery.dart';
 
-/// Guesses within 25 points of the real level pass (spec §7).
-({int low, int high}) oracleRange(int actual) =>
-    (low: (actual - 25).clamp(0, 100), high: (actual + 25).clamp(0, 100));
+/// Guesses within [tolerance] points of the real level pass (the game: 25,
+/// spec §7; as an alarm challenge, stricter with difficulty).
+({int low, int high}) oracleRange(int actual, {int tolerance = 25}) => (
+  low: (actual - tolerance).clamp(0, 100),
+  high: (actual + tolerance).clamp(0, 100),
+);
 
-bool oracleAccepts(int guess, int actual) => (guess - actual).abs() <= 25;
+bool oracleAccepts(int guess, int actual, {int tolerance = 25}) =>
+    (guess - actual).abs() <= tolerance;
+
+/// Battery guess alarm challenge: ±25 at difficulty 1 down to ±10 at 5.
+int batteryToleranceFor(int difficulty) =>
+    const [25, 20, 15, 12, 10][difficulty.clamp(1, 5) - 1];
 
 /// Battery Oracle: guess the charge with the status bar hidden.
 class BatteryOracleWorld extends ConsumerStatefulWidget {
@@ -16,10 +24,17 @@ class BatteryOracleWorld extends ConsumerStatefulWidget {
     super.key,
     required this.onPassed,
     this.onUnavailable,
+    this.tolerance = 25,
+    this.checkAtStart = false,
   });
 
   final VoidCallback onPassed;
   final VoidCallback? onUnavailable;
+  final int tolerance;
+
+  /// Read the battery once at the start, so a phone that cannot report it
+  /// gets its fallback at once instead of at the first guess (alarms).
+  final bool checkAtStart;
 
   @override
   ConsumerState<BatteryOracleWorld> createState() => _BatteryOracleState();
@@ -36,6 +51,17 @@ class _BatteryOracleState extends ConsumerState<BatteryOracleWorld> {
     super.initState();
     // Hide the status bar, which shows the battery level.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    if (widget.checkAtStart) {
+      ref
+          .read(batteryLevelProvider)
+          .level()
+          .then(
+            (_) {},
+            onError: (Object _) {
+              if (mounted) widget.onUnavailable?.call();
+            },
+          );
+    }
   }
 
   @override
@@ -69,15 +95,17 @@ class _BatteryOracleState extends ConsumerState<BatteryOracleWorld> {
       _checking = false;
       _result = (guess: guess, actual: actual);
     });
-    if (oracleAccepts(guess, actual)) widget.onPassed();
+    if (oracleAccepts(guess, actual, tolerance: widget.tolerance)) {
+      widget.onPassed();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final r = _result;
     if (r != null) {
-      final ok = oracleAccepts(r.guess, r.actual);
-      final range = oracleRange(r.actual);
+      final ok = oracleAccepts(r.guess, r.actual, tolerance: widget.tolerance);
+      final range = oracleRange(r.actual, tolerance: widget.tolerance);
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -103,8 +131,8 @@ class _BatteryOracleState extends ConsumerState<BatteryOracleWorld> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.visibility_off, size: 72),
-        const Text(
-          'How full is the battery? Guess within 25%.',
+        Text(
+          'How full is the battery? Guess within ${widget.tolerance}%.',
           textAlign: TextAlign.center,
         ),
         SizedBox(

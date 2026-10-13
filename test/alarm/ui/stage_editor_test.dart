@@ -78,7 +78,7 @@ void main() {
     await pumpApp(tester, fake);
     await tester.tap(find.byKey(const Key('add-alarm')));
     await tester.pumpAndSettle();
-    for (final id in [ChallengeId.charger, ChallengeId.barcode]) {
+    for (final id in [ChallengeId.batteryGuess, ChallengeId.barcode]) {
       await tester.ensureVisible(find.byKey(const Key('add-stage')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('add-stage')));
@@ -104,7 +104,7 @@ void main() {
     }
     final stages = fake.stored.values.single.stages;
     expect(stages.map((s) => s.challenge).skip(4), [
-      ChallengeId.charger,
+      ChallengeId.batteryGuess,
       ChallengeId.barcode,
     ]);
   });

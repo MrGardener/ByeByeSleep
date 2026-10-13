@@ -10,7 +10,10 @@ enum ChallengeId {
   photoMatch,
   nfcTag,
   barcode,
-  charger,
+
+  /// Was 'charger' (plug in at another charger), replaced at the owner's
+  /// request: saved 'charger' stages load as this (StageConfig.fromJson).
+  batteryGuess,
   heartRate,
   compass,
   watchSwing,
