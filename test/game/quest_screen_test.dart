@@ -106,4 +106,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Passed!'), findsOneWidget);
   });
+
+  testWidgets('practice opens a challenge setup before its first run', (
+    tester,
+  ) async {
+    await pump(tester, const PracticeScreen());
+    await tester.tap(find.text('Walk'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+    expect(find.text('Walk — setup'), findsOneWidget);
+  });
+
+  testWidgets('practice keeps permission-gated challenges playable', (
+    tester,
+  ) async {
+    await pump(tester, const PracticeScreen(), caps: {SensorKind.battery});
+    final tile = tester.widget<ListTile>(
+      find.ancestor(
+        of: find.text('Photo match'),
+        matching: find.byType(ListTile),
+      ),
+    );
+    expect(tile.enabled, isTrue);
+  });
 }

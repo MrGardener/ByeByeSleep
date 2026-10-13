@@ -43,11 +43,17 @@ class _RuneHuntState extends ConsumerState<RuneHuntWorld> {
 
   Future<void> _start() async {
     final reader = ref.read(nfcReaderProvider);
-    if (!await reader.isAvailable()) {
+    bool available;
+    try {
+      available = await reader.isAvailable();
+    } catch (_) {
+      available = false;
+    }
+    if (!mounted) return;
+    if (!available) {
       widget.args.onUnavailable?.call();
       return;
     }
-    if (!mounted) return;
     _sub = reader.tagIds().listen((id) {
       setState(() => _hunt.add(id));
       if (_hunt.passed && !_reported) {

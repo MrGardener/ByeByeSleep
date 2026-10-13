@@ -59,6 +59,8 @@ class _BatteryOracleState extends ConsumerState<BatteryOracleWorld> {
     try {
       actual = await ref.read(batteryLevelProvider).level();
     } catch (_) {
+      if (!mounted) return;
+      setState(() => _checking = false);
       widget.onUnavailable?.call();
       return;
     }

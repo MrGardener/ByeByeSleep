@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/challenge.dart';
 import '../challenges/core/challenge_id.dart';
+import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
+
+const _permissionGated = {SensorKind.camera, SensorKind.stepDetector};
 
 /// Try any alarm challenge without an alarm ringing.
 class PracticeScreen extends ConsumerWidget {
@@ -23,9 +26,12 @@ class PracticeScreen extends ConsumerWidget {
             Builder(
               builder: (context) {
                 final d = definitionFor(id);
-                // Tilt maze level 1 needs nothing, so it is always playable.
-                final playable =
-                    caps == null || caps.containsAll(d.requires(1));
+                // Camera and step counting may only lack a permission, which
+                // the challenge asks for itself, so they stay playable.
+                final missing = caps == null
+                    ? const <SensorKind>{}
+                    : d.requires(1).difference(caps);
+                final playable = missing.every(_permissionGated.contains);
                 return ListTile(
                   enabled: playable,
                   title: Text(d.title),
@@ -68,7 +74,8 @@ class _PracticeRunScreenState extends State<PracticeRunScreen> {
 
   Future<void> _start() async {
     final setup = _d.setup;
-    if (setup != null && !_d.isSetUp(_params)) {
+    // First run, or incomplete setup: set the challenge up (steps, light…).
+    if (setup != null && (_params.isEmpty || !_d.isSetUp(_params))) {
       final params = await setup(context, _params);
       if (params == null || !mounted) return;
       _params = params;

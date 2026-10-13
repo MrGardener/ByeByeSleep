@@ -41,7 +41,10 @@ class _WorldScreenState extends ConsumerState<WorldScreen> {
   var _outcome = _Outcome.playing;
 
   void _won() {
-    ref.read(questProgressProvider.notifier).complete(widget.world);
+    ref
+        .read(questProgressProvider.notifier)
+        .complete(widget.world)
+        .catchError((Object _) {}); // shown as done; saved next time
     setState(() => _outcome = _Outcome.won);
   }
 
@@ -89,7 +92,9 @@ class _WorldScreenState extends ConsumerState<WorldScreen> {
               _Outcome.won => end(
                 Icons.emoji_events,
                 'World complete!',
-                'The next world is open.',
+                widget.world == World.values.last
+                    ? 'You finished every world!'
+                    : 'Well played.',
               ),
               _Outcome.unavailable => end(
                 Icons.sensors_off,

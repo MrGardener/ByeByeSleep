@@ -37,11 +37,15 @@ class FileProgressStore implements ProgressStore {
 
   @override
   Future<void> save(Set<World> completed) async {
-    await (await _file).writeAsString(
+    // Write then rename, so a kill mid-write cannot wipe the progress.
+    final file = await _file;
+    final tmp = File('${file.path}.tmp');
+    await tmp.writeAsString(
       jsonEncode({
         'completed': [for (final w in completed) w.name],
       }),
     );
+    await tmp.rename(file.path);
   }
 }
 

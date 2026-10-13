@@ -112,6 +112,10 @@ class _GhostHideState extends ConsumerState<GhostHideWorld> {
     if (_game.phase == GhostPhase.warning && before != GhostPhase.warning) {
       HapticFeedback.heavyImpact();
     }
+    // The hand hides the screen, so the end of a look is felt too.
+    if (before == GhostPhase.looking && _game.phase == GhostPhase.uncover) {
+      HapticFeedback.lightImpact();
+    }
     setState(() {});
     if (_game.passed && !_reported) {
       _reported = true;
