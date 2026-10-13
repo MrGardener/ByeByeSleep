@@ -26,7 +26,12 @@ enum World {
   }),
   runeHunt('Rune Hunt', 'Touch three different NFC stickers.', {
     SensorKind.nfc,
-  });
+  }),
+  pulseRun(
+    'Pulse Run',
+    'Get your heart going on the stairs, with your watch.',
+    {SensorKind.heartRate},
+  );
 
   const World(this.title, this.blurb, this.requires);
 

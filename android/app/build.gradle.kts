@@ -76,6 +76,9 @@ flutter {
 }
 
 dependencies {
+    // Heart rate from the ByeByeSleep watch app (WatchChannel.kt).
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.wear:wear-remote-interactions:1.1.0")
     testImplementation("junit:junit:4.13.2")
     // Real org.json for JVM unit tests (android.jar only ships stubs).
     testImplementation("org.json:json:20240303")

@@ -31,7 +31,7 @@ jobs:
       - name: Kotlin unit tests and lint
         working-directory: android
         run: |
-          ./gradlew :app:testDebugUnitTest :app:lintDebug
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :wear:assembleDebug
           # Fail if the Kotlin tests were silently skipped (e.g. NO-SOURCE).
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET

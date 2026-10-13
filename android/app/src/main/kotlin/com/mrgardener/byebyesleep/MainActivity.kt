@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
 import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
+import com.mrgardener.byebyesleep.alarm.WatchChannel
 import com.mrgardener.byebyesleep.alarm.PreflightReceiver
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
@@ -45,6 +46,7 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private val envSensors = EnvSensorsChannel(this)
+    private val watch = WatchChannel(this)
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -55,5 +57,6 @@ class MainActivity : FlutterFragmentActivity() {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
         envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
+        watch.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 }

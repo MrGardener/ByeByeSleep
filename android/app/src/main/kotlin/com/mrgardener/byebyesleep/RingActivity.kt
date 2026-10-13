@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import com.mrgardener.byebyesleep.alarm.AlarmChannel
 import com.mrgardener.byebyesleep.alarm.EmergencyChannel
 import com.mrgardener.byebyesleep.alarm.EnvSensorsChannel
+import com.mrgardener.byebyesleep.alarm.WatchChannel
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.EXTRA_ALARM_ID
 import io.flutter.embedding.android.FlutterActivity
@@ -33,6 +34,7 @@ class RingActivity : FlutterActivity() {
     }
 
     private val envSensors = EnvSensorsChannel(this)
+    private val watch = WatchChannel(this)
     private val emergency = EmergencyChannel(this)
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -44,6 +46,7 @@ class RingActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
         envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
+        watch.register(flutterEngine.dartExecutor.binaryMessenger)
         emergency.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 
