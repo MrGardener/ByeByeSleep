@@ -19,4 +19,7 @@ enum ChallengeId {
   watchSwing,
   watchSteps,
   stairs,
+  timeSense,
+  pulseCode,
+  colourHunt,
 }

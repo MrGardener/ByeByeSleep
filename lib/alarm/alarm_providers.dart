@@ -1,16 +1,24 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../challenges/core/camera.dart';
 import 'alarm.dart';
 import 'alarm_platform.dart';
 import 'guard.dart';
+import 'ios/ios_engine.dart';
 import 'series.dart';
 import 'stage_config.dart';
 
 final alarmPlatformProvider = Provider<AlarmPlatform>(
-  (_) => MethodChannelAlarmPlatform(),
+  (_) => Platform.isIOS
+      ? IosAlarmEngine(
+          kit: MethodChannelIosAlarmKit(),
+          store: FileIosStateStore(getApplicationDocumentsDirectory),
+        )
+      : MethodChannelAlarmPlatform(),
 );
 
 /// Photo files the alarms still use: reminder photos and photo-match

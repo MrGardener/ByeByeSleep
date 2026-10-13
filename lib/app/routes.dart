@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../alarm/alarm.dart';
@@ -19,8 +21,16 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       : null;
   return MaterialPageRoute<void>(
     settings: settings,
-    builder: (_) => switch (name) {
-      _ when ringId != null => RingScreen(alarmId: ringId),
+    builder: (context) => switch (name) {
+      _ when ringId != null => RingScreen(
+        alarmId: ringId,
+        // iPhone apps cannot close themselves: go back to the alarms.
+        onFinished: Platform.isIOS
+            ? () =>
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (_) => false)
+            : null,
+      ),
       editRoute => AlarmEditScreen(alarm: settings.arguments as Alarm?),
       questRoute => const QuestScreen(),
       practiceRoute => const PracticeScreen(),
