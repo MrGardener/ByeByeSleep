@@ -52,3 +52,13 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 35 | Leave such an alarm for tomorrow and wait until 21:00. | Notification "Tomorrow's alarm may not work — tap to fix". |
 | 36 | With an alarm due in under 30 min, switch it off / swipe-delete / change its time. | Fingerprint/PIN prompt; cancelling keeps the alarm unchanged. Over 30 min away: no prompt. |
 | 37 | Tilt maze difficulty 5. | Arrow + "On course"; when the phone turns away from the arrow the ball freezes ("Turn to the arrow!"). |
+| 38 | Alarm list → game-controller icon (**Sensor Quest**). | Map lists 7 worlds; Battery Oracle shows "Play", the rest "Locked" (or "Not on this phone"). |
+| 39 | **Battery Oracle**: guess within 25 of the real level, then (replay) far off. | Status bar hidden while guessing and back afterwards; a near guess shows "World complete!", a far one shows the real level, the accepted range and "Try again". |
+| 40 | **Labyrinth**. | Three mazes (tilt, reversed, turning) in a row, then complete. |
+| 41 | **Compass Temple**: turn on the spot holding the phone flat. | Arrow turns green near each rune direction; 2 s still lights it; 4 runes complete. |
+| 42 | **Solar Garden**: start in a dim room, then go to a lamp/window. | Plant grows (lux shown) in bright light, shrinks in the dark; blooms after ~10 s of light. |
+| 43 | **Ghost Hide**: follow the prompts, covering the top of the phone with a hand. | Buzz on "It is coming"; staying covered through the look counts a visit; uncovering early restarts it; 5 visits complete. |
+| 44 | **Sky Tower**: start downstairs, climb one floor, wait. | "Measuring the ground floor" for 3 s, metres climb, completes ~2 s after reaching ~2.5 m. Standing still never completes. |
+| 45 | **Rune Hunt**: touch 3 different NFC tags/cards (bank card works). | Same tag twice counts once; three distinct complete. |
+| 46 | Close and reopen the app. | Completed worlds stay "Done". |
+| 47 | Alarm list → dumbbell icon (**Practice**): run Broken calculator, then Walk. | Each challenge runs without an alarm; Walk asks for its setup first; pass shows "Passed!" and "Again". |
