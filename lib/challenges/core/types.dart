@@ -35,6 +35,9 @@ enum SensorKind {
   battery,
   barometer,
   proximity,
+
+  /// From the ByeByeSleep watch app.
+  heartRate,
 }
 
 class Vec3 {

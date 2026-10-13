@@ -11,4 +11,5 @@ enum ChallengeId {
   nfcTag,
   barcode,
   charger,
+  heartRate,
 }

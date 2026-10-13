@@ -4,6 +4,7 @@ import '../../alarm/alarm_platform.dart';
 import '../../alarm/alarm_providers.dart';
 import 'camera.dart';
 import 'env_sensors.dart';
+import 'heart_rate.dart';
 import 'motion.dart';
 import 'nfc.dart';
 import 'types.dart';
@@ -47,5 +48,5 @@ final deviceCapabilitiesProvider = FutureProvider<Set<SensorKind>>((ref) async {
 /// Further capability probes (camera, NFC) registered by their challenges.
 final extraCapabilitiesProvider =
     Provider<List<Future<Set<SensorKind>> Function()>>(
-      (_) => const [cameraCapability, nfcCapability],
+      (_) => const [cameraCapability, nfcCapability, watchCapability],
     );
