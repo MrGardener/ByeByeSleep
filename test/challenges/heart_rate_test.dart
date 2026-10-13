@@ -162,6 +162,36 @@ void main() {
     });
   });
 
+  testWidgets('heart rate stopping half way falls back after 30 s', (
+    tester,
+  ) async {
+    final source = FakeHeartRate();
+    var unavailable = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [watchSourceProvider.overrideWithValue(source)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: HeartRateChallenge(
+              args: ChallengeArgs(
+                difficulty: 1,
+                random: Random(1),
+                onPassed: () {},
+                onUnavailable: () => unavailable++,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    source.send(70);
+    await tester.pump(const Duration(seconds: 29));
+    expect(unavailable, 0);
+    await tester.pump(const Duration(seconds: 2));
+    expect(unavailable, 1);
+  });
+
   test('without a watch the stage is replaced', () {
     expect(
       resolveStage(

@@ -170,6 +170,20 @@ void main() {
       expect(unavailable, 1);
     });
 
+    testWidgets('the watch going quiet half way: falls back after 30 s', (
+      tester,
+    ) async {
+      watch = FakeWatch();
+      await pump(tester, (a) => WatchStepsChallenge(args: a));
+      watch.readings$.add(const StepsReading(0));
+      await tester.pump(const Duration(seconds: 20));
+      watch.readings$.add(const StepsReading(5));
+      await tester.pump(const Duration(seconds: 25));
+      expect(unavailable, 0);
+      await tester.pump(const Duration(seconds: 6)); // 31 s since the last
+      expect(unavailable, 1);
+    });
+
     testWidgets('no watch: unavailable at once', (tester) async {
       watch = FakeWatch(connected: false);
       await pump(tester, (a) => WatchStepsChallenge(args: a));

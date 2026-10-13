@@ -51,7 +51,9 @@ class _HeartRateState extends ConsumerState<HeartRateChallenge> {
     _sub = source.readings.listen((r) {
       if (r is! HeartRateReading) return;
       final bpm = r.bpm;
+      // Readings stopping half way (watch off, out of range) falls back too.
       _silence?.cancel();
+      _silence = Timer(HeartRateChallenge.firstReadingTimeout, _unavailable);
       _goal.add(bpm, now());
       setState(() => _bpm = bpm);
       if (_goal.passed && !_done) {

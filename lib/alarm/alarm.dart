@@ -23,6 +23,7 @@ class Alarm {
     this.parentId,
     this.onceAt,
     this.followUpMinutes = 0,
+    this.maxRingMinutes = defaultMaxRing,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -51,6 +52,7 @@ class Alarm {
         : null,
     parentId: (_extras(m)['parent'] as num?)?.toInt(),
     followUpMinutes: (_extras(m)['followUp'] as num?)?.toInt() ?? 0,
+    maxRingMinutes: (_extras(m)['maxRing'] as num?)?.toInt() ?? defaultMaxRing,
     onceAt: m['atMs'] is num
         ? DateTime.fromMillisecondsSinceEpoch((m['atMs']! as num).toInt())
         : null,
@@ -94,6 +96,12 @@ class Alarm {
   /// Minutes after Stop to ring once more and check you are awake; 0 = off.
   final int followUpMinutes;
 
+  /// Rings at most this long with nobody stopping it (owner away), then
+  /// stops itself and leaves a "missed alarm" notification. Read natively
+  /// (RingLimit.kt).
+  final int maxRingMinutes;
+  static const defaultMaxRing = 30;
+
   /// A one-shot series alarm rings exactly here (its date included), so it
   /// stays with its main alarm's ring instead of the next free time of day.
   final DateTime? onceAt;
@@ -117,6 +125,7 @@ class Alarm {
     int? Function()? parentId,
     DateTime? Function()? onceAt,
     int? followUpMinutes,
+    int? maxRingMinutes,
   }) => Alarm(
     id: id ?? this.id,
     hour: hour ?? this.hour,
@@ -131,6 +140,7 @@ class Alarm {
     parentId: parentId != null ? parentId() : this.parentId,
     onceAt: onceAt != null ? onceAt() : this.onceAt,
     followUpMinutes: followUpMinutes ?? this.followUpMinutes,
+    maxRingMinutes: maxRingMinutes ?? this.maxRingMinutes,
   );
 
   Map<String, Object?> toMap() => {
@@ -148,6 +158,7 @@ class Alarm {
       if (series != null) 'series': series!.toJson(),
       if (parentId != null) 'parent': parentId,
       if (followUpMinutes > 0) 'followUp': followUpMinutes,
+      if (maxRingMinutes != defaultMaxRing) 'maxRing': maxRingMinutes,
     }),
   };
 
@@ -166,7 +177,8 @@ class Alarm {
       other.series == series &&
       other.parentId == parentId &&
       other.onceAt == onceAt &&
-      other.followUpMinutes == followUpMinutes;
+      other.followUpMinutes == followUpMinutes &&
+      other.maxRingMinutes == maxRingMinutes;
 
   @override
   int get hashCode => Object.hash(

@@ -18,6 +18,7 @@ class RingActivity : FlutterActivity() {
     private val alarmId get() = intent.getIntExtra(EXTRA_ALARM_ID, -1)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        showing = java.lang.ref.WeakReference(this)
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         super.onCreate(savedInstanceState)
@@ -61,11 +62,19 @@ class RingActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        if (showing?.get() === this) showing = null
         AlarmService.ringActivityGone(this)
         super.onDestroy()
     }
 
     companion object {
+        @Volatile private var showing: java.lang.ref.WeakReference<RingActivity>? = null
+
+        /** The alarm stopped by itself (ring limit): close the ring screen. */
+        fun closeIfShowing() {
+            showing?.get()?.let { activity -> activity.runOnUiThread { activity.finish() } }
+        }
+
         fun intent(context: Context, id: Int): Intent =
             Intent(context, RingActivity::class.java)
                 .putExtra(EXTRA_ALARM_ID, id)

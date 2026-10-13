@@ -217,4 +217,17 @@ void main() {
       0,
     );
   });
+
+  test('ring limit: 30 min by default, saved, shared by the series', () {
+    expect(Alarm(id: 1, hour: 7, minute: 0).maxRingMinutes, 30);
+    final a = Alarm(
+      id: 1,
+      hour: 7,
+      minute: 0,
+      maxRingMinutes: 10,
+      series: const SeriesConfig(count: 2, everyMinutes: 5),
+    );
+    expect(Alarm.fromMap(a.toMap()).maxRingMinutes, 10);
+    expect(seriesChildren(a).single.maxRingMinutes, 10);
+  });
 }
