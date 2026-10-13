@@ -35,6 +35,17 @@ class Maze {
     return maze;
   }
 
+  /// No inner walls, only the border (physics tests).
+  factory Maze.open(int size) {
+    final maze = Maze._(size, List.filled(size * size, 0));
+    for (var c = 0; c < size * size; c++) {
+      for (final d in Direction.values) {
+        if (!maze._inside(c, d)) maze._walls[c] |= _bit(d);
+      }
+    }
+    return maze;
+  }
+
   final int size;
   final List<int> _walls;
 

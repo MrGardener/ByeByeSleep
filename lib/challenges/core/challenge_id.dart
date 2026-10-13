@@ -12,4 +12,7 @@ enum ChallengeId {
   barcode,
   charger,
   heartRate,
+  compass,
+  watchSwing,
+  watchSteps,
 }

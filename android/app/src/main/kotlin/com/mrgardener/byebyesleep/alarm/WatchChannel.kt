@@ -15,39 +15,48 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * Native side of lib/challenges/core/heart_rate.dart: finds a watch with the
- * ByeByeSleep watch app, opens its heart-rate screen, and streams the readings.
+ * Native side of lib/challenges/core/watch.dart: finds a watch with the
+ * ByeByeSleep watch app, opens its sensor screen, and streams its readings
+ * (heart rate, wrist motion, steps) to Dart as {type, value} maps.
  * A phone without Google Play services or without a watch simply has none.
  */
 class WatchChannel(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private var sink: EventChannel.EventSink? = null
+    private var session = 0
     private val readings = MessageClient.OnMessageReceivedListener { event ->
-        if (event.path != WatchProtocol.PATH_BPM) return@OnMessageReceivedListener
-        val bpm = WatchProtocol.decodeBpm(event.data) ?: return@OnMessageReceivedListener
-        main.post { sink?.success(bpm) }
+        val reading = WatchProtocol.toEvent(event.path, event.data) ?: return@OnMessageReceivedListener
+        main.post { sink?.success(reading) }
     }
 
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, "byebyesleep/watch").setMethodCallHandler { call, result ->
             when (call.method) {
                 "available" -> watches { result.success(it.isNotEmpty()) }
-                "start" -> watches { nodes ->
-                    nodes.forEach { open(it.id) }
-                    result.success(null)
-                }
-                "stop" -> watches { nodes ->
-                    nodes.forEach {
-                        runCatching {
-                            Wearable.getMessageClient(context).sendMessage(it.id, WatchProtocol.PATH_STOP, ByteArray(0))
-                        }
+                "start" -> {
+                    session++
+                    val started = session
+                    watches { nodes ->
+                        nodes.forEach { open(it.id, started) }
+                        result.success(null)
                     }
-                    result.success(null)
+                }
+                "stop" -> {
+                    val ended = session
+                    watches { nodes ->
+                        nodes.forEach {
+                            runCatching {
+                                Wearable.getMessageClient(context)
+                                    .sendMessage(it.id, WatchProtocol.PATH_STOP, WatchProtocol.encodeCount(ended))
+                            }
+                        }
+                        result.success(null)
+                    }
                 }
                 else -> result.notImplemented()
             }
         }
-        EventChannel(messenger, "byebyesleep/heart_rate").setStreamHandler(
+        EventChannel(messenger, "byebyesleep/watch_readings").setStreamHandler(
             object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                     sink = events
@@ -74,10 +83,10 @@ class WatchChannel(private val context: Context) {
         }
     }
 
-    private fun open(nodeId: String) {
+    private fun open(nodeId: String, session: Int) {
         val intent = Intent(Intent.ACTION_VIEW)
             .addCategory(Intent.CATEGORY_BROWSABLE)
-            .setData(Uri.parse(WatchProtocol.START_URI))
+            .setData(Uri.parse(WatchProtocol.startUri(session)))
         runCatching { RemoteActivityHelper(context).startRemoteActivity(intent, nodeId) }
     }
 }

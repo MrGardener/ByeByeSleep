@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/challenge.dart';
-import '../core/heart_rate.dart';
+import '../core/watch.dart';
 import 'detector.dart';
 
 /// Get your heart going: walk up and down the stairs until the watch shows
@@ -25,7 +25,7 @@ class _HeartRateState extends ConsumerState<HeartRateChallenge> {
   late final HeartRateGoal _goal = HeartRateGoal(
     difficulty: widget.args.difficulty,
   );
-  StreamSubscription<int>? _sub;
+  StreamSubscription<WatchReading>? _sub;
   Timer? _silence;
   int? _bpm;
   bool _done = false;
@@ -43,12 +43,14 @@ class _HeartRateState extends ConsumerState<HeartRateChallenge> {
   }
 
   Future<void> _start() async {
-    final source = ref.read(heartRateSourceProvider);
+    final source = ref.read(watchSourceProvider);
     if (!await source.available()) return _unavailable();
     if (!mounted) return;
     _silence = Timer(HeartRateChallenge.firstReadingTimeout, _unavailable);
-    final now = ref.read(heartRateClockProvider);
-    _sub = source.bpm.listen((bpm) {
+    final now = ref.read(watchClockProvider);
+    _sub = source.readings.listen((r) {
+      if (r is! HeartRateReading) return;
+      final bpm = r.bpm;
       _silence?.cancel();
       _goal.add(bpm, now());
       setState(() => _bpm = bpm);

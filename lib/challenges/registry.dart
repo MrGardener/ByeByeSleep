@@ -7,8 +7,10 @@ import 'broken_calculator/widget.dart';
 import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
+import 'compass/widget.dart';
 import 'core/types.dart';
 import 'heart_rate/widget.dart';
+import 'watch/widgets.dart';
 import 'photo_match/setup.dart';
 import 'photo_match/widget.dart';
 import 'lights_on/setup.dart';
@@ -102,6 +104,29 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     build: (args) => BarcodeChallenge(args: args),
     setup: setupBarcode,
     isSetUp: (p) => (p['code'] as String?)?.isNotEmpty ?? false,
+  ),
+  ChallengeId.compass: ChallengeDefinition(
+    id: ChallengeId.compass,
+    title: 'Compass runes',
+    instructions:
+        'Hold the phone flat, turn your body to face each direction shown, '
+        'and keep still for 2 seconds.',
+    requires: (_) => const {SensorKind.accelerometer, SensorKind.magnetometer},
+    build: (args) => CompassRunes(args: args),
+  ),
+  ChallengeId.watchSwing: ChallengeDefinition(
+    id: ChallengeId.watchSwing,
+    title: 'Wrist workout',
+    instructions: 'Swing the arm with your watch up and down until done.',
+    requires: (_) => const {SensorKind.watchMotion},
+    build: (args) => WatchSwingChallenge(args: args),
+  ),
+  ChallengeId.watchSteps: ChallengeDefinition(
+    id: ChallengeId.watchSteps,
+    title: 'Walk with your watch',
+    instructions: 'Walk around; your watch counts the steps.',
+    requires: (_) => const {SensorKind.watchSteps},
+    build: (args) => WatchStepsChallenge(args: args),
   ),
   ChallengeId.heartRate: ChallengeDefinition(
     id: ChallengeId.heartRate,

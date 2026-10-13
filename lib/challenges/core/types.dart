@@ -38,6 +38,8 @@ enum SensorKind {
 
   /// From the ByeByeSleep watch app.
   heartRate,
+  watchMotion,
+  watchSteps,
 }
 
 class Vec3 {

@@ -1,7 +1,21 @@
 # Installing the ByeByeSleep watch app (Pixel Watch 3)
 
-The heart-rate challenge ("Get your heart going") and the Sensor Quest world
-"Pulse Run" read your heart rate live from a small ByeByeSleep app on the watch.
+Three challenges use the watch's sensors live, through a small ByeByeSleep app on
+the watch:
+
+| Challenge | Watch sensor |
+|---|---|
+| Get your heart going (and Sensor Quest "Pulse Run") | Heart rate |
+| Wrist workout — swing the arm with the watch | Motion (accelerometer) |
+| Walk with your watch — steps counted on the wrist | Step detector |
+
+**Which watches:** built and tuned for the **Pixel Watch 3 (45 mm)**; it runs on any
+Wear OS 3+ watch (other Pixel Watches, Samsung Galaxy Watch 4 and later, …). **Fitbit
+trackers** (Charge, Inspire, Luxe, Versa/Sense on Fitbit OS) cannot run third-party
+apps; their data only reaches the phone through Health Connect minutes later, which
+is too late for live challenges. The app's watch code is behind one interface
+(`lib/challenges/core/watch.dart`), so a Health Connect source can be added later
+for slower checks.
 Without a Play Store listing, the watch app has to be installed once from a
 computer (Windows, Mac or Linux). Updates later need the same steps.
 
@@ -22,7 +36,8 @@ the same Wi-Fi, and Android's free `adb` tool
    adb connect <IP>:<port shown on the Wireless debugging screen>
    adb install ByeByeSleep-watch.apk
    ```
-5. Open **ByeByeSleep** on the watch once and allow **body sensors**.
+5. Open **ByeByeSleep** on the watch once and allow **body sensors** and
+   **physical activity** (for steps).
 6. Turn **Wireless debugging** off again (it uses battery).
 
 **Check it works:** on the phone, Practice → *Get your heart going* → Start. The watch

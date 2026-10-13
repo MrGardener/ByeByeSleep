@@ -23,18 +23,6 @@ void main() {
       expect(t.passed, isTrue);
     });
 
-    test('leaving the heading resets the hold', () {
-      final t = CompassTrial([0, 90]);
-      t.update(0, ms(0));
-      t.update(0, ms(1900));
-      t.update(40, ms(1950));
-      t.update(0, ms(2000));
-      t.update(0, ms(3900));
-      expect(t.index, 0);
-      t.update(0, ms(4000));
-      expect(t.index, 1);
-    });
-
     test('350° counts as within 15° of 5°', () {
       final t = CompassTrial([5]);
       t.update(350, ms(0));

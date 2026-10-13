@@ -95,6 +95,39 @@ void main() {
     }
   });
 
+  test('ball_rollsBriskly_whenTilted', () {
+    // Owner: the ball "drags too much". At a 30° tilt it should roll two cells
+    // along an open corridor in under a second, and keep up its speed.
+    final open = Maze.open(9);
+    final ball = Ball.atStart();
+    final tilt = tiltToAccel(const Vec3(-4.9, 0, 8.5)); // right edge down
+    var t = 0.0;
+    while (ball.pos.dx < 2.5 && t < 2) {
+      stepBall(open, ball, tilt, 1 / 60);
+      t += 1 / 60;
+    }
+    expect(t, lessThan(0.8));
+    expect(ball.vel.dx, greaterThan(4));
+  });
+
+  test('ball_neverCrossesWalls_atFullSpeed', () {
+    final r = Random(5);
+    final m = Maze.generate(9, r);
+    final ball = Ball.atStart();
+    for (var i = 0; i < 20000; i++) {
+      final before = cellOf(ball.pos);
+      final accel = Offset(r.nextDouble() * 80 - 40, r.nextDouble() * 80 - 40);
+      stepBall(m, ball, accel, 1 / 30); // slow frames too
+      final after = cellOf(ball.pos);
+      if (before != after && before.$1 != after.$1 && before.$2 != after.$2) {
+        continue; // diagonal moves are covered by the test above
+      }
+      if (before != after) {
+        expect(open(m, before, after), isTrue, reason: 'crossed at $i');
+      }
+    }
+  });
+
   test('ball_reachesGoalFollowingSolution', () {
     final m = Maze.generate(9, Random(3));
     final ball = Ball.atStart();

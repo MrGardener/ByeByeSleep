@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
-import 'package:byebyesleep/challenges/core/heart_rate.dart';
+import 'package:byebyesleep/challenges/core/watch.dart';
 import 'package:byebyesleep/challenges/core/types.dart';
 import 'package:byebyesleep/challenges/heart_rate/detector.dart';
 import 'package:byebyesleep/challenges/heart_rate/widget.dart';
@@ -13,21 +13,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class FakeHeartRate implements HeartRateSource {
+/// A watch sending heart-rate readings driven by the test.
+class FakeHeartRate implements WatchSource {
   FakeHeartRate({this.watch = true});
 
   final bool watch;
-  final readings = StreamController<int>.broadcast();
-  var listening = false;
+  final _out = StreamController<WatchReading>.broadcast();
+
+  void send(int bpm) => _out.add(HeartRateReading(bpm));
 
   @override
   Future<bool> available() async => watch;
 
   @override
-  Stream<int> get bpm {
-    listening = true;
-    return readings.stream;
-  }
+  Stream<WatchReading> get readings => _out.stream;
 }
 
 Duration s(num v) => Duration(milliseconds: (v * 1000).round());
@@ -86,10 +85,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            heartRateSourceProvider.overrideWithValue(source),
-            heartRateClockProvider.overrideWithValue(
-              () => Duration(seconds: source.readings.hashCode % 1),
-            ),
+            watchSourceProvider.overrideWithValue(source),
+            watchClockProvider.overrideWithValue(() => Duration.zero),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -116,8 +113,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            heartRateSourceProvider.overrideWithValue(source),
-            heartRateClockProvider.overrideWithValue(() => t),
+            watchSourceProvider.overrideWithValue(source),
+            watchClockProvider.overrideWithValue(() => t),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -136,7 +133,7 @@ void main() {
       await tester.pump();
       Future<void> feed(int bpm, int seconds) async {
         for (var i = 0; i < seconds; i++) {
-          source.readings.add(bpm);
+          source.send(bpm);
           await tester.pump();
           t += const Duration(seconds: 1);
         }

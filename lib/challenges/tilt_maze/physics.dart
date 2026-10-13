@@ -6,10 +6,11 @@ import 'maze.dart';
 
 /// Ball radius in cell units.
 const ballRadius = 0.3;
-const _maxSpeed = 8.0; // cells per second
-const _maxStep = 1 / 30; // seconds; longer frames are split
-const _frictionPerFrame = 0.9; // at 60 fps
-const _tiltGain = 3.0;
+// A "heavy" ball: little drag, strong pull from the tilt (owner: it dragged).
+const _maxSpeed = 10.0; // cells per second
+const _maxStep = 1 / 60; // seconds; longer frames are split (≤ 1/6 cell)
+const _frictionPerFrame = 0.97; // at 60 fps
+const _tiltGain = 4.5;
 
 class Ball {
   Ball(this.pos, [this.vel = Offset.zero]);

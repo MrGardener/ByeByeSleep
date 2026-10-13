@@ -4,7 +4,7 @@ import '../../alarm/alarm_platform.dart';
 import '../../alarm/alarm_providers.dart';
 import 'camera.dart';
 import 'env_sensors.dart';
-import 'heart_rate.dart';
+import 'watch.dart';
 import 'motion.dart';
 import 'nfc.dart';
 import 'types.dart';
