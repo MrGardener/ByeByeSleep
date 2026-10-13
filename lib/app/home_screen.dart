@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../alarm/ui/alarm_list_screen.dart';
 import '../game/practice_screen.dart';
 import '../game/quest_screen.dart';
+import '../ringing/ring_launcher.dart';
 
 /// The app's three tools, one tab each.
 class HomeScreen extends StatefulWidget {
@@ -17,6 +18,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return RingLauncher(child: _scaffold());
+  }
+
+  Widget _scaffold() {
     return Scaffold(
       // Only the open tab is built, so the game's sensor probes do not run
       // while you are just setting alarms.

@@ -43,4 +43,27 @@ jobs:
             --prerelease \
             --target "$GITHUB_SHA" \
             --title "Latest build (main)" \
-            --notes "Newest build of main (${GITHUB_SHA::7}). Debug-signed test build: tap ByeByeSleep.apk to download and install. ByeByeSleep-watch.apk is the Pixel Watch app (see docs/watch-install.md)."
+            --notes "Newest build of main (${GITHUB_SHA::7}). Debug-signed test build: tap ByeByeSleep.apk to download and install. ByeByeSleep-watch.apk is the Pixel Watch app (see docs/watch-install.md). ByeByeSleep.ipa is the unsigned iPhone build, added a few minutes later (see docs/iphone-install.md)."
+
+  ios:
+    runs-on: macos-latest
+    needs: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          cache: true
+      - run: flutter pub get
+      - name: Unsigned IPA
+        run: |
+          flutter build ios --release --no-codesign --build-number "${{ github.run_number }}"
+          mkdir -p Payload && cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr ByeByeSleep.ipa Payload
+      - name: Add it to the latest-apk release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload latest-apk ByeByeSleep.ipa --clobber

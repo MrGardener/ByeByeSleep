@@ -41,6 +41,13 @@ combines these tools, in labelled sections of the editor:
 | Stop ringing after | Default 30 min: an alarm nobody stops (you are away) stops itself and leaves a "Missed alarm" notification. See [docs/safety.md](docs/safety.md). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
 
+## iPhone
+
+An unsigned iPhone build (`ByeByeSleep.ipa`, iOS 26+) is published next to the
+APK. Install it with a free Apple ID, see [docs/iphone-install.md](docs/iphone-install.md).
+The system alarm keeps a Stop button, so it rings again every 2 minutes until
+the challenges are done.
+
 ## Challenges
 
 | Challenge | What you do | Setup needed |

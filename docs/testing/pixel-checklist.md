@@ -89,3 +89,4 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 72 | Practice → Time sense at difficulty 1 and 5. | Start, count silently, Stop: within ±3 s of 20 s passes at 1; ±1 s of 45 s at 5; misses say "Too fast/slow by X s". |
 | 73 | Practice → Pulse code. | Flashes play (long ≈ 3× short); tapping them back passes; a wrong tap replays the code. |
 | 74 | Practice → Colour hunt in a lit room. | Pointing at an object of the asked colour and tapping Check passes; a grey/dark scene says no clear colour. |
+| 75 | iPhone (iOS 26, sideloaded): alarm in 2 min; tap Stop on the system alert. | Rings again 2 min later; tapping Challenges or opening the app shows the challenges; after finishing them no more rings. |
