@@ -25,6 +25,18 @@ void main() {
     expect(find.text('06:00'), findsOneWidget);
   });
 
+  testWidgets('listShowsHowLongEachAlarmTakesToTurnOff', (tester) async {
+    final fake = FakeAlarmPlatform(
+      seed: [
+        Alarm(id: 1, hour: 6, minute: 0),
+        Alarm(id: 2, hour: 7, minute: 0, stages: const []),
+      ],
+    );
+    await pumpApp(tester, fake);
+    expect(find.textContaining('min to turn off'), findsOneWidget);
+    expect(find.text('Stops at once'), findsOneWidget);
+  });
+
   testWidgets('toggleSwitchDisablesAlarm', (tester) async {
     final fake = FakeAlarmPlatform(seed: [Alarm(id: 1, hour: 7, minute: 0)]);
     await pumpApp(tester, fake);

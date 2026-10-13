@@ -5,6 +5,7 @@ import '../../app/routes.dart';
 import '../../sensors/trace_recorder_screen.dart';
 import '../alarm.dart';
 import '../alarm_providers.dart';
+import '../estimate.dart';
 import '../guard.dart';
 import 'preflight_banner.dart';
 import 'repeat_summary.dart';
@@ -105,6 +106,7 @@ class _AlarmTile extends ConsumerWidget {
     final subtitle = [
       if (alarm.label.isNotEmpty) alarm.label,
       repeatSummary(alarm.repeatDays),
+      estimateLabel(alarm.stages, alarm.pauseSeconds),
     ];
     return Dismissible(
       key: Key('alarm-tile-${alarm.id}'),

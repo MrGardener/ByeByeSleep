@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../challenges/core/challenge.dart';
 import '../../challenges/core/challenge_id.dart';
 import '../../challenges/registry.dart';
+import '../estimate.dart';
 import '../stage_config.dart';
 
 const maxStages = 8;
@@ -12,9 +13,17 @@ const maxStages = 8;
 /// Ordered list of an alarm's stages: reorder, set difficulty, add, remove,
 /// and practise each one.
 class StageEditor extends StatelessWidget {
-  const StageEditor({super.key, required this.stages, required this.onChanged});
+  const StageEditor({
+    super.key,
+    required this.stages,
+    required this.onChanged,
+    this.pauseSeconds = 0,
+  });
 
   final List<StageConfig> stages;
+
+  /// For the time-to-turn-off estimate.
+  final int pauseSeconds;
   final ValueChanged<List<StageConfig>> onChanged;
 
   void _replace(int i, StageConfig s) => onChanged([...stages]..[i] = s);
@@ -80,6 +89,16 @@ class StageEditor extends StatelessWidget {
         Text(
           'Stages — Stop and Snooze appear after the last one',
           style: Theme.of(context).textTheme.titleSmall,
+        ),
+        Row(
+          children: [
+            const Icon(Icons.timer_outlined, size: 18),
+            const SizedBox(width: 4),
+            Text(
+              estimateLabel(stages, pauseSeconds),
+              key: const Key('estimate'),
+            ),
+          ],
         ),
         ReorderableListView(
           shrinkWrap: true,

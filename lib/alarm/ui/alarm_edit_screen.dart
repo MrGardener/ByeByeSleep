@@ -222,6 +222,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           const SizedBox(height: 24),
           StageEditor(
             stages: _stages,
+            pauseSeconds: _pauseSeconds,
             onChanged: (s) => setState(() => _stages = s),
           ),
           const SizedBox(height: 16),
