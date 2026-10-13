@@ -25,6 +25,19 @@ Stuck? A hint appears after 2 minutes, a different challenge after 5, and after
 15 minutes you can also type a fixed sentence to turn the alarm off. Stages are edited per alarm, and every challenge has
 a "Try it" practice button.
 
+## Tools
+
+The app has three tabs: **Alarms**, **Sensor Quest** and **Practice**. Each alarm
+combines these tools, in labelled sections of the editor:
+
+| Tool | What it does |
+|---|---|
+| When | Time, days, label. |
+| Challenges | What you must do before Stop/Snooze appear, with an estimate ("About 2–5 min to turn off") and an optional pause between challenges. |
+| Series | One alarm that rings N times, every M minutes, starting or ending at its time. The others are listed under it and follow its changes; follow-ups need the same challenges or one quick sum. After Stop you can skip the rest of the series today. "Split into separate alarms" makes them independent. |
+| Reminder | A photo and caption of what not to forget, shown while ringing and full screen after Stop. "Reminder only" = no challenges. |
+| Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
+
 ## Challenges
 
 | Challenge | What you do | Setup needed |

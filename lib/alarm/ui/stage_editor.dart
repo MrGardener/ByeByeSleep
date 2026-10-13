@@ -86,10 +86,7 @@ class StageEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Stages — Stop and Snooze appear after the last one',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        const Text('Stop and Snooze appear after the last one.'),
         Row(
           children: [
             const Icon(Icons.timer_outlined, size: 18),

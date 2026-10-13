@@ -440,6 +440,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const _SectionTitle(Icons.schedule, 'When'),
           Center(
             child: TextButton(
               key: const Key('time-button'),
@@ -473,35 +474,65 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             controller: _label,
             decoration: const InputDecoration(labelText: 'Label'),
           ),
-          const SizedBox(height: 24),
-          if (_stages.isNotEmpty)
+          const _SectionTitle(Icons.extension_outlined, 'Challenges'),
+          if (_stages.isNotEmpty) ...[
             StageEditor(
               stages: _stages,
               pauseSeconds: _pauseSeconds,
               onChanged: (s) => setState(() => _stages = s),
             ),
-          const SizedBox(height: 16),
-          _seriesSection(),
-          const SizedBox(height: 16),
-          _reminderSection(),
-          const SizedBox(height: 16),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Pause between challenges'),
-            subtitle: const Text('The alarm rings quieter during the pause.'),
-            trailing: DropdownButton<int>(
-              key: const Key('pause-dropdown'),
-              value: _pauseSeconds,
-              items: [
-                for (final s in pauseChoices)
-                  DropdownMenuItem(
-                    value: s,
-                    child: Text(s == 0 ? 'No pause' : '$s seconds'),
-                  ),
-              ],
-              onChanged: (s) => setState(() => _pauseSeconds = s ?? 0),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Pause between challenges'),
+              subtitle: const Text('The alarm rings quieter during the pause.'),
+              trailing: DropdownButton<int>(
+                key: const Key('pause-dropdown'),
+                value: _pauseSeconds,
+                items: [
+                  for (final s in pauseChoices)
+                    DropdownMenuItem(
+                      value: s,
+                      child: Text(s == 0 ? 'No pause' : '$s seconds'),
+                    ),
+                ],
+                onChanged: (s) => setState(() => _pauseSeconds = s ?? 0),
+              ),
             ),
+          ] else
+            const Text('None: this alarm is a reminder only.'),
+          const _SectionTitle(Icons.repeat, 'Series'),
+          _seriesSection(),
+          const _SectionTitle(Icons.photo_camera_outlined, 'Reminder'),
+          _reminderSection(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Heading of one tool in the editor: When, Challenges, Series, Reminder.
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.icon, this.title);
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(top: 24, bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(color: color),
           ),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider()),
         ],
       ),
     );
