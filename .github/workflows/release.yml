@@ -50,7 +50,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "ByeByeSleep-${GITHUB_REF_NAME}.apk"
           (cd android && ./gradlew :wear:assembleRelease -PwatchVersionCode="${{ github.run_number }}")
           cp build/wear/outputs/apk/release/wear-release.apk "ByeByeSleep-watch-${GITHUB_REF_NAME}.apk"
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: |
             ByeByeSleep-${{ github.ref_name }}.apk
@@ -82,6 +82,6 @@ jobs:
           flutter build ios --release --no-codesign --build-name "${GITHUB_REF_NAME#v}" --build-number "${{ github.run_number }}"
           mkdir -p Payload && cp -R build/ios/iphoneos/Runner.app Payload/
           zip -qr "ByeByeSleep-${GITHUB_REF_NAME}.ipa" Payload
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: ByeByeSleep-${{ github.ref_name }}.ipa
