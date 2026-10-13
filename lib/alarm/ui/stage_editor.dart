@@ -7,7 +7,7 @@ import '../../challenges/core/challenge_id.dart';
 import '../../challenges/registry.dart';
 import '../stage_config.dart';
 
-const maxStages = 6;
+const maxStages = 8;
 
 /// Ordered list of an alarm's stages: reorder, set difficulty, add, remove,
 /// and practise each one.
@@ -39,17 +39,34 @@ class StageEditor extends StatelessWidget {
   Future<void> _add(BuildContext context) async {
     final picked = await showModalBottomSheet<ChallengeId>(
       context: context,
-      builder: (context) => ListView(
-        shrinkWrap: true,
-        children: [
-          for (final id in ChallengeId.values)
-            ListTile(
-              key: Key('pick-${id.name}'),
-              title: Text(definitionFor(id).title),
-              subtitle: Text(definitionFor(id).instructions),
-              onTap: () => Navigator.of(context).pop(id),
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.8,
+        maxChildSize: 0.95,
+        builder: (context, controller) => ListView(
+          controller: controller,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Add a challenge',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
-        ],
+            for (final id in ChallengeId.values)
+              ListTile(
+                key: Key('pick-${id.name}'),
+                title: Text(definitionFor(id).title),
+                subtitle: Text(definitionFor(id).instructions),
+                trailing: definitionFor(id).setup != null
+                    ? const Text('needs setup')
+                    : null,
+                onTap: () => Navigator.of(context).pop(id),
+              ),
+          ],
+        ),
       ),
     );
     if (picked != null) onChanged([...stages, StageConfig(picked)]);
@@ -86,17 +103,26 @@ class StageEditor extends StatelessWidget {
                           CircleAvatar(radius: 12, child: Text('${i + 1}')),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              definitionFor(stages[i].challenge).title,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(definitionFor(stages[i].challenge).title),
+                                // Under the title: on a phone a chip in the
+                                // row pushed the buttons off the edge.
+                                if (!definitionFor(stages[i].challenge)
+                                    .isSetUp(stages[i].params))
+                                  Text(
+                                    'Needs setup',
+                                    key: Key('needs-setup-$i'),
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .error,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                          if (!definitionFor(stages[i].challenge)
-                              .isSetUp(stages[i].params))
-                            Chip(
-                              key: Key('needs-setup-$i'),
-                              label: const Text('Needs setup'),
-                              visualDensity: VisualDensity.compact,
-                            ),
                           if (definitionFor(stages[i].challenge).setup != null)
                             IconButton(
                               key: Key('setup-stage-$i'),
@@ -150,21 +176,22 @@ class StageEditor extends StatelessWidget {
               ),
           ],
         ),
-        Wrap(
-          children: [
-            TextButton.icon(
-              key: const Key('use-routine'),
-              onPressed: _useRoutine,
-              icon: const Icon(Icons.wb_sunny_outlined),
-              label: const Text('Use wake-up routine'),
-            ),
-          ],
-        ),
-        TextButton.icon(
+        const SizedBox(height: 8),
+        FilledButton.tonalIcon(
           key: const Key('add-stage'),
           onPressed: stages.length < maxStages ? () => _add(context) : null,
           icon: const Icon(Icons.add),
-          label: const Text('Add stage'),
+          label: Text(
+            stages.length < maxStages
+                ? 'Add challenge'
+                : 'Up to $maxStages challenges (remove one to add)',
+          ),
+        ),
+        TextButton.icon(
+          key: const Key('use-routine'),
+          onPressed: _useRoutine,
+          icon: const Icon(Icons.wb_sunny_outlined),
+          label: const Text('Replace with the wake-up routine'),
         ),
       ],
     );

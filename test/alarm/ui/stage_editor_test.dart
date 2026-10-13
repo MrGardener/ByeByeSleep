@@ -64,6 +64,55 @@ void main() {
     expect(stages.last.challenge, ChallengeId.stroopTap);
   });
 
+  testWidgets('editor_addsAnyChallengeOnAPhoneSizedScreen', (tester) async {
+    // Pixel 10 Pro: about 412×915 logical pixels.
+    await tester.binding.setSurfaceSize(const Size(412, 915));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final fake = FakeAlarmPlatform();
+    await pumpApp(tester, fake);
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    for (final id in [ChallengeId.charger, ChallengeId.barcode]) {
+      await tester.ensureVisible(find.byKey(const Key('add-stage')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('add-stage')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(Key('pick-${id.name}')),
+        100,
+        scrollable: find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.ensureVisible(find.byKey(Key('pick-${id.name}')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key('pick-${id.name}')));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    if (find.byKey(const Key('preflight-save')).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(const Key('preflight-save')));
+      await tester.pumpAndSettle();
+    }
+    final stages = fake.stored.values.single.stages;
+    expect(stages.map((s) => s.challenge).skip(4), [
+      ChallengeId.charger,
+      ChallengeId.barcode,
+    ]);
+  });
+
+  testWidgets('editor_canAddAfterTheWakeUpRoutine', (tester) async {
+    await openNewAlarm(tester, FakeAlarmPlatform());
+    await tester.tap(find.byKey(const Key('use-routine')));
+    await tester.pumpAndSettle();
+    final add = tester.widget<ButtonStyleButton>(
+      find.byKey(const Key('add-stage')),
+    );
+    expect(add.onPressed, isNotNull);
+  });
+
   testWidgets('editor_removeStageIsSaved', (tester) async {
     final fake = FakeAlarmPlatform();
     await openNewAlarm(tester, fake);
@@ -98,7 +147,7 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: StageEditor(
-              stages: List.filled(6, const StageConfig(ChallengeId.stroopTap)),
+              stages: List.filled(maxStages, const StageConfig(ChallengeId.stroopTap)),
               onChanged: (_) {},
             ),
           ),

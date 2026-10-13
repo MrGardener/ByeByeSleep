@@ -34,6 +34,8 @@ void main() {
       100,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.byKey(const Key('pause-dropdown')));
+    await tester.pumpAndSettle();
     expect(find.text('No pause'), findsOneWidget);
     await tester.tap(find.byKey(const Key('pause-dropdown')));
     await tester.pumpAndSettle();
