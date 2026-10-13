@@ -4,6 +4,7 @@ import 'package:byebyesleep/challenges/core/nfc.dart';
 import 'package:byebyesleep/challenges/core/types.dart';
 import 'package:byebyesleep/game/worlds/compass_temple.dart';
 import 'package:byebyesleep/game/worlds/ghost_hide.dart';
+import 'package:byebyesleep/game/worlds/labyrinth.dart';
 import 'package:byebyesleep/game/worlds/rune_hunt.dart';
 import 'package:byebyesleep/game/worlds/sky_tower.dart';
 import 'package:byebyesleep/game/worlds/solar_garden.dart';
@@ -60,6 +61,31 @@ void main() {
     }
     expect(passed, 1);
     expect(find.text('In full bloom!'), findsOneWidget);
+  });
+
+  testWidgets('Solar Garden stops growing while the app is in the background', (
+    tester,
+  ) async {
+    await pump(tester, SolarGardenWorld(args: args));
+    env.luxController.add(400);
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    for (var i = 0; i < 60; i++) {
+      clock += const Duration(milliseconds: 200);
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    expect(passed, 0);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Labyrinth with a silent accelerometer is unavailable', (
+    tester,
+  ) async {
+    await pump(tester, LabyrinthWorld(args: args));
+    await tester.pump(const Duration(seconds: 3));
+    expect(unavailable, 1);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('a silent sensor reports the world unavailable', (tester) async {

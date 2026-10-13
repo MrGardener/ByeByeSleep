@@ -77,3 +77,7 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 60 | Practice → Compass runes, then Sensor Quest → Compass Temple. | Clear steps on screen; arrow calm (no twitching); "face east" style targets; ring fills while holding; a short wobble does not restart it. |
 | 61 | Practice → Tilt maze, levels 2–4. | The ball rolls briskly and feels heavier; still never passes through walls. |
 | 62 | Watch app installed: Practice → Wrist workout, then Walk with your watch. | Watch screen opens by itself showing ♥, steps; big arm swings count (small wrist moves don't); steps count on the watch even with the phone left still. |
+| 63 | Alarm with "Check I'm awake: After 5 min"; let it ring, finish, Stop. | 5 min later it rings again showing "Still awake?" and one Colour words; Stop ends it; no further check after that. Reboot during the 5 min: the check still rings. |
+| 64 | Add "Climb the stairs"; let it ring downstairs. | "Measuring the ground floor" 3 s, then climbing one floor and waiting there passes. |
+| 65 | Retake a reminder photo, save; delete an alarm with photos. | Old photo files are removed (Settings → Apps → ByeByeSleep → storage stays small). |
+| 66 | Sensor Quest → Solar Garden in bright light, lock the phone 30 s, unlock. | The plant did not grow while locked. |

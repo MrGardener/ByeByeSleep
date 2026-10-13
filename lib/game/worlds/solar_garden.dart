@@ -17,6 +17,9 @@ class SolarGarden {
   bool get passed => grown >= goal;
   double get progress => grown.inMicroseconds / goal.inMicroseconds;
 
+  /// The app went to the background: the time away does not count.
+  void pause() => _last = null;
+
   void update(double lux, Duration now) {
     final dt = now - (_last ?? now);
     _last = now;
@@ -41,7 +44,18 @@ class SolarGardenWorld extends ConsumerStatefulWidget {
   ConsumerState<SolarGardenWorld> createState() => _SolarGardenState();
 }
 
-class _SolarGardenState extends ConsumerState<SolarGardenWorld> {
+class _SolarGardenState extends ConsumerState<SolarGardenWorld>
+    with WidgetsBindingObserver {
+  bool _away = false;
+
+  // The light sensor only reports changes; without this, the last bright
+  // reading kept the plant growing while the phone was locked.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _away = state != AppLifecycleState.resumed;
+    if (_away) _garden.pause();
+  }
+
   final _garden = SolarGarden();
   late final Watchdog _watchdog;
   StreamSubscription<double>? _sub;
@@ -52,6 +66,7 @@ class _SolarGardenState extends ConsumerState<SolarGardenWorld> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _watchdog = Watchdog(() => widget.args.onUnavailable?.call());
     _sub = ref.read(envSensorProvider).lux.listen((lux) {
       _watchdog.heard();
@@ -63,7 +78,7 @@ class _SolarGardenState extends ConsumerState<SolarGardenWorld> {
 
   void _feed() {
     final lux = _lux;
-    if (lux == null || !mounted) return;
+    if (lux == null || !mounted || _away) return;
     _garden.update(lux, ref.read(gameClockProvider)());
     setState(() {});
     if (_garden.passed && !_reported) {
@@ -74,6 +89,7 @@ class _SolarGardenState extends ConsumerState<SolarGardenWorld> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _watchdog.cancel();
     _sub?.cancel();
     _timer?.cancel();
