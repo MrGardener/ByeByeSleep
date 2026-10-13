@@ -1,6 +1,7 @@
 package com.mrgardener.byebyesleep.alarm
 
 import java.time.ZonedDateTime
+import kotlin.math.abs
 
 interface AlarmRepository {
     fun all(): List<AlarmSpec>
@@ -37,7 +38,10 @@ class AlarmLifecycle(
     fun onFired(id: Int): Boolean {
         val spec = repo.get(id) ?: return false
         val pending = spec.followUpAtMs
-        val check = pending != null && pending <= clock().toInstant().toEpochMilli() + 60_000
+        // Only the ring at the check time is the check: a marker left over
+        // (phone off at that time, scheduling failed) must never make the
+        // next real alarm the easy one.
+        val check = pending != null && abs(clock().toInstant().toEpochMilli() - pending) <= CHECK_WINDOW_MS
         if (spec.repeatDays.isEmpty()) {
             repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null, followUpAtMs = null))
             scheduler.cancel(id)
@@ -67,12 +71,16 @@ class AlarmLifecycle(
     fun skipNext(id: Int) {
         val spec = repo.get(id)?.takeIf { it.enabled } ?: return
         if (spec.repeatDays.isEmpty() || spec.atMs != null) {
-            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null))
+            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null, followUpAtMs = null))
             scheduler.cancel(id)
             return
         }
         val skipped = NextTrigger.compute(spec, clock())
-        val saved = spec.copy(snoozeUntilMs = null, skipUntilMs = skipped.toInstant().toEpochMilli())
+        val saved = spec.copy(
+            snoozeUntilMs = null,
+            skipUntilMs = skipped.toInstant().toEpochMilli(),
+            followUpAtMs = null,
+        )
         repo.put(saved)
         scheduler.schedule(id, NextTrigger.compute(saved, skipped).toInstant().toEpochMilli())
     }
@@ -98,7 +106,10 @@ class AlarmLifecycle(
     /** After boot, time change or app update: a future snooze wins over the regular time. */
     fun rescheduleAll() {
         val nowMs = clock().toInstant().toEpochMilli()
-        for (spec in repo.all()) {
+        for (stored in repo.all()) {
+            // A check whose time passed while the phone was off is dropped.
+            val spec = stored.followUpAtMs?.takeIf { it < nowMs - CHECK_WINDOW_MS }
+                ?.let { stored.copy(followUpAtMs = null).also(repo::put) } ?: stored
             // One failing alarm (e.g. SecurityException) must not stop the others.
             runCatching {
                 val snooze = spec.snoozeUntilMs
@@ -115,6 +126,11 @@ class AlarmLifecycle(
                 }
             }
         }
+    }
+
+    private companion object {
+        /** A ring this close to the check time is the check. */
+        const val CHECK_WINDOW_MS = 5 * 60_000L
     }
 
     private fun scheduleRegular(spec: AlarmSpec): Long? {

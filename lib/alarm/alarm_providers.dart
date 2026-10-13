@@ -190,11 +190,21 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
   Future<void> split(int mainId) async {
     final current = await future;
     final main = current.firstWhere((a) => a.id == mainId);
-    for (final child in current.where((a) => a.parentId == mainId)) {
-      await save(child.copyWith(parentId: () => null));
+    // Several saves: let go of photos only once all of them succeeded, so
+    // a failure half way cannot delete photos the editor still shows.
+    _holdPhotos = true;
+    try {
+      for (final child in current.where((a) => a.parentId == mainId)) {
+        await save(child.copyWith(parentId: () => null));
+      }
+      await save(main.copyWith(series: () => null));
+    } finally {
+      _holdPhotos = false;
     }
-    await save(main.copyWith(series: () => null));
+    _prunePhotos();
   }
+
+  bool _holdPhotos = false;
 
   /// Removes the alarm and its series (the series first, the main alarm
   /// last). On a failure everything is put back and the error rethrown.
@@ -214,7 +224,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
   /// Never after a failure, when the list may be incomplete.
   void _prunePhotos() {
     final alarms = state.value;
-    if (alarms == null) return;
+    if (alarms == null || _holdPhotos) return;
     ref
         .read(photoStoreProvider)
         .keepOnly(photosInUse(alarms))

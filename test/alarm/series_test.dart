@@ -57,6 +57,19 @@ void main() {
     expect(k.reminder?.caption, 'Keys');
   });
 
+  test('only the main alarm checks you are awake; the series re-checks', () {
+    final kids = seriesChildren(
+      Alarm(
+        id: 4,
+        hour: 7,
+        minute: 0,
+        followUpMinutes: 5,
+        series: const SeriesConfig(count: 3, everyMinutes: 10),
+      ),
+    );
+    expect(kids.every((k) => k.followUpMinutes == 0), isTrue);
+  });
+
   test('follow-ups: same challenges or one quick challenge', () {
     final same = seriesChildren(
       main(series: const SeriesConfig(count: 2, everyMinutes: 5)),

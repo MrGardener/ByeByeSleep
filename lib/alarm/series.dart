@@ -149,7 +149,8 @@ Alarm _child(Alarm main, SeriesConfig series, int k, int minutes) {
     stages: series.followUp == FollowUp.quick ? quickFollowUp : main.stages,
     pauseSeconds: main.pauseSeconds,
     reminder: main.reminder,
-    followUpMinutes: main.followUpMinutes,
+    // The series itself re-checks you; a check per alarm would make checks
+    // and series alarms ring over each other.
     parentId: main.id,
   );
 }
