@@ -62,3 +62,6 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 45 | **Rune Hunt**: touch 3 different NFC tags/cards (bank card works). | Same tag twice counts once; three distinct complete. |
 | 46 | Close and reopen the app. | Completed worlds stay "Done". |
 | 47 | Alarm list → dumbbell icon (**Practice**): run Broken calculator, then Walk. | Each challenge runs without an alarm; Walk asks for its setup first; pass shows "Passed!" and "Again". |
+| 48 | While an alarm rings, tap **Emergency stop** (bottom of the ring screen) before finishing any challenge. | Checklist of 4 steps. Press a volume key (alarm volume does not change), then from Quick Settings turn Wi-Fi off, Bluetooth off, airplane mode on — any order; each ticks itself. Red "Emergency stop" appears only after all 4 and stops the alarm. |
+| 49 | Photo match: set it up, then at ring time retake the photo from roughly the same spot by hand. | Reference photo shown in the corner (tap = large). Same spot passes (typically 80–95%); a different room shows "Not quite — N% match" well below 60%. |
+| 50 | Alarm editor on the phone: Add challenge → pick from the bottom of the list (Charger, Barcode); add up to 8. | Picker is tall and scrolls; every challenge can be added; at 8 the button says to remove one first. No row is cut off at the right edge. |

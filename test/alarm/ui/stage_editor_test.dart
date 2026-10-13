@@ -147,7 +147,10 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: StageEditor(
-              stages: List.filled(maxStages, const StageConfig(ChallengeId.stroopTap)),
+              stages: List.filled(
+                maxStages,
+                const StageConfig(ChallengeId.stroopTap),
+              ),
               onChanged: (_) {},
             ),
           ),

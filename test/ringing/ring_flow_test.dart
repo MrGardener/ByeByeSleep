@@ -10,12 +10,14 @@ import 'package:byebyesleep/challenges/core/capabilities.dart';
 import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
+import 'package:byebyesleep/ringing/emergency.dart';
 import 'package:byebyesleep/ringing/safety_exit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'emergency_test.dart' show FakeEmergencySource;
 import '../support/challenge_solvers.dart';
 import '../support/fake_alarm_platform.dart';
 import '../support/fake_env_sensors.dart';
@@ -34,6 +36,7 @@ void main() {
   late FakeAlarmPlatform fake;
   late DateTime now;
   late int finished;
+  late FakeEmergencySource emergency;
 
   Future<void> pumpRing(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(500, 1000));
@@ -46,6 +49,7 @@ void main() {
           envSensorProvider.overrideWithValue(FakeEnvSensors()),
           extraCapabilitiesProvider.overrideWithValue(const []),
           chargeSourceProvider.overrideWithValue(BrokenCharge()),
+          emergencySourceProvider.overrideWithValue(emergency),
         ],
         child: MaterialApp(
           home: RingScreen(
@@ -69,6 +73,7 @@ void main() {
   }
 
   setUp(() {
+    emergency = FakeEmergencySource();
     now = DateTime(2026, 10, 12, 7);
     finished = 0;
     fake = FakeAlarmPlatform(
@@ -116,6 +121,25 @@ void main() {
     expect(find.byKey(const Key('breather')), findsNothing);
     expect(fake.calls, isNot(contains('setRingLevel:0.2')));
     expect(find.text('Stage 2 of 2'), findsOneWidget);
+  });
+
+  testWidgets('ringFlow_emergencyProtocolStopsAtAnyTime', (tester) async {
+    await pumpRing(tester);
+    expect(find.byKey(const Key('stop')), findsNothing);
+    await tester.tap(find.byKey(const Key('emergency')));
+    await tester.pumpAndSettle();
+    emergency.presses.add(null);
+    emergency.state = const RadioState(
+      wifiOn: false,
+      bluetoothOn: false,
+      airplaneOn: true,
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('emergency-stop')));
+    await tester.pumpAndSettle();
+    expect(fake.calls, contains('stopRinging'));
+    expect(finished, 1);
   });
 
   testWidgets('ringFlow_resumesAtSavedStage', (tester) async {
