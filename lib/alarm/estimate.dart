@@ -18,6 +18,7 @@ const _typical = <ChallengeId, (int, int)>{
   ChallengeId.barcode: (15, 60),
   ChallengeId.charger: (15, 60),
   ChallengeId.heartRate: (60, 180),
+  ChallengeId.compass: (20, 90),
 };
 
 /// Challenges whose difficulty changes how long they take.
