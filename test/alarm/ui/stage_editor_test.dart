@@ -31,6 +31,12 @@ void main() {
     }
   });
 
+  testWidgets('editor_showsTheTimeToTurnOff', (tester) async {
+    await openNewAlarm(tester, FakeAlarmPlatform());
+    expect(find.byKey(const Key('estimate')), findsOneWidget);
+    expect(find.textContaining('min to turn off'), findsWidgets);
+  });
+
   testWidgets('editor_cannotRemoveLastStage', (tester) async {
     var changed = <StageConfig>[];
     await tester.pumpWidget(

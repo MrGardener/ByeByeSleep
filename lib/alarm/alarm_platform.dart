@@ -100,6 +100,12 @@ abstract class AlarmPlatform {
   /// Snoozes a ringing alarm; returns the snooze trigger (epoch ms).
   Future<int> snooze(int id, int minutes);
 
+  /// Skips the alarm's next ring (a one-shot alarm is switched off).
+  Future<void> skipNext(int id);
+
+  /// Alarms ringing right now (empty when none).
+  Future<List<int>> ringingAlarmIds();
+
   Future<PermissionStatus> permissions();
 
   Future<void> openSettings(PermissionKind kind);
@@ -152,6 +158,15 @@ class MethodChannelAlarmPlatform implements AlarmPlatform {
 
   @override
   Future<void> stopRinging() => _invoke<void>('stopRinging');
+
+  @override
+  Future<void> skipNext(int id) => _invoke<void>('skipNext', {'id': id});
+
+  @override
+  Future<List<int>> ringingAlarmIds() async => [
+    for (final id in await _invoke<List<Object?>>('ringingAlarmIds') ?? [])
+      (id! as num).toInt(),
+  ];
 
   @override
   Future<int> snooze(int id, int minutes) async =>

@@ -39,4 +39,13 @@ class PreflightTest {
         assertEquals(at(2026, 10, 12, 21, 0), Preflight.nextCheck(at(2026, 10, 12, 20, 59)))
         assertEquals(at(2026, 10, 13, 21, 0), Preflight.nextCheck(at(2026, 10, 12, 21, 0)))
     }
+
+    @Test fun problems_reportsASeriesOnceForItsMainAlarm() {
+        val main = spec(7, 0).copy(stagesJson = photoNoSetup, extrasJson = """{"series":{"count":3}}""")
+        val child = spec(7, 5).copy(id = 101, stagesJson = photoNoSetup, extrasJson = """{"parent":1}""")
+        assertEquals(
+            listOf("The 07:00 alarm: Photo match needs setup."),
+            Preflight.problems(listOf(main, child), true, now),
+        )
+    }
 }

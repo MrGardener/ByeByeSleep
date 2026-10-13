@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_platform.dart';
+import 'package:flutter/services.dart';
 
 /// In-memory [AlarmPlatform] that records calls as "method[:args]" strings.
 class FakeAlarmPlatform implements AlarmPlatform {
@@ -26,10 +27,24 @@ class FakeAlarmPlatform implements AlarmPlatform {
   /// When set, upsert/delete/snooze throw this (simulates a native failure).
   Object? failWith;
 
+  /// When set, the call whose record (e.g. 'upsert:103') matches fails once.
+  bool Function(String call)? failOn;
+
+  /// Ids reported as ringing right now.
+  List<int> ringing = [];
+
   void _maybeFail() {
     final f = failWith;
     if (f != null) throw f;
+    final on = failOn;
+    if (on != null && on(calls.last)) {
+      failOn = null;
+      throw PlatformException(code: 'fake', message: 'failed ${calls.last}');
+    }
   }
+
+  @override
+  Future<List<int>> ringingAlarmIds() async => ringing;
 
   @override
   Future<bool> isSupported() async => supported;
@@ -48,6 +63,12 @@ class FakeAlarmPlatform implements AlarmPlatform {
     _maybeFail();
     stored[alarm.id] = alarm;
     return alarm.enabled ? 1 : null;
+  }
+
+  @override
+  Future<void> skipNext(int id) async {
+    calls.add('skipNext:$id');
+    _maybeFail();
   }
 
   @override

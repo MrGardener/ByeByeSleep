@@ -1,5 +1,6 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/guard.dart';
+import 'package:byebyesleep/alarm/series.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
 import 'package:flutter/material.dart';
@@ -193,5 +194,89 @@ void main() {
     await tester.pumpAndSettle();
     expect(auth.prompts, 1);
     expect(fake.stored[1]!.repeatDays, {1, 2});
+  });
+
+  group('series', () {
+    // Main 07:20 ending a series of 5 every 10 min: 06:40, 06:50, 07:00, 07:10.
+    // At 06:45 the main alarm is 35 min away, the 06:50 one only 5.
+    final main = Alarm(
+      id: 1,
+      hour: 7,
+      minute: 20,
+      repeatDays: {1},
+      series: const SeriesConfig(
+        count: 5,
+        everyMinutes: 10,
+        direction: SeriesDirection.before,
+      ),
+    );
+
+    Future<(FakeAlarmPlatform, FakeAuthenticator)> pumpSeries(
+      WidgetTester tester,
+    ) async {
+      final fake = FakeAlarmPlatform(seed: [main, ...seriesChildren(main)]);
+      final auth = FakeAuthenticator(false);
+      await tester.binding.setSurfaceSize(const Size(500, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpApp(
+        tester,
+        fake,
+        extraOverrides: [
+          authenticatorProvider.overrideWithValue(auth),
+          nowProvider.overrideWithValue(() => monday0645),
+        ],
+      );
+      return (fake, auth);
+    }
+
+    testWidgets('deleting a main alarm whose series rings soon is guarded', (
+      tester,
+    ) async {
+      final (fake, auth) = await pumpSeries(tester);
+      await tester.drag(
+        find.byKey(const Key('alarm-tile-1')),
+        const Offset(-600, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(auth.prompts, 1);
+      expect(fake.stored, hasLength(5));
+    });
+
+    testWidgets('switching it off is guarded too', (tester) async {
+      final (fake, auth) = await pumpSeries(tester);
+      await tester.tap(find.byKey(const Key('alarm-switch-1')));
+      await tester.pumpAndSettle();
+      expect(auth.prompts, 1);
+      expect(fake.stored.values.every((a) => a.enabled), isTrue);
+    });
+
+    testWidgets('turning the series off is guarded', (tester) async {
+      final (fake, auth) = await pumpSeries(tester);
+      await tester.tap(find.text('07:20'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('series-switch')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('series-switch')));
+      await tester.tap(find.byKey(const Key('save-alarm')));
+      await tester.pumpAndSettle();
+      expect(auth.prompts, 1);
+      expect(fake.stored, hasLength(5));
+    });
+
+    test('groupWeakens sees a removed or later series alarm', () {
+      final kids = seriesChildren(main);
+      expect(groupWeakens([main, ...kids], [main], monday0645), isTrue);
+      expect(
+        groupWeakens([main, ...kids], [main, ...kids], monday0645),
+        isFalse,
+      );
+      final later = [
+        for (final k in kids) k.copyWith(minute: (k.minute + 5) % 60),
+      ];
+      expect(
+        groupWeakens([main, ...kids], [main, ...later], monday0645),
+        isTrue,
+      );
+    });
   });
 }

@@ -53,6 +53,8 @@ final nowProvider = Provider<DateTime Function()>((_) => DateTime.now);
 /// Next time [a] rings after [now] (local time), or null when disabled.
 DateTime? nextRing(Alarm a, DateTime now) {
   if (!a.enabled) return null;
+  final at = a.onceAt;
+  if (at != null) return at.isAfter(now) ? at : null;
   for (var d = 0; d <= 7; d++) {
     final day = DateTime(now.year, now.month, now.day + d, a.hour, a.minute);
     if (a.repeatDays.isNotEmpty && !a.repeatDays.contains(day.weekday)) {
@@ -79,9 +81,29 @@ bool weakens(Alarm before, Alarm after, DateTime now) {
   return will == null || will.isAfter(was);
 }
 
-/// True when the change may go ahead: not guarded, or confirmed.
-Future<bool> confirmWeakening(WidgetRef ref, Alarm a, String reason) async {
-  if (!needsGuard(a, ref.read(nowProvider)())) return true;
+/// Like [weakens] for a main alarm together with its series ([before] into
+/// [after], matched by id; a missing id was deleted): true when any alarm
+/// that rings within the guard window would ring later or not at all.
+bool groupWeakens(List<Alarm> before, List<Alarm> after, DateTime now) {
+  final byId = {for (final a in after) a.id: a};
+  for (final b in before) {
+    if (!needsGuard(b, now)) continue;
+    final a = byId[b.id];
+    if (a == null || weakens(b, a, now)) return true;
+  }
+  return false;
+}
+
+/// True when the change may go ahead: not guarded, or confirmed. [series]
+/// are the alarms of [a]'s series, which go with it.
+Future<bool> confirmWeakening(
+  WidgetRef ref,
+  Alarm a,
+  String reason, {
+  List<Alarm> series = const [],
+}) async {
+  final now = ref.read(nowProvider)();
+  if (![a, ...series].any((x) => needsGuard(x, now))) return true;
   try {
     return await ref.read(authenticatorProvider).confirm(reason);
   } catch (_) {

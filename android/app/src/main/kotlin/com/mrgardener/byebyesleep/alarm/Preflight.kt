@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import org.json.JSONArray
+import org.json.JSONObject
 
 /** Evening check (spec §6.1): will tomorrow's alarms work? Pure, JVM-tested. */
 object Preflight {
@@ -17,7 +18,11 @@ object Preflight {
     fun problems(specs: List<AlarmSpec>, permissionsOk: Boolean, now: ZonedDateTime): List<String> {
         val problems = mutableListOf<String>()
         if (!permissionsOk) problems += "Some permissions the alarm needs are off."
-        for (spec in specs.filter { it.enabled }) {
+        // A series shares its main alarm's setup: report it once, for the main alarm.
+        val isSeriesChild = { s: AlarmSpec ->
+            runCatching { JSONObject(s.extrasJson).has("parent") }.getOrDefault(false)
+        }
+        for (spec in specs.filter { it.enabled && !isSeriesChild(it) }) {
             if (Duration.between(now, NextTrigger.compute(spec, now)) > Duration.ofHours(24)) continue
             val stages = runCatching { JSONArray(spec.stagesJson) }.getOrNull() ?: continue
             for (i in 0 until stages.length()) {

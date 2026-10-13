@@ -17,7 +17,9 @@ void main() {
     expect(find.byType(AlarmListScreen), findsOneWidget);
   });
 
-  testWidgets('alarm list opens Sensor Quest and Practice', (tester) async {
+  testWidgets('home tabs switch between alarms, Sensor Quest and Practice', (
+    tester,
+  ) async {
     await pumpApp(
       tester,
       FakeAlarmPlatform(),
@@ -28,13 +30,15 @@ void main() {
         ),
       ],
     );
-    await tester.tap(find.byKey(const Key('open-quest')));
+    // One tab per tool, at the bottom of the home screen.
+    await tester.tap(find.byKey(const Key('tab-quest')));
     await tester.pumpAndSettle();
     expect(find.byType(QuestScreen), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('open-practice')));
+    await tester.tap(find.byKey(const Key('tab-practice')));
     await tester.pumpAndSettle();
     expect(find.byType(PracticeScreen), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tab-alarms')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlarmListScreen), findsOneWidget);
   });
 }

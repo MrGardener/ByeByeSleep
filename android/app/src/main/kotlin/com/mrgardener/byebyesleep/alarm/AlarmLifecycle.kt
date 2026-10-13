@@ -22,7 +22,7 @@ class AlarmLifecycle(
 ) {
     /** Saves [spec] and returns its next trigger (epoch ms), or null if disabled. */
     fun upsert(spec: AlarmSpec): Long? {
-        val saved = spec.copy(snoozeUntilMs = null)
+        val saved = spec.copy(snoozeUntilMs = null, skipUntilMs = null)
         repo.put(saved)
         scheduler.cancel(saved.id)
         return scheduleRegular(saved)
@@ -36,13 +36,30 @@ class AlarmLifecycle(
     fun onFired(id: Int) {
         val spec = repo.get(id) ?: return
         if (spec.repeatDays.isEmpty()) {
-            repo.put(spec.copy(enabled = false, snoozeUntilMs = null))
+            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null))
             scheduler.cancel(id)
         } else {
-            val cleared = spec.copy(snoozeUntilMs = null)
+            val cleared = spec.copy(snoozeUntilMs = null, skipUntilMs = null)
             repo.put(cleared)
             scheduleRegular(cleared)
         }
+    }
+
+    /**
+     * Skips the alarm's next ring ("skip the rest of the series today"): a one-shot
+     * alarm is switched off, a repeating one rings again at the occurrence after.
+     */
+    fun skipNext(id: Int) {
+        val spec = repo.get(id)?.takeIf { it.enabled } ?: return
+        if (spec.repeatDays.isEmpty() || spec.atMs != null) {
+            repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null))
+            scheduler.cancel(id)
+            return
+        }
+        val skipped = NextTrigger.compute(spec, clock())
+        val saved = spec.copy(snoozeUntilMs = null, skipUntilMs = skipped.toInstant().toEpochMilli())
+        repo.put(saved)
+        scheduler.schedule(id, NextTrigger.compute(saved, skipped).toInstant().toEpochMilli())
     }
 
     /** Returns the snooze trigger (epoch ms). */
@@ -70,8 +87,14 @@ class AlarmLifecycle(
             // One failing alarm (e.g. SecurityException) must not stop the others.
             runCatching {
                 val snooze = spec.snoozeUntilMs
+                val skip = spec.skipUntilMs
                 when {
                     snooze != null && snooze > nowMs -> scheduler.schedule(spec.id, snooze)
+                    spec.enabled && skip != null && skip > nowMs -> scheduler.schedule(
+                        spec.id,
+                        NextTrigger.compute(spec, ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(skip), clock().zone))
+                            .toInstant().toEpochMilli(),
+                    )
                     spec.enabled -> scheduleRegular(spec)
                     else -> scheduler.cancel(spec.id)
                 }
@@ -81,6 +104,17 @@ class AlarmLifecycle(
 
     private fun scheduleRegular(spec: AlarmSpec): Long? {
         if (!spec.enabled) return null
+        val pinned = spec.atMs
+        if (pinned != null) {
+            // A pinned one-shot rings at that instant or, once past, not at all.
+            if (pinned > clock().toInstant().toEpochMilli()) {
+                scheduler.schedule(spec.id, pinned)
+                return pinned
+            }
+            repo.put(spec.copy(enabled = false))
+            scheduler.cancel(spec.id)
+            return null
+        }
         val at = NextTrigger.compute(spec, clock()).toInstant().toEpochMilli()
         scheduler.schedule(spec.id, at)
         return at

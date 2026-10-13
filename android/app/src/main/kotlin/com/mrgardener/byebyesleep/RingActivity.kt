@@ -24,6 +24,14 @@ class RingActivity : FlutterActivity() {
 
     override fun getInitialRoute(): String = "/ring/$alarmId"
 
+    // A new ring while this screen is still open (e.g. on the reminder after
+    // Stop): keep its intent, so a recreated screen shows the new alarm. The
+    // Flutter side notices the new ring itself (lib/ringing/after_stop.dart).
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
     private val envSensors = EnvSensorsChannel(this)
     private val emergency = EmergencyChannel(this)
 
