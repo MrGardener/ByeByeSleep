@@ -36,6 +36,7 @@ combines these tools, in labelled sections of the editor:
 | Challenges | What you must do before Stop/Snooze appear, with an estimate ("About 2–5 min to turn off") and an optional pause between challenges. |
 | Series | One alarm that rings N times, every M minutes, starting or ending at its time. The others are listed under it and follow its changes; follow-ups need the same challenges or one quick sum. After Stop you can skip the rest of the series today. "Split into separate alarms" makes them independent. |
 | Reminder | A photo and caption of what not to forget, shown while ringing and full screen after Stop. "Reminder only" = no challenges. |
+| Watch | With the ByeByeSleep watch app on a Pixel Watch, "Get your heart going" reads your heart rate live while you take the stairs ([install guide](docs/watch-install.md)). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
 
 ## Challenges

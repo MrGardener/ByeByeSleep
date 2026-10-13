@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Lets the phone find this watch (WatchProtocol.CAPABILITY). -->
+    <string-array name="android_wear_capabilities" translatable="false">
+        <item>byebyesleep_heart_rate</item>
+    </string-array>
+</resources>

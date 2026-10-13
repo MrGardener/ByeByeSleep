@@ -52,7 +52,7 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 35 | Leave such an alarm for tomorrow and wait until 21:00. | Notification "Tomorrow's alarm may not work — tap to fix". |
 | 36 | With an alarm due in under 30 min, switch it off / swipe-delete / change its time. | Fingerprint/PIN prompt; cancelling keeps the alarm unchanged. Over 30 min away: no prompt. |
 | 37 | Tilt maze difficulty 5. | Arrow + "On course"; when the phone turns away from the arrow the ball freezes ("Turn to the arrow!"). |
-| 38 | Alarm list → game-controller icon (**Sensor Quest**). | Map lists 7 worlds; Battery Oracle shows "Play", the rest "Locked" (or "Not on this phone"). |
+| 38 | Alarm list → game-controller icon (**Sensor Quest**). | Map lists 8 worlds; Battery Oracle shows "Play", the rest "Locked" (or "Not on this phone"). |
 | 39 | **Battery Oracle**: guess within 25 of the real level, then (replay) far off. | Status bar hidden while guessing and back afterwards; a near guess shows "World complete!", a far one shows the real level, the accepted range and "Try again". |
 | 40 | **Labyrinth**. | Three mazes (tilt, reversed, turning) in a row, then complete. |
 | 41 | **Compass Temple**: turn on the spot holding the phone flat. | Arrow turns green near each rune direction; 2 s still lights it; 4 runes complete. |
@@ -71,3 +71,5 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 54 | Let a series alarm ring, finish, Stop. | Asks "Skip the rest of this series today?"; Skip → the remaining ones that day do not ring, they ring again next due day. |
 | 55 | Series → "Split into separate alarms". | Warning first; then every alarm is independent (own switch, editable, deletable), same times. |
 | 56 | Reminder: photo + caption "Passport", "Reminder only". Let it ring. | Ring screen shows the reminder card and Stop at once; after Stop a full-screen "Don't forget" with the photo and caption. |
+| 57 | Install the watch app ([docs/watch-install.md](../watch-install.md)); Practice → *Get your heart going* → Start. | The watch opens the heart-rate screen by itself; the phone shows the live bpm, then "stay above N bpm"; walking the stairs fills the bar and passes. Leaving the challenge closes the watch screen. |
+| 58 | Same with the watch off the wrist or out of range. | After about 30 s the challenge is replaced (stage) or "Sensor not answering" (Pulse Run). |

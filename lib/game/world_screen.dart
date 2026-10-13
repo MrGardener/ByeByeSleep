@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../challenges/core/challenge.dart';
+import '../challenges/heart_rate/widget.dart';
 import 'progress_store.dart';
 import 'quest.dart';
 import 'worlds/battery_oracle.dart';
@@ -23,6 +27,14 @@ Widget buildWorld(World w, WorldArgs args) => switch (w) {
   World.ghostHide => GhostHideWorld(args: args),
   World.skyTower => SkyTowerWorld(args: args),
   World.runeHunt => RuneHuntWorld(args: args),
+  World.pulseRun => HeartRateChallenge(
+    args: ChallengeArgs(
+      difficulty: 2,
+      random: Random(),
+      onPassed: args.onPassed,
+      onUnavailable: args.onUnavailable,
+    ),
+  ),
 };
 
 enum _Outcome { playing, won, unavailable }

@@ -8,6 +8,7 @@ import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
 import 'core/types.dart';
+import 'heart_rate/widget.dart';
 import 'photo_match/setup.dart';
 import 'photo_match/widget.dart';
 import 'lights_on/setup.dart';
@@ -101,6 +102,15 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     build: (args) => BarcodeChallenge(args: args),
     setup: setupBarcode,
     isSetUp: (p) => (p['code'] as String?)?.isNotEmpty ?? false,
+  ),
+  ChallengeId.heartRate: ChallengeDefinition(
+    id: ChallengeId.heartRate,
+    title: 'Get your heart going',
+    instructions:
+        'Wear your watch and walk up and down the stairs until your heart '
+        'rate goes up.',
+    requires: (_) => const {SensorKind.heartRate},
+    build: (args) => HeartRateChallenge(args: args),
   ),
   ChallengeId.charger: ChallengeDefinition(
     id: ChallengeId.charger,

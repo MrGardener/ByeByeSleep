@@ -17,6 +17,7 @@ const _typical = <ChallengeId, (int, int)>{
   ChallengeId.nfcTag: (15, 60),
   ChallengeId.barcode: (15, 60),
   ChallengeId.charger: (15, 60),
+  ChallengeId.heartRate: (60, 180),
 };
 
 /// Challenges whose difficulty changes how long they take.
