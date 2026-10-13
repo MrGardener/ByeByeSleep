@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../challenges/core/challenge_id.dart';
 import 'alarm.dart';
+import 'guard.dart' show nextRing;
 import 'stage_config.dart';
 
 /// Something not to forget, shown while ringing and after Stop.
@@ -97,6 +98,9 @@ class SeriesConfig {
   int get hashCode => Object.hash(count, everyMinutes, direction, followUp);
 }
 
+/// Alarm ids must fit the native side's 32-bit Int with room to spare.
+const maxAlarmId = 2000000000;
+
 /// Id of the [k]-th other alarm (1-based) of main alarm [parentId].
 int seriesChildId(int parentId, int k) => parentId * 100 + k;
 
@@ -105,8 +109,10 @@ const quickFollowUp = [
 ];
 
 /// The other alarms of [main]'s series, in ringing order. A child that lands
-/// on the day before or after keeps ringing on the matching days.
-List<Alarm> seriesChildren(Alarm main) {
+/// on the day before or after keeps ringing on the matching days. For a
+/// one-shot main alarm, each child is pinned to the date of the main alarm's
+/// next ring after [now], so the series rings together.
+List<Alarm> seriesChildren(Alarm main, {DateTime? now}) {
   final series = main.series;
   if (series == null) return const [];
   final sign = series.direction == SeriesDirection.after ? 1 : -1;
@@ -116,9 +122,17 @@ List<Alarm> seriesChildren(Alarm main) {
   final offsets = sign > 0
       ? [for (final k in ks) k * series.everyMinutes]
       : [for (final k in ks.reversed) -k * series.everyMinutes];
+  final mainRing = main.repeatDays.isEmpty && now != null
+      ? nextRing(main.copyWith(enabled: true), now)
+      : null;
   return [
     for (var i = 0; i < offsets.length; i++)
-      _child(main, series, i + 1, base + offsets[i]),
+      _child(
+        main,
+        series,
+        i + 1,
+        base + offsets[i],
+      ).copyWith(onceAt: () => mainRing?.add(Duration(minutes: offsets[i]))),
   ];
 }
 

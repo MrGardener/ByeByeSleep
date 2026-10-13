@@ -17,7 +17,7 @@ class AlarmSpecTest {
         val s = full.copy(snoozeUntilMs = null)
         val map = s.toChannelMap()
         assertEquals(listOf(1, 5), map["repeatDays"])
-        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages", "pauseSeconds", "extras"), map.keys)
+        assertEquals(setOf("id", "hour", "minute", "repeatDays", "label", "enabled", "stages", "pauseSeconds", "extras"), map.keys - "atMs")
         assertEquals(s, AlarmSpec.fromChannelMap(map))
     }
 
@@ -53,5 +53,11 @@ class AlarmSpecTest {
         assertEquals(s, AlarmSpec.fromJson(s.toJson()))
         assertEquals(s.extrasJson, s.toChannelMap()["extras"])
         assertEquals(s.copy(snoozeUntilMs = null, skipUntilMs = null), AlarmSpec.fromChannelMap(s.toChannelMap()))
+    }
+
+    @Test fun atMs_roundTrips() {
+        val s = full.copy(snoozeUntilMs = null, atMs = 1_760_000_000_000L)
+        assertEquals(s, AlarmSpec.fromJson(s.toJson()))
+        assertEquals(s, AlarmSpec.fromChannelMap(s.toChannelMap()))
     }
 }

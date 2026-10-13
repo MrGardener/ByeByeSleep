@@ -50,8 +50,8 @@ class AlarmLifecycle(
      * alarm is switched off, a repeating one rings again at the occurrence after.
      */
     fun skipNext(id: Int) {
-        val spec = repo.get(id) ?: return
-        if (spec.repeatDays.isEmpty()) {
+        val spec = repo.get(id)?.takeIf { it.enabled } ?: return
+        if (spec.repeatDays.isEmpty() || spec.atMs != null) {
             repo.put(spec.copy(enabled = false, snoozeUntilMs = null, skipUntilMs = null))
             scheduler.cancel(id)
             return
@@ -104,6 +104,17 @@ class AlarmLifecycle(
 
     private fun scheduleRegular(spec: AlarmSpec): Long? {
         if (!spec.enabled) return null
+        val pinned = spec.atMs
+        if (pinned != null) {
+            // A pinned one-shot rings at that instant or, once past, not at all.
+            if (pinned > clock().toInstant().toEpochMilli()) {
+                scheduler.schedule(spec.id, pinned)
+                return pinned
+            }
+            repo.put(spec.copy(enabled = false))
+            scheduler.cancel(spec.id)
+            return null
+        }
         val at = NextTrigger.compute(spec, clock()).toInstant().toEpochMilli()
         scheduler.schedule(spec.id, at)
         return at

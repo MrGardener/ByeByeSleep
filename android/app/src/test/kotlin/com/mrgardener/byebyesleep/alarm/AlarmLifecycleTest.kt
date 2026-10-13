@@ -167,4 +167,25 @@ class AlarmLifecycleTest {
         lifecycle.onFired(1)
         assertNull(repo.get(1)!!.skipUntilMs)
     }
+
+    @Test fun atMs_ringsAtThatExactInstant() {
+        val tomorrow = ms(at(2026, 10, 13, 7, 5))
+        assertEquals(tomorrow, lifecycle.upsert(spec(7, 5).copy(atMs = tomorrow)))
+        assertEquals(tomorrow, sched.scheduled[1])
+    }
+
+    @Test fun atMs_inThePast_doesNotRingAtAll() {
+        val earlier = ms(at(2026, 10, 12, 5, 40))
+        assertNull(lifecycle.upsert(spec(5, 40).copy(atMs = earlier)))
+        assertFalse(repo.get(1)!!.enabled)
+        assertEquals("cancel:1", sched.calls.last())
+    }
+
+    @Test fun atMs_survivesReschedule() {
+        val tomorrow = ms(at(2026, 10, 13, 7, 5))
+        lifecycle.upsert(spec(7, 5).copy(atMs = tomorrow))
+        sched.scheduled.clear()
+        lifecycle.rescheduleAll()
+        assertEquals(tomorrow, sched.scheduled[1])
+    }
 }

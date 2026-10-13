@@ -117,26 +117,30 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     if (_saving) return; // ignore double taps
     setState(() => _saving = true);
     final existing = widget.alarm;
-    if (existing != null &&
-        weakens(
-          existing,
-          existing.copyWith(
-            hour: _time.hour,
-            minute: _time.minute,
-            repeatDays: _days,
-            stages: _stages,
-            pauseSeconds: _pauseSeconds,
-            enabled: true,
-          ),
-          ref.read(nowProvider)(),
-        ) &&
-        !await confirmWeakening(
-          ref,
-          existing,
-          'Confirm changing an alarm that rings soon',
-        )) {
-      if (mounted) setState(() => _saving = false);
-      return;
+    if (existing != null) {
+      final current = ref.read(alarmListProvider).value ?? const <Alarm>[];
+      final oldSeries = [
+        for (final a in current)
+          if (a.parentId == existing.id) a,
+      ];
+      final draft = _draft().copyWith(enabled: true);
+      final newSeries = ref
+          .read(alarmListProvider.notifier)
+          .planSeries(draft, current);
+      if (groupWeakens(
+            [existing, ...oldSeries],
+            [draft, ...newSeries],
+            ref.read(nowProvider)(),
+          ) &&
+          !await confirmWeakening(
+            ref,
+            existing,
+            'Confirm changing an alarm that rings soon',
+            series: oldSeries,
+          )) {
+        if (mounted) setState(() => _saving = false);
+        return;
+      }
     }
     if (!await _confirmPreflight()) {
       if (mounted) setState(() => _saving = false);
@@ -260,7 +264,8 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         content: const Text(
           'Every alarm of this series becomes its own alarm at the same time. '
           'They will no longer follow this alarm: each one is edited, switched '
-          'off and deleted on its own. This cannot be undone.',
+          'off and deleted on its own. This cannot be undone. Changes not '
+          'yet saved in this screen are discarded.',
         ),
         actions: [
           TextButton(

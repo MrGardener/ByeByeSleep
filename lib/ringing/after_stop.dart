@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../alarm/alarm.dart';
 import '../alarm/alarm_platform.dart';
 import '../alarm/series.dart';
 import '../alarm/ui/stored_photo.dart';
+import '../app/routes.dart';
 
 /// Alarms of [ringing]'s series that ring in the next 3 hours after [now].
 List<Alarm> laterInSeries(Alarm ringing, List<Alarm> all, DateTime now) {
@@ -30,14 +33,52 @@ int _minutesUntil(Alarm a, int nowMin) =>
     (a.hour * 60 + a.minute - nowMin) % (24 * 60);
 
 /// Runs after the alarm was stopped: shows the reminder, then offers to skip
-/// the rest of the series today.
-Future<void> afterStop(
+/// the rest of the series today. Returns false when another alarm started
+/// ringing meanwhile and took over the screen (the caller must then not
+/// close it).
+Future<bool> afterStop(
   BuildContext context,
   AlarmPlatform platform,
   Alarm? alarm,
   DateTime now,
 ) async {
-  if (alarm == null) return;
+  if (alarm == null) return true;
+  // The screen stays open while the reminder or the question is shown; a
+  // new ring (the next alarm of the series, or tomorrow's if the phone was
+  // locked on this screen) must not ring behind it.
+  var superseded = false;
+  final navigator = Navigator.of(context);
+  final watch = Timer.periodic(const Duration(seconds: 1), (t) async {
+    List<int> ringing;
+    try {
+      ringing = await platform.ringingAlarmIds();
+    } catch (_) {
+      return;
+    }
+    if (ringing.isEmpty || superseded) return;
+    superseded = true;
+    t.cancel();
+    unawaited(
+      navigator.pushNamedAndRemoveUntil(
+        '$ringRoutePrefix${ringing.first}',
+        (_) => false,
+      ),
+    );
+  });
+  try {
+    await _afterStop(context, platform, alarm, now);
+  } finally {
+    watch.cancel();
+  }
+  return !superseded;
+}
+
+Future<void> _afterStop(
+  BuildContext context,
+  AlarmPlatform platform,
+  Alarm alarm,
+  DateTime now,
+) async {
   final reminder = alarm.reminder;
   if (reminder != null && !reminder.isEmpty) {
     await Navigator.of(context).push<void>(
@@ -151,16 +192,19 @@ class RingReminderCard extends StatelessWidget {
           children: [
             if (photo != null)
               SizedBox(
-                width: 64,
-                height: 64,
+                width: 48,
+                height: 48,
                 child: StoredPhoto(photo, fit: BoxFit.cover),
               ),
             const SizedBox(width: 12),
+            // Kept to two lines: the challenge below needs the room.
             Expanded(
               child: Text(
                 reminder.caption.isEmpty
                     ? "Don't forget!"
                     : "Don't forget: ${reminder.caption}",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

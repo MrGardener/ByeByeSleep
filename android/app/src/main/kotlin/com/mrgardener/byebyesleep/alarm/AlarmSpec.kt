@@ -11,6 +11,7 @@ import org.json.JSONObject
  * [extrasJson] holds Dart-only options (reminder, series), passed through untouched.
  * [skipUntilMs] is native-only: the ring at that instant is skipped ("skip the rest
  * of the series today"), surviving a reboot.
+ * [atMs] pins a one-shot alarm (one of a series) to an exact instant, date included.
  */
 data class AlarmSpec(
     val id: Int,
@@ -24,6 +25,7 @@ data class AlarmSpec(
     val pauseSeconds: Int = 0,
     val extrasJson: String = "",
     val skipUntilMs: Long? = null,
+    val atMs: Long? = null,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id)
@@ -36,6 +38,7 @@ data class AlarmSpec(
         .put("pauseSeconds", pauseSeconds)
         .put("extras", extrasJson)
         .apply { if (skipUntilMs != null) put("skipUntilMs", skipUntilMs) }
+        .apply { if (atMs != null) put("atMs", atMs) }
         .apply { if (snoozeUntilMs != null) put("snoozeUntilMs", snoozeUntilMs) }
 
     /** Map sent over the `byebyesleep/alarm` channel (keys match Dart's Alarm.toMap). */
@@ -49,7 +52,7 @@ data class AlarmSpec(
         "stages" to stagesJson,
         "pauseSeconds" to pauseSeconds,
         "extras" to extrasJson,
-    )
+    ) + (if (atMs != null) mapOf("atMs" to atMs) else emptyMap())
 
     companion object {
         fun fromJson(o: JSONObject): AlarmSpec {
@@ -66,6 +69,7 @@ data class AlarmSpec(
                 pauseSeconds = o.optInt("pauseSeconds", 0),
                 extrasJson = o.optString("extras", ""),
                 skipUntilMs = if (o.has("skipUntilMs")) o.getLong("skipUntilMs") else null,
+                atMs = if (o.has("atMs")) o.getLong("atMs") else null,
             )
         }
 
@@ -79,6 +83,7 @@ data class AlarmSpec(
             stagesJson = m["stages"] as? String ?: "",
             pauseSeconds = (m["pauseSeconds"] as? Number)?.toInt() ?: 0,
             extrasJson = m["extras"] as? String ?: "",
+            atMs = (m["atMs"] as? Number)?.toLong(),
         )
     }
 }

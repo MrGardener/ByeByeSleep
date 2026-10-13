@@ -165,5 +165,65 @@ void main() {
       expect(next.id, main.id + 1);
       expect(fake.stored.keys.where((id) => id == next.id), hasLength(1));
     });
+
+    test('a series switched on again never overwrites split alarms', () async {
+      final main = await addSeries();
+      await notifier().split(main.id);
+      final gym = (await state()).firstWhere(
+        (a) => a.id == seriesChildId(main.id, 2),
+      );
+      await notifier().save(gym.copyWith(hour: 9, label: 'gym'));
+      await notifier().save(
+        (await state())
+            .firstWhere((a) => a.id == main.id)
+            .copyWith(
+              series: () => const SeriesConfig(count: 3, everyMinutes: 5),
+            ),
+      );
+      final kept = fake.stored[gym.id]!;
+      expect(kept.label, 'gym');
+      expect(kept.hour, 9);
+      expect(kept.parentId, isNull);
+      final kids = fake.stored.values.where((a) => a.parentId == main.id);
+      expect([for (final k in kids) k.timeLabel]..sort(), ['17:05', '17:10']);
+    });
+
+    test('a failed delete never leaves a series half deleted', () async {
+      final main = await addSeries();
+      fake.failOn = (c) => c == 'delete:${seriesChildId(main.id, 2)}';
+      await expectLater(notifier().remove(main.id), throwsA(anything));
+      // Whatever is left natively is what the list shows, and the main
+      // alarm is still there to own it.
+      expect({for (final a in await state()) a.id}, fake.stored.keys.toSet());
+      expect(fake.stored.containsKey(main.id), isTrue);
+    });
+
+    test('a failed save restores the series as it was', () async {
+      final main = await addSeries();
+      final before = Map.of(fake.stored);
+      fake.failOn = (c) => c == 'upsert:${seriesChildId(main.id, 3)}';
+      await expectLater(
+        notifier().save(main.copyWith(hour: 8)),
+        throwsA(anything),
+      );
+      expect(fake.stored, before);
+      expect({for (final a in await state()) a.id: a}, before);
+    });
+
+    test('series ids never get too large for the phone', () async {
+      // Repeated split → series → split would multiply ids by 100 each time.
+      var main = await notifier().addAlarm(Alarm(id: 0, hour: 6, minute: 0));
+      for (var round = 0; round < 5; round++) {
+        await notifier().save(
+          main.copyWith(
+            series: () => const SeriesConfig(count: 2, everyMinutes: 1),
+          ),
+        );
+        await notifier().split(main.id);
+        final all = await state();
+        main = all.reduce((a, b) => a.id > b.id ? a : b);
+      }
+      expect(fake.stored.keys.every((id) => id < maxAlarmId), isTrue);
+    });
   });
 }

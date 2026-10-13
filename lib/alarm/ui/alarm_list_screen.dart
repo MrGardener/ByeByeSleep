@@ -91,6 +91,11 @@ class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
   }
 }
 
+List<Alarm> _seriesOf(WidgetRef ref, Alarm main) => [
+  for (final a in ref.read(alarmListProvider).value ?? const <Alarm>[])
+    if (a.parentId == main.id) a,
+];
+
 /// A series alarm is listed under its main alarm, not on its own.
 bool _hasParentIn(Alarm a, List<Alarm> list) =>
     a.parentId != null && list.any((m) => m.id == a.parentId);
@@ -149,6 +154,7 @@ class _AlarmTile extends ConsumerWidget {
         ref,
         alarm,
         'Confirm deleting an alarm that rings soon',
+        series: _seriesOf(ref, alarm),
       ),
       background: Container(
         color: Theme.of(context).colorScheme.error,
@@ -183,6 +189,7 @@ class _AlarmTile extends ConsumerWidget {
                   ref,
                   alarm,
                   'Confirm turning off an alarm that rings soon',
+                  series: _seriesOf(ref, alarm),
                 )) {
               return;
             }

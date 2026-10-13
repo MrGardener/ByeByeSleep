@@ -21,6 +21,7 @@ class Alarm {
     this.reminder,
     this.series,
     this.parentId,
+    this.onceAt,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -48,6 +49,9 @@ class Alarm {
           )
         : null,
     parentId: (_extras(m)['parent'] as num?)?.toInt(),
+    onceAt: m['atMs'] is num
+        ? DateTime.fromMillisecondsSinceEpoch((m['atMs']! as num).toInt())
+        : null,
   );
 
   /// Dart-only options, stored natively as one opaque JSON string.
@@ -85,6 +89,10 @@ class Alarm {
 
   bool get isSeriesChild => parentId != null;
 
+  /// A one-shot series alarm rings exactly here (its date included), so it
+  /// stays with its main alarm's ring instead of the next free time of day.
+  final DateTime? onceAt;
+
   bool get isRepeating => repeatDays.isNotEmpty;
 
   String get timeLabel =>
@@ -102,6 +110,7 @@ class Alarm {
     Reminder? Function()? reminder,
     SeriesConfig? Function()? series,
     int? Function()? parentId,
+    DateTime? Function()? onceAt,
   }) => Alarm(
     id: id ?? this.id,
     hour: hour ?? this.hour,
@@ -114,6 +123,7 @@ class Alarm {
     reminder: reminder != null ? reminder() : this.reminder,
     series: series != null ? series() : this.series,
     parentId: parentId != null ? parentId() : this.parentId,
+    onceAt: onceAt != null ? onceAt() : this.onceAt,
   );
 
   Map<String, Object?> toMap() => {
@@ -125,6 +135,7 @@ class Alarm {
     'enabled': enabled,
     'stages': encodeStages(stages),
     'pauseSeconds': pauseSeconds,
+    if (onceAt != null) 'atMs': onceAt!.millisecondsSinceEpoch,
     'extras': jsonEncode({
       if (reminder != null) 'reminder': reminder!.toJson(),
       if (series != null) 'series': series!.toJson(),
@@ -145,7 +156,8 @@ class Alarm {
       other.pauseSeconds == pauseSeconds &&
       other.reminder == reminder &&
       other.series == series &&
-      other.parentId == parentId;
+      other.parentId == parentId &&
+      other.onceAt == onceAt;
 
   @override
   int get hashCode => Object.hash(

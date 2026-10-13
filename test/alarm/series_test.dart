@@ -1,4 +1,5 @@
 import 'package:byebyesleep/alarm/alarm.dart';
+import 'package:byebyesleep/alarm/guard.dart';
 import 'package:byebyesleep/alarm/series.dart';
 import 'package:byebyesleep/alarm/stage_config.dart';
 import 'package:byebyesleep/challenges/core/challenge_id.dart';
@@ -131,5 +132,67 @@ void main() {
     expect(decodeStages(encodeStages(const [])), isEmpty);
     expect(decodeStages(null), defaultStages);
     expect(decodeStages('nonsense'), defaultStages);
+  });
+
+  group('one-shot series ring together with their main alarm', () {
+    test('saved just after today\'s ring: the whole series is tomorrow', () {
+      final kids = seriesChildren(
+        Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          series: const SeriesConfig(count: 3, everyMinutes: 5),
+        ),
+        now: DateTime(2026, 10, 13, 7, 5),
+      );
+      expect(
+        [for (final k in kids) k.onceAt],
+        [DateTime(2026, 10, 14, 7, 5), DateTime(2026, 10, 14, 7, 10)],
+      );
+    });
+
+    test('ending at 07:00, saved at 06:45: earlier ones are today', () {
+      final kids = seriesChildren(
+        Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          series: const SeriesConfig(
+            count: 5,
+            everyMinutes: 5,
+            direction: SeriesDirection.before,
+          ),
+        ),
+        now: DateTime(2026, 10, 13, 6, 45),
+      );
+      expect(kids.first.onceAt, DateTime(2026, 10, 13, 6, 40));
+      // Already past: it does not ring at all, rather than tomorrow.
+      expect(nextRing(kids.first, DateTime(2026, 10, 13, 6, 45)), isNull);
+      expect(kids.last.onceAt, DateTime(2026, 10, 13, 6, 55));
+    });
+
+    test('repeating series are not pinned to a date', () {
+      final kids = seriesChildren(
+        Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeatDays: {1},
+          series: const SeriesConfig(count: 2, everyMinutes: 5),
+        ),
+        now: DateTime(2026, 10, 13, 7, 5),
+      );
+      expect(kids.single.onceAt, isNull);
+    });
+
+    test('the date survives the platform map', () {
+      final a = Alarm(
+        id: 2,
+        hour: 7,
+        minute: 5,
+        onceAt: DateTime(2026, 10, 14, 7, 5),
+      );
+      expect(Alarm.fromMap(a.toMap()).onceAt, a.onceAt);
+    });
   });
 }

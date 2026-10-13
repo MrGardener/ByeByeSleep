@@ -8,6 +8,7 @@ import 'package:byebyesleep/challenges/core/camera.dart';
 import 'package:byebyesleep/challenges/core/capabilities.dart';
 import 'package:byebyesleep/challenges/core/env_sensors.dart';
 import 'package:byebyesleep/challenges/core/motion.dart';
+import 'package:byebyesleep/app/routes.dart';
 import 'package:byebyesleep/ringing/emergency.dart';
 import 'package:byebyesleep/ringing/ring_screen.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ void main() {
           photoStoreProvider.overrideWithValue(photos),
         ],
         child: MaterialApp(
+          onGenerateRoute: generateRoute,
           home: RingScreen(
             alarmId: id,
             onFinished: () => finished++,
@@ -87,6 +89,36 @@ void main() {
     await tester.tap(find.byKey(const Key('reminder-done')));
     await tester.pumpAndSettle();
     expect(finished, 1);
+  });
+
+  testWidgets('a new alarm ringing replaces the reminder screen', (
+    tester,
+  ) async {
+    fake = FakeAlarmPlatform(
+      seed: [
+        Alarm(
+          id: 3,
+          hour: 17,
+          minute: 5,
+          stages: const [],
+          reminder: const Reminder(caption: 'Take the keys'),
+        ),
+        Alarm(id: 5, hour: 17, minute: 6, stages: const []),
+      ],
+    );
+    await ring(tester, 3);
+    await tester.tap(find.byKey(const Key('stop')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('reminder-screen')), findsOneWidget);
+    fake.ringing = [5];
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('reminder-screen')), findsNothing);
+    expect(
+      find.byWidgetPredicate((w) => w is RingScreen && w.alarmId == 5),
+      findsOneWidget,
+    );
+    expect(finished, 0); // the activity stays for the new ring
   });
 
   group('series', () {

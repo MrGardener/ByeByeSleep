@@ -171,8 +171,7 @@ class _RingScreenState extends ConsumerState<RingScreen> {
 
   /// The alarm stopped for good (not snoozed): reminder, series, then close.
   Future<void> _stopped() async {
-    await afterStop(context, _platform, _alarm, widget.clock());
-    _finish();
+    if (await afterStop(context, _platform, _alarm, widget.clock())) _finish();
   }
 
   Future<void> _emergency() async {
