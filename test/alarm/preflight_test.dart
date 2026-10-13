@@ -37,6 +37,21 @@ void main() {
     ]);
   });
 
+  test('colour hunt needs the camera too', () {
+    expect(
+      preflightProblems(
+        Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          stages: const [StageConfig(ChallengeId.colourHunt)],
+        ),
+        const PermissionStatus({PermissionKind.camera: false}),
+      ),
+      ['Camera permission is off (needed by stage 1).'],
+    );
+  });
+
   test('preflight_emptyWhenAllGood', () {
     expect(
       preflightProblems(

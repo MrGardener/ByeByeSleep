@@ -24,7 +24,8 @@ List<String> preflightProblems(Alarm alarm, PermissionStatus permissions) {
     }
     final needsCamera =
         stage.challenge == ChallengeId.photoMatch ||
-        stage.challenge == ChallengeId.barcode;
+        stage.challenge == ChallengeId.barcode ||
+        stage.challenge == ChallengeId.colourHunt;
     if (needsCamera && permissions.granted[PermissionKind.camera] == false) {
       problems.add('Camera permission is off (needed by stage ${i + 1}).');
     }

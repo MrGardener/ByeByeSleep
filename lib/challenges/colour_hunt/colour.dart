@@ -59,7 +59,10 @@ HuntColour? centreColour(Uint8List bytes) {
   } else {
     hue = 60 * ((r - g) / (mx - mn) + 4);
   }
-  if (hue < 35 || hue >= 330) return HuntColour.red;
+  if (hue < 15 || hue >= 345) return HuntColour.red;
+  // Orange, skin and wood are none of the colours asked for: a hand in
+  // front of the lens must not pass as red.
+  if (hue < 42) return null;
   if (hue < 70) return HuntColour.yellow;
   if (hue < 170) return HuntColour.green;
   if (hue < 260) return HuntColour.blue;

@@ -19,6 +19,7 @@ abstract class PhotoCamera {
 
 class PluginPhotoCamera implements PhotoCamera {
   CameraController? _controller;
+  var _disposed = false;
 
   @override
   Future<void> init() async {
@@ -33,6 +34,11 @@ class PluginPhotoCamera implements PhotoCamera {
       enableAudio: false,
     );
     await controller.initialize();
+    // The screen closed while the camera was starting: switch it off.
+    if (_disposed) {
+      await controller.dispose();
+      return;
+    }
     _controller = controller;
   }
 
@@ -47,7 +53,10 @@ class PluginPhotoCamera implements PhotoCamera {
       (await _controller!.takePicture()).readAsBytes();
 
   @override
-  Future<void> dispose() async => _controller?.dispose();
+  Future<void> dispose() async {
+    _disposed = true;
+    await _controller?.dispose();
+  }
 }
 
 /// Factory, so each screen gets its own camera session.

@@ -32,13 +32,13 @@ iOS does not let an app hide the Stop button of an alarm, so ByeByeSleep uses a
 - At the alarm time iOS shows the alarm, even in silent mode or a Focus.
 - Tap **Challenges** to open the app on the alarm's challenges.
 - If you tap **Stop** instead, it rings again 2 minutes later, and again every 2
-  minutes (up to 10 times, within "Stop ringing after"), until the challenges
-  are done.
+  minutes until the challenges are done or "Stop ringing after" is reached.
 - Opening the app while an alarm is ringing always goes straight to its
   challenges.
 
-Repeating alarms are armed two rings ahead. Opening the app (finishing the
-challenges does this) arms the next ones.
+Repeating alarms are armed a week ahead (backups on the next two rings).
+Opening the app (finishing the challenges does this) arms the next ones, and
+also moves alarms to local time after you change time zone.
 
 ## What is different from Android
 

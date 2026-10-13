@@ -67,6 +67,11 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      - name: Needs the iOS 26 SDK (AlarmKit)
+        run: |
+          v=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "iOS SDK $v"
+          [ "${v%%.*}" -ge 26 ]
       - uses: subosito/flutter-action@v2
         with:
           flutter-version-file: pubspec.yaml

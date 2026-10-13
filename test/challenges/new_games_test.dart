@@ -116,6 +116,12 @@ void main() {
       return img.encodeJpg(im, quality: 90);
     }
 
+    test('skin, wood and orange are not red', () {
+      expect(centreColour(photo(224, 172, 140)), isNull); // a hand
+      expect(centreColour(photo(160, 100, 50)), isNull); // wood
+      expect(centreColour(photo(240, 130, 20)), isNull); // orange
+    });
+
     test('a clearly red centre is red, also in dim light', () {
       expect(centreColour(photo(200, 30, 30)), HuntColour.red);
       expect(centreColour(photo(90, 15, 15)), HuntColour.red);

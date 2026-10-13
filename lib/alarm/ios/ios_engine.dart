@@ -92,8 +92,14 @@ class FileIosStateStore implements IosStateStore {
   Future<Map<String, Object?>?> load() async {
     final file = await _file;
     if (!await file.exists()) return null;
-    return (jsonDecode(await file.readAsString()) as Map)
-        .cast<String, Object?>();
+    try {
+      return (jsonDecode(await file.readAsString()) as Map)
+          .cast<String, Object?>();
+    } on Object {
+      // Unreadable: keep it aside for a look, start again without it.
+      await file.rename('${file.path}.bad');
+      return null;
+    }
   }
 
   @override
@@ -125,31 +131,44 @@ DateTime nextRing(Alarm a, DateTime after) {
 }
 
 const _backupEvery = Duration(minutes: 2);
-const _maxBackups = 10;
+
+/// Repeating alarms are armed this many rings ahead, in case the app is not
+/// opened in between; the first [_ringsWithBackups] of them get backups.
+const _ringsAhead = 7;
+const _ringsWithBackups = 2;
 
 /// A ring this close to the check time is the "check I'm awake" ring.
 const _checkWindowMs = 5 * 60000;
 
-int _backups(Alarm a) => min(_maxBackups, a.maxRingMinutes ~/ 2);
+/// Backups every 2 minutes until the alarm's ring limit.
+int _backups(Alarm a) => max(0, a.maxRingMinutes ~/ 2 - 1);
 
 class _Entry {
-  _Entry(this.alarm, {this.nextAtMs, this.followUpAtMs});
+  _Entry(this.alarm, {this.nextAtMs, this.pinned = false, this.followUpAtMs});
 
   factory _Entry.fromJson(Map<String, Object?> j) => _Entry(
     Alarm.fromMap((j['alarm']! as Map).cast<Object?, Object?>()),
     nextAtMs: (j['nextAtMs'] as num?)?.toInt(),
+    pinned: j['pinned'] == true,
     followUpAtMs: (j['followUpAtMs'] as num?)?.toInt(),
   );
 
   Alarm alarm;
 
-  /// When it rings next (a snooze or the regular time), null = never.
+  /// When it rings next, null = never.
   int? nextAtMs;
+
+  /// [nextAtMs] is a snooze, check or skip, not the alarm's regular time
+  /// (which is worked out again on every call, e.g. after a time zone move).
+  bool pinned;
   int? followUpAtMs;
+
+  bool get repeats => alarm.isRepeating && alarm.onceAt == null;
 
   Map<String, Object?> toJson() => {
     'alarm': alarm.toMap(),
     'nextAtMs': ?nextAtMs,
+    if (pinned) 'pinned': true,
     'followUpAtMs': ?followUpAtMs,
   };
 }
@@ -174,7 +193,8 @@ class _Ringing {
 /// The iPhone alarm engine. iOS runs no app code when an alarm goes off, so
 /// what happened since the app last ran is worked out from the clock on
 /// every call: an alarm whose time passed (within its ring limit) is ringing
-/// until its challenges are done. The system alarms are re-synced each time.
+/// until its challenges are done. The system alarms are re-synced when the
+/// plan changes.
 class IosAlarmEngine implements AlarmPlatform {
   IosAlarmEngine({
     required IosAlarmKit kit,
@@ -192,17 +212,34 @@ class IosAlarmEngine implements AlarmPlatform {
   final _ringing = <int, _Ringing>{};
   RingProgress? _progress;
   bool _loaded = false;
+  String? _savedJson;
+  String? _syncedJson;
   Future<void> _queue = Future.value();
 
-  /// Runs [body] after earlier calls, on fresh state, then saves and syncs.
+  /// Runs [body] after earlier calls, on fresh state, then saves and syncs
+  /// what changed.
   Future<T> _run<T>(T Function(int nowMs) body) {
     final result = _queue.then((_) async {
       await _load();
       final nowMs = _clock().millisecondsSinceEpoch;
       _catchUp(nowMs);
       final value = body(nowMs);
-      await _stateStore.save(_toJson());
-      await _alarmKit.sync(_plan(nowMs));
+      final state = jsonEncode(_toJson());
+      if (state != _savedJson) {
+        await _stateStore.save(_toJson());
+        _savedJson = state;
+      }
+      final plan = _plan(nowMs);
+      final planJson = jsonEncode([for (final r in plan) r.toMap()]);
+      if (planJson != _syncedJson) {
+        try {
+          await _alarmKit.sync(plan);
+          _syncedJson = planJson;
+        } catch (_) {
+          // The state is saved; the next call tries the sync again.
+          _syncedJson = null;
+        }
+      }
       return value;
     });
     _queue = result.then((_) {}, onError: (Object _) {});
@@ -226,6 +263,7 @@ class IosAlarmEngine implements AlarmPlatform {
       if (j['progress'] case final Map<Object?, Object?> p) {
         _progress = RingProgress.fromMap(p);
       }
+      _savedJson = jsonEncode(_toJson());
     }
     _loaded = true;
   }
@@ -239,78 +277,91 @@ class IosAlarmEngine implements AlarmPlatform {
     if (_progress != null) 'progress': _progress!.toMap(),
   };
 
-  /// Applies every ring that went off since the app last ran.
+  int _limitMs(int id) =>
+      (_entries[id]?.alarm.maxRingMinutes ?? Alarm.defaultMaxRing) * 60000;
+
+  /// Applies every ring that went off since the app last ran, then works
+  /// out each alarm's regular time again.
   void _catchUp(int nowMs) {
     for (final e in _entries.values) {
-      final firedAt = e.nextAtMs;
-      if (firedAt == null || firedAt > nowMs) continue;
-      final check =
-          e.followUpAtMs != null &&
-          (firedAt - e.followUpAtMs!).abs() <= _checkWindowMs;
-      e.followUpAtMs = null;
-      if (e.alarm.isRepeating && e.alarm.onceAt == null) {
-        var next = nextRing(
-          e.alarm,
-          DateTime.fromMillisecondsSinceEpoch(firedAt),
-        );
-        while (next.millisecondsSinceEpoch <= nowMs) {
-          next = nextRing(e.alarm, next);
+      final first = e.nextAtMs;
+      if (first != null && first <= nowMs) {
+        // Only the latest ring that went off can still be ringing.
+        var firedAt = first;
+        if (e.repeats && !e.pinned) {
+          var next = nextRing(
+            e.alarm,
+            DateTime.fromMillisecondsSinceEpoch(firedAt),
+          );
+          while (next.millisecondsSinceEpoch <= nowMs) {
+            firedAt = next.millisecondsSinceEpoch;
+            next = nextRing(e.alarm, next);
+          }
         }
-        e.nextAtMs = next.millisecondsSinceEpoch;
-      } else {
-        e.alarm = e.alarm.copyWith(enabled: false);
-        e.nextAtMs = null;
+        final check =
+            e.followUpAtMs != null &&
+            (firedAt - e.followUpAtMs!).abs() <= _checkWindowMs;
+        e
+          ..followUpAtMs = null
+          ..pinned = false
+          ..nextAtMs = null;
+        if (!e.repeats) e.alarm = e.alarm.copyWith(enabled: false);
+        if (nowMs < firedAt + _limitMs(e.alarm.id)) {
+          _ringing[e.alarm.id] = _Ringing(firedAt, followUp: check);
+        }
       }
-      _ringing[e.alarm.id] = _Ringing(firedAt, followUp: check);
+      if (!e.pinned) e.nextAtMs = _regular(e, nowMs);
     }
     // Nobody stopped it within its ring limit: it stopped by itself.
-    _ringing.removeWhere((id, r) {
-      final limit = _entries[id]?.alarm.maxRingMinutes ?? Alarm.defaultMaxRing;
-      return r.firedAtMs + limit * 60000 <= nowMs;
-    });
+    _ringing.removeWhere((id, r) => r.firedAtMs + _limitMs(id) <= nowMs);
     if (_progress != null && !_ringing.containsKey(_progress!.alarmId)) {
       _progress = null;
     }
   }
 
-  /// The system alarms to ring: each alarm's next ring with its backups,
-  /// one more regular ring ahead, and the remaining backups of rings now.
+  /// The system alarms to ring: the next rings of each alarm (backups on
+  /// the first ones), and every ring of the alarms ringing now, including
+  /// the one sounding, so a sync never cuts it off.
   List<IosRing> _plan(int nowMs) {
-    final rings = <IosRing>[];
-    void ringAt(Alarm a, int atMs) {
+    final rings = <String, IosRing>{};
+    void ringAt(Alarm a, int atMs, {required bool backups, bool past = false}) {
       final title = a.label.isEmpty ? 'Alarm ${a.timeLabel}' : a.label;
-      if (atMs > nowMs) {
-        rings.add(IosRing(alarmId: a.id, atMs: atMs, title: title));
+      void add(IosRing r) {
+        if (past || r.atMs > nowMs) rings[r.key] = r;
       }
+
+      add(IosRing(alarmId: a.id, atMs: atMs, title: title));
+      if (!backups) return;
       for (var k = 1; k <= _backups(a); k++) {
-        final at = atMs + k * _backupEvery.inMilliseconds;
-        if (at > nowMs) {
-          rings.add(
-            IosRing(alarmId: a.id, atMs: at, title: title, backup: true),
-          );
-        }
+        add(
+          IosRing(
+            alarmId: a.id,
+            atMs: atMs + k * _backupEvery.inMilliseconds,
+            title: title,
+            backup: true,
+          ),
+        );
       }
     }
 
     for (final e in _entries.values) {
-      final next = e.nextAtMs;
-      if (next != null) {
-        ringAt(e.alarm, next);
-        // If the app is not opened after this ring, the following one is
-        // already armed.
-        if (e.alarm.enabled && e.alarm.isRepeating && e.alarm.onceAt == null) {
-          final after = nextRing(
-            e.alarm,
-            DateTime.fromMillisecondsSinceEpoch(next),
-          );
-          ringAt(e.alarm, after.millisecondsSinceEpoch);
-        }
-      }
       final r = _ringing[e.alarm.id];
-      if (r != null) ringAt(e.alarm, r.firedAtMs);
+      if (r != null) ringAt(e.alarm, r.firedAtMs, backups: true, past: true);
+      final next = e.nextAtMs;
+      if (next == null) continue;
+      ringAt(e.alarm, next, backups: true);
+      if (!e.alarm.enabled || !e.repeats) continue;
+      var at = DateTime.fromMillisecondsSinceEpoch(next);
+      for (var i = 1; i < _ringsAhead; i++) {
+        at = nextRing(e.alarm, at);
+        ringAt(
+          e.alarm,
+          at.millisecondsSinceEpoch,
+          backups: i < _ringsWithBackups,
+        );
+      }
     }
-    rings.sort((a, b) => a.atMs.compareTo(b.atMs));
-    return rings;
+    return rings.values.toList()..sort((a, b) => a.atMs.compareTo(b.atMs));
   }
 
   int? _regular(_Entry e, int nowMs) {
@@ -360,7 +411,9 @@ class IosAlarmEngine implements AlarmPlatform {
   Future<int> snooze(int id, int minutes) => _run((nowMs) {
     final at = nowMs + minutes * 60000;
     for (final ringingId in {..._ringing.keys, id}) {
-      _entries[ringingId]?.nextAtMs = at;
+      _entries[ringingId]
+        ?..nextAtMs = at
+        ..pinned = true;
     }
     _ringing.clear();
     _progress = null;
@@ -372,8 +425,10 @@ class IosAlarmEngine implements AlarmPlatform {
     final at = nowMs + minutes * 60000;
     final e = _entries[id];
     if (e != null) {
-      e.nextAtMs = at;
-      e.followUpAtMs = at;
+      e
+        ..nextAtMs = at
+        ..pinned = true
+        ..followUpAtMs = at;
     }
     return at;
   });
@@ -383,16 +438,20 @@ class IosAlarmEngine implements AlarmPlatform {
     final e = _entries[id];
     if (e == null || !e.alarm.enabled) return;
     if (!e.alarm.isRepeating || e.alarm.onceAt != null) {
-      e.alarm = e.alarm.copyWith(enabled: false);
-      e.nextAtMs = null;
+      e
+        ..alarm = e.alarm.copyWith(enabled: false)
+        ..nextAtMs = null
+        ..pinned = false;
       return;
     }
     final skipped = nextRing(
       e.alarm,
       DateTime.fromMillisecondsSinceEpoch(nowMs),
     );
-    e.nextAtMs = nextRing(e.alarm, skipped).millisecondsSinceEpoch;
-    e.followUpAtMs = null;
+    e
+      ..nextAtMs = nextRing(e.alarm, skipped).millisecondsSinceEpoch
+      ..pinned = true
+      ..followUpAtMs = null;
   });
 
   @override

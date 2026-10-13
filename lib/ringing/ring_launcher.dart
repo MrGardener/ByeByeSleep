@@ -38,22 +38,39 @@ class _RingLauncherState extends ConsumerState<RingLauncher>
     with WidgetsBindingObserver {
   var _showing = false;
 
+  /// An alarm going off over the open app does not bring it back to the
+  /// foreground, so look every 15 s while it is open.
+  Timer? _poll;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _poll?.cancel();
+    if (!ref.read(ringLauncherEnabledProvider)) return;
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) => _check());
   }
 
   @override
   void dispose() {
+    _poll?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(_check());
+    if (state == AppLifecycleState.resumed) {
+      _startPolling();
+      unawaited(_check());
+    } else if (state == AppLifecycleState.paused) {
+      _poll?.cancel();
+    }
   }
 
   Future<void> _check() async {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_platform.dart';
 import 'package:byebyesleep/alarm/ios/ios_engine.dart';
@@ -6,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 class FakeKit implements IosAlarmKit {
   String auth = 'authorized';
   List<IosRing> rings = [];
+  var syncs = 0;
+  Object? failSync;
   var requested = 0;
   var settingsOpened = 0;
 
@@ -19,7 +23,11 @@ class FakeKit implements IosAlarmKit {
   }
 
   @override
-  Future<void> sync(List<IosRing> rings) async => this.rings = rings;
+  Future<void> sync(List<IosRing> rings) async {
+    syncs++;
+    if (failSync case final e?) throw e;
+    this.rings = rings;
+  }
 
   @override
   Future<void> openSettings() async => settingsOpened++;
@@ -72,9 +80,9 @@ void main() {
       );
       expect(at, DateTime(2026, 10, 13, 7).millisecondsSinceEpoch);
       final main = kit.rings.where((r) => !r.backup);
+      // A week of rings is armed, in case the app is not opened.
       expect(times(main), [
-        DateTime(2026, 10, 13, 7),
-        DateTime(2026, 10, 14, 7),
+        for (var d = 13; d <= 19; d++) DateTime(2026, 10, d, 7),
       ]);
       final todayChain = times(
         kit.rings.where(
@@ -83,10 +91,12 @@ void main() {
               r.atMs < DateTime(2026, 10, 14).millisecondsSinceEpoch,
         ),
       );
-      // Default 30 min ring limit: a backup every 2 min, at most 10.
+      // Default 30 min ring limit: a backup every 2 min until it ends.
       expect(todayChain.first, DateTime(2026, 10, 13, 7, 2));
-      expect(todayChain, hasLength(10));
-      expect(todayChain.last, DateTime(2026, 10, 13, 7, 20));
+      expect(todayChain, hasLength(14));
+      expect(todayChain.last, DateTime(2026, 10, 13, 7, 28));
+      // Backups on the next two rings only.
+      expect(kit.rings.where((r) => r.backup), hasLength(28));
       expect(kit.rings.map((r) => r.key).toSet(), hasLength(kit.rings.length));
       expect((await e.list()).single.id, 1);
     },
@@ -94,7 +104,7 @@ void main() {
 
   test('a short ring limit means a shorter chain', () async {
     await engine().upsert(Alarm(id: 1, hour: 7, minute: 0, maxRingMinutes: 10));
-    expect(kit.rings.where((r) => r.backup), hasLength(5));
+    expect(kit.rings.where((r) => r.backup), hasLength(4));
   });
 
   test('state survives a restart of the app', () async {
@@ -117,7 +127,11 @@ void main() {
         DateTime(2026, 10, 13, 7).millisecondsSinceEpoch,
       );
       // The backups that are still ahead stay armed while it rings.
-      expect(times(kit.rings).first, DateTime(2026, 10, 13, 7, 4));
+      expect(
+        times(kit.rings.where((r) => r.atMs > now.millisecondsSinceEpoch))
+            .first,
+        DateTime(2026, 10, 13, 7, 4),
+      );
       // A one-shot alarm switches itself off once it rang.
       expect((await e.list()).single.enabled, isFalse);
 
@@ -237,5 +251,89 @@ void main() {
     expect(kit.settingsOpened, 1);
     kit.auth = 'unsupported';
     expect(await e.isSupported(), isFalse);
+  });
+  test('a ring the app never saw does not hide the next one', () async {
+    final e = engine();
+    await e.upsert(
+      Alarm(id: 1, hour: 7, minute: 0, repeatDays: {1, 2, 3, 4, 5, 6, 7}),
+    );
+    // Tuesday's ring was dismissed in the system alert only; the app is
+    // first opened during Wednesday's ring.
+    now = DateTime(2026, 10, 14, 7, 1);
+    expect(await e.ringingAlarmIds(), [1]);
+    expect(
+      (await e.getRingProgress())!.startedAtMs,
+      DateTime(2026, 10, 14, 7).millisecondsSinceEpoch,
+    );
+    expect(
+      times(kit.rings.where((r) => r.atMs > now.millisecondsSinceEpoch)).first,
+      DateTime(2026, 10, 14, 7, 2),
+    );
+  });
+
+  test('the ring sounding now stays armed while the app looks at it', () async {
+    final e = engine();
+    await e.upsert(Alarm(id: 1, hour: 7, minute: 0));
+    now = DateTime(2026, 10, 13, 7, 0, 20);
+    await e.list();
+    expect(
+      kit.rings.map((r) => r.key),
+      contains('1@${DateTime(2026, 10, 13, 7).millisecondsSinceEpoch}'),
+    );
+  });
+
+  test('a failed sync does not fail the call, and is retried', () async {
+    final e = engine();
+    kit.failSync = StateError('AlarmKit down');
+    expect(await e.upsert(Alarm(id: 1, hour: 7, minute: 0)), isNotNull);
+    expect(kit.rings, isEmpty);
+    kit.failSync = null;
+    await e.list();
+    expect(kit.rings, isNotEmpty);
+  });
+
+  test('calls that change nothing do not re-sync', () async {
+    final e = engine();
+    await e.upsert(Alarm(id: 1, hour: 7, minute: 0));
+    final before = kit.syncs;
+    await e.ringingAlarmIds();
+    await e.list();
+    expect(kit.syncs, before);
+  });
+
+  test(
+    'a regular ring time is recomputed on every call (time zone moves)',
+    () async {
+      final e = engine();
+      await e.upsert(Alarm(id: 1, hour: 7, minute: 0));
+      // As if saved in another zone: the stored instant is an hour off.
+      final alarms = store.saved!['alarms']! as List;
+      (alarms.single as Map)['nextAtMs'] = DateTime(
+        2026,
+        10,
+        13,
+        8,
+      ).millisecondsSinceEpoch;
+      final fresh = engine();
+      await fresh.list();
+      expect(
+        times(kit.rings.where((r) => !r.backup)).first,
+        DateTime(2026, 10, 13, 7),
+      );
+    },
+  );
+
+  test('an unreadable state file starts empty instead of breaking', () async {
+    final dir = await Directory.systemTemp.createTemp('ios_state');
+    addTearDown(() => dir.delete(recursive: true));
+    await File('${dir.path}/alarms.json').writeAsString('{not json');
+    final e = IosAlarmEngine(
+      kit: kit,
+      store: FileIosStateStore(() async => dir),
+      now: () => now,
+    );
+    expect(await e.list(), isEmpty);
+    await e.upsert(Alarm(id: 1, hour: 7, minute: 0));
+    expect(await File('${dir.path}/alarms.json').exists(), isTrue);
   });
 }

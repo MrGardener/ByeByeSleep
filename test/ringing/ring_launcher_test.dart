@@ -67,4 +67,14 @@ void main() {
     expect(find.text('home'), findsOneWidget);
     expect(find.textContaining('ringing'), findsNothing);
   });
+
+  testWidgets('iPhone: an alarm going off over the open app shows in 15 s', (
+    tester,
+  ) async {
+    final platform = await pump(tester, enabled: true);
+    platform.ringing = [7];
+    await tester.pump(const Duration(seconds: 16));
+    await tester.pumpAndSettle();
+    expect(find.text('ringing 7'), findsOneWidget);
+  });
 }
