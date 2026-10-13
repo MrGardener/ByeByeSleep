@@ -74,7 +74,9 @@ CI builds a downloadable debug APK on every pull request (see the run's artifact
 
 ### Release signing (one-time, owner)
 
-Releases are built when a tag `v*` is pushed. Without a keystore they are debug-signed.
+Releases are built when a tag `v*` is pushed. Without a keystore they are signed with the shared
+test key in `android/app/shared-debug.keystore` (committed on purpose, so every test build installs
+over the previous one; it is public, so never ship a store build with it).
 To sign them, create a keystore once and keep it safe — losing it means users must uninstall to update:
 
 ```sh
