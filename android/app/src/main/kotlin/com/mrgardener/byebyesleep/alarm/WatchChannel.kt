@@ -15,17 +15,17 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * Native side of lib/challenges/core/heart_rate.dart: finds a watch with the
- * ByeByeSleep watch app, opens its heart-rate screen, and streams the readings.
+ * Native side of lib/challenges/core/watch.dart: finds a watch with the
+ * ByeByeSleep watch app, opens its sensor screen, and streams its readings
+ * (heart rate, wrist motion, steps) to Dart as {type, value} maps.
  * A phone without Google Play services or without a watch simply has none.
  */
 class WatchChannel(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private var sink: EventChannel.EventSink? = null
     private val readings = MessageClient.OnMessageReceivedListener { event ->
-        if (event.path != WatchProtocol.PATH_BPM) return@OnMessageReceivedListener
-        val bpm = WatchProtocol.decodeBpm(event.data) ?: return@OnMessageReceivedListener
-        main.post { sink?.success(bpm) }
+        val reading = WatchProtocol.toEvent(event.path, event.data) ?: return@OnMessageReceivedListener
+        main.post { sink?.success(reading) }
     }
 
     fun register(messenger: BinaryMessenger) {
@@ -47,7 +47,7 @@ class WatchChannel(private val context: Context) {
                 else -> result.notImplemented()
             }
         }
-        EventChannel(messenger, "byebyesleep/heart_rate").setStreamHandler(
+        EventChannel(messenger, "byebyesleep/watch_readings").setStreamHandler(
             object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                     sink = events

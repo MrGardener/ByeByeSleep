@@ -13,4 +13,6 @@ enum ChallengeId {
   charger,
   heartRate,
   compass,
+  watchSwing,
+  watchSteps,
 }

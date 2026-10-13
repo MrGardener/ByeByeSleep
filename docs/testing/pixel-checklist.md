@@ -73,3 +73,7 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 56 | Reminder: photo + caption "Passport", "Reminder only". Let it ring. | Ring screen shows the reminder card and Stop at once; after Stop a full-screen "Don't forget" with the photo and caption. |
 | 57 | Install the watch app ([docs/watch-install.md](../watch-install.md)); Practice → *Get your heart going* → Start. | The watch opens the heart-rate screen by itself; the phone shows the live bpm, then "stay above N bpm"; walking the stairs fills the bar and passes. Leaving the challenge closes the watch screen. |
 | 58 | Same with the watch off the wrist or out of range. | After about 30 s the challenge is replaced (stage) or "Sensor not answering" (Pulse Run). |
+| 59 | With 3-button navigation on (Settings → System → Navigation mode): alarm editor scrolled to the end, Add challenge picker scrolled to the end, ring screen. | No button or text sits under the back / home / switch bar. |
+| 60 | Practice → Compass runes, then Sensor Quest → Compass Temple. | Clear steps on screen; arrow calm (no twitching); "face east" style targets; ring fills while holding; a short wobble does not restart it. |
+| 61 | Practice → Tilt maze, levels 2–4. | The ball rolls briskly and feels heavier; still never passes through walls. |
+| 62 | Watch app installed: Practice → Wrist workout, then Walk with your watch. | Watch screen opens by itself showing ♥, steps; big arm swings count (small wrist moves don't); steps count on the watch even with the phone left still. |
