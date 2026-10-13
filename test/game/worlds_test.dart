@@ -71,7 +71,24 @@ void main() {
     });
   });
 
+  test('Solar Garden: time in the background does not grow the plant', () {
+    final g = SolarGarden();
+    g.update(400, ms(0));
+    g.update(400, ms(3000));
+    g.pause();
+    g.update(400, ms(60000)); // back after a minute, still bright
+    expect(g.grown, const Duration(seconds: 3));
+  });
+
   group('Ghost Hide', () {
+    test('coming back from the background starts the visit over', () {
+      final g = GhostHide(Random(3));
+      g.update(false, ms(0));
+      expect(g.phase, GhostPhase.wandering);
+      g.pause();
+      expect(g.phase, GhostPhase.uncover);
+    });
+
     /// Runs the game for [seconds] with [cover] deciding the sensor.
     void play(GhostHide g, bool Function(GhostPhase) cover, int seconds) {
       for (var t = 0; t <= seconds * 1000; t += 100) {

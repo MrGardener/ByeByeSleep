@@ -33,7 +33,11 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_RING -> {
-                ring(intent.getIntExtra(EXTRA_ALARM_ID, -1), redelivered = flags and START_FLAG_REDELIVERY != 0)
+                ring(
+                    intent.getIntExtra(EXTRA_ALARM_ID, -1),
+                    redelivered = flags and START_FLAG_REDELIVERY != 0,
+                    followUp = intent.getBooleanExtra(EXTRA_FOLLOW_UP, false),
+                )
                 // If the process is killed while ringing, Android restarts us with this intent.
                 return START_REDELIVER_INTENT
             }
@@ -44,7 +48,7 @@ class AlarmService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun ring(id: Int, redelivered: Boolean) {
+    private fun ring(id: Int, redelivered: Boolean, followUp: Boolean) {
         val alreadyRinging = player != null
         if (ringingAlarmId == null) ringingAlarmId = id
         ringingAlarmIds = ringingAlarmIds + id
@@ -57,7 +61,7 @@ class AlarmService : Service() {
         if (alreadyRinging) return
 
         // A new ring starts at stage 0; a redelivered one (process restarted) continues.
-        val progress = RingProgress.onRing(storedProgress(this), id, System.currentTimeMillis(), redelivered)
+        val progress = RingProgress.onRing(storedProgress(this), id, System.currentTimeMillis(), redelivered, followUp)
         ringingState().edit().putString(KEY_PROGRESS, progress.toJson().toString()).commit()
 
         wakeLock = getSystemService(PowerManager::class.java)
@@ -191,8 +195,13 @@ class AlarmService : Service() {
         @Volatile var ringingAlarmIds: Set<Int> = emptySet()
             private set
 
-        fun ringIntent(context: Context, id: Int): Intent =
-            Intent(context, AlarmService::class.java).setAction(ACTION_RING).putExtra(EXTRA_ALARM_ID, id)
+        private const val EXTRA_FOLLOW_UP = "follow_up"
+
+        fun ringIntent(context: Context, id: Int, followUp: Boolean = false): Intent =
+            Intent(context, AlarmService::class.java)
+                .setAction(ACTION_RING)
+                .putExtra(EXTRA_ALARM_ID, id)
+                .putExtra(EXTRA_FOLLOW_UP, followUp)
 
         /** Marks ringing as stopped immediately, then lets the service clean up. */
         fun stop(context: Context) {

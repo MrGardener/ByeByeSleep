@@ -7,6 +7,8 @@ import 'broken_calculator/widget.dart';
 import 'charger/widget.dart';
 import 'core/challenge.dart';
 import 'core/challenge_id.dart';
+import '../game/worlds/sky_tower.dart';
+import '../game/worlds/world_kit.dart';
 import 'compass/widget.dart';
 import 'core/types.dart';
 import 'heart_rate/widget.dart';
@@ -113,6 +115,21 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
         'and keep still for 2 seconds.',
     requires: (_) => const {SensorKind.accelerometer, SensorKind.magnetometer},
     build: (args) => CompassRunes(args: args),
+  ),
+  ChallengeId.stairs: ChallengeDefinition(
+    id: ChallengeId.stairs,
+    title: 'Climb the stairs',
+    instructions:
+        'Hold still for 3 s, then climb one floor of stairs and wait there '
+        'until it passes.',
+    requires: (_) => const {SensorKind.barometer},
+    // Sky Tower's rule and screen: 0.30 hPa below the start, held 2 s.
+    build: (args) => SkyTowerWorld(
+      args: WorldArgs(
+        onPassed: args.onPassed,
+        onUnavailable: args.onUnavailable,
+      ),
+    ),
   ),
   ChallengeId.watchSwing: ChallengeDefinition(
     id: ChallengeId.watchSwing,

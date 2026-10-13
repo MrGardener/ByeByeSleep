@@ -75,6 +75,11 @@ void main() {
     await pumpPhone(tester);
     await tester.tap(find.byKey(const Key('add-alarm')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('reminder-only')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await scrollToEnd(tester);
     clearOfNavBar(tester, find.byKey(const Key('reminder-only')), 'Reminder');
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 900));

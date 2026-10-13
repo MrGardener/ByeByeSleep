@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:byebyesleep/alarm/alarm.dart';
+import 'package:byebyesleep/alarm/alarm_platform.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/alarm/series.dart';
 import 'package:byebyesleep/challenges/core/camera.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../challenges/photo_match_test.dart' show MemoryPhotoStore;
+import '../support/challenge_solvers.dart';
 import '../support/fake_alarm_platform.dart';
 import '../support/fake_env_sensors.dart';
 import '../support/fake_motion_source.dart';
@@ -119,6 +121,63 @@ void main() {
       findsOneWidget,
     );
     expect(finished, 0); // the activity stays for the new ring
+  });
+
+  group('awake check', () {
+    testWidgets('Stop schedules the check when the alarm has one', (
+      tester,
+    ) async {
+      fake = FakeAlarmPlatform(
+        seed: [
+          Alarm(
+            id: 3,
+            hour: 17,
+            minute: 5,
+            stages: const [],
+            followUpMinutes: 10,
+          ),
+        ],
+      );
+      await ring(tester, 3);
+      await tester.tap(find.byKey(const Key('stop')));
+      await tester.pumpAndSettle();
+      expect(fake.calls, contains('followUp:3:10'));
+      expect(finished, 1);
+    });
+
+    testWidgets('no check unless set', (tester) async {
+      fake = FakeAlarmPlatform(
+        seed: [Alarm(id: 3, hour: 17, minute: 5, stages: const [])],
+      );
+      await ring(tester, 3);
+      await tester.tap(find.byKey(const Key('stop')));
+      await tester.pumpAndSettle();
+      expect(fake.calls.where((c) => c.startsWith('followUp')), isEmpty);
+    });
+
+    testWidgets('the check ring asks one quick challenge and does not loop', (
+      tester,
+    ) async {
+      fake =
+          FakeAlarmPlatform(
+              seed: [Alarm(id: 3, hour: 17, minute: 5, followUpMinutes: 10)],
+            )
+            ..ringProgress = RingProgress(
+              alarmId: 3,
+              stageIndex: 0,
+              startedAtMs: now.millisecondsSinceEpoch,
+              followUp: true,
+            );
+      await ring(tester, 3);
+      expect(find.text('Still awake?'), findsOneWidget);
+      expect(find.text('Stage 1 of 1'), findsOneWidget);
+      expect(find.byKey(const Key('stroop-word')), findsOneWidget);
+      await solveStroop(tester);
+      await tester.tap(find.byKey(const Key('stop')));
+      await tester.pumpAndSettle();
+      expect(fake.calls.where((c) => c.startsWith('followUp')), isEmpty);
+      expect(finished, 1);
+    });
   });
 
   group('series', () {

@@ -48,28 +48,35 @@ class RingProgress {
     required this.alarmId,
     required this.stageIndex,
     required this.startedAtMs,
+    this.followUp = false,
   });
 
   factory RingProgress.fromMap(Map<Object?, Object?> m) => RingProgress(
     alarmId: m['alarmId']! as int,
     stageIndex: m['stageIndex']! as int,
     startedAtMs: m['startedAtMs']! as int,
+    followUp: m['followUp'] as bool? ?? false,
   );
 
   final int alarmId;
   final int stageIndex;
   final int startedAtMs;
 
+  /// This ring is the "check I'm awake" ring after a Stop.
+  final bool followUp;
+
   RingProgress copyWith({int? stageIndex}) => RingProgress(
     alarmId: alarmId,
     stageIndex: stageIndex ?? this.stageIndex,
     startedAtMs: startedAtMs,
+    followUp: followUp,
   );
 
   Map<String, Object?> toMap() => {
     'alarmId': alarmId,
     'stageIndex': stageIndex,
     'startedAtMs': startedAtMs,
+    'followUp': followUp,
   };
 
   @override
@@ -77,10 +84,11 @@ class RingProgress {
       other is RingProgress &&
       other.alarmId == alarmId &&
       other.stageIndex == stageIndex &&
-      other.startedAtMs == startedAtMs;
+      other.startedAtMs == startedAtMs &&
+      other.followUp == followUp;
 
   @override
-  int get hashCode => Object.hash(alarmId, stageIndex, startedAtMs);
+  int get hashCode => Object.hash(alarmId, stageIndex, startedAtMs, followUp);
 }
 
 /// Bridge to the native alarm engine.
@@ -99,6 +107,9 @@ abstract class AlarmPlatform {
 
   /// Snoozes a ringing alarm; returns the snooze trigger (epoch ms).
   Future<int> snooze(int id, int minutes);
+
+  /// After a Stop: rings [id] once more in [minutes] to check you are awake.
+  Future<int> followUp(int id, int minutes);
 
   /// Skips the alarm's next ring (a one-shot alarm is switched off).
   Future<void> skipNext(int id);
@@ -158,6 +169,10 @@ class MethodChannelAlarmPlatform implements AlarmPlatform {
 
   @override
   Future<void> stopRinging() => _invoke<void>('stopRinging');
+
+  @override
+  Future<int> followUp(int id, int minutes) async =>
+      await _invoke<int>('followUp', {'id': id, 'minutes': minutes}) ?? 0;
 
   @override
   Future<void> skipNext(int id) => _invoke<void>('skipNext', {'id': id});

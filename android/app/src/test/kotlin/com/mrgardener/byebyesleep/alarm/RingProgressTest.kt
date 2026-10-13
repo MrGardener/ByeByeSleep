@@ -44,4 +44,16 @@ class RingProgressTest {
         val recent = RingProgress(3, 1, now - 60_000L)
         assertEquals(null, RingProgress.current(recent, nowMs = now, ringing = false))
     }
+
+    @Test fun followUp_flagIsKeptForTheRingAndRoundTrips() {
+        val p = RingProgress.onRing(null, 3, 1000, redelivered = false, followUp = true)
+        assertEquals(true, p.followUp)
+        assertEquals(p, RingProgress.fromJson(p.toJson()))
+        assertEquals(p, RingProgress.fromChannelMap(p.toChannelMap()))
+        // A redelivered ring keeps what was stored.
+        assertEquals(p, RingProgress.onRing(p, 3, 5000, redelivered = true, followUp = false))
+        // Old stored progress without the field: not a check.
+        val old = org.json.JSONObject().put("alarmId", 3).put("stageIndex", 0).put("startedAtMs", 1L)
+        assertEquals(false, RingProgress.fromJson(old).followUp)
+    }
 }

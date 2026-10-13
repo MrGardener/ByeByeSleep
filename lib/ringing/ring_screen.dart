@@ -87,10 +87,6 @@ class _RingScreenState extends ConsumerState<RingScreen> {
       alarm = null;
     }
     if (!mounted) return;
-    final List<StageConfig> stages =
-        kDebugMode && widget.alarmId == debugSmokeAlarmId
-        ? const []
-        : alarm?.stages ?? defaultStages;
     final now = widget.clock();
     RingProgress? progress;
     try {
@@ -107,6 +103,13 @@ class _RingScreenState extends ConsumerState<RingScreen> {
       );
       unawaited(_platform.saveRingProgress(progress).catchError((Object _) {}));
     }
+    // The "check I'm awake" ring after a Stop asks one quick challenge.
+    final List<StageConfig> stages =
+        kDebugMode && widget.alarmId == debugSmokeAlarmId
+        ? const []
+        : progress.followUp
+        ? awakeCheckStages
+        : alarm?.stages ?? defaultStages;
     Set<SensorKind> available;
     try {
       available = await ref.read(deviceCapabilitiesProvider.future);
@@ -171,7 +174,16 @@ class _RingScreenState extends ConsumerState<RingScreen> {
 
   /// The alarm stopped for good (not snoozed): reminder, series, then close.
   Future<void> _stopped() async {
-    if (await afterStop(context, _platform, _alarm, widget.clock())) _finish();
+    final checkRing = _progress?.followUp ?? false;
+    if (await afterStop(
+      context,
+      _platform,
+      _alarm,
+      widget.clock(),
+      checkRing: checkRing,
+    )) {
+      _finish();
+    }
   }
 
   Future<void> _emergency() async {
@@ -210,6 +222,8 @@ class _RingScreenState extends ConsumerState<RingScreen> {
                   '${now.minute.toString().padLeft(2, '0')}',
                   style: text.displayMedium,
                 ),
+                if (_progress?.followUp ?? false)
+                  Text('Still awake?', style: text.headlineSmall),
                 if (label.isNotEmpty) Text(label, style: text.titleMedium),
                 if (_alarm?.reminder case final r? when !r.isEmpty)
                   RingReminderCard(reminder: r),

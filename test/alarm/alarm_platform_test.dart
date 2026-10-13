@@ -130,6 +130,7 @@ void main() {
       'alarmId': 4,
       'stageIndex': 1,
       'startedAtMs': 5,
+      'followUp': false,
     });
     expect(calls[1].method, 'setRingLevel');
     expect(calls[1].arguments, {'level': 0.2});

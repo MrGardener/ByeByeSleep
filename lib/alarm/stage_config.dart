@@ -70,6 +70,11 @@ const List<StageConfig> wakeUpRoutine = [
   StageConfig(ChallengeId.brokenCalculator),
 ];
 
+/// The one quick challenge of the "check I'm awake" ring after a Stop.
+const List<StageConfig> awakeCheckStages = [
+  StageConfig(ChallengeId.stroopTap, difficulty: 1),
+];
+
 String encodeStages(List<StageConfig> stages) =>
     jsonEncode([for (final s in stages) s.toJson()]);
 

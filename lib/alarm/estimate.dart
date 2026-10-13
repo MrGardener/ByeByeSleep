@@ -21,6 +21,7 @@ const _typical = <ChallengeId, (int, int)>{
   ChallengeId.compass: (20, 90),
   ChallengeId.watchSwing: (20, 60),
   ChallengeId.watchSteps: (30, 120),
+  ChallengeId.stairs: (40, 150),
 };
 
 /// Challenges whose difficulty changes how long they take.

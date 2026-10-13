@@ -40,9 +40,20 @@ Future<bool> afterStop(
   BuildContext context,
   AlarmPlatform platform,
   Alarm? alarm,
-  DateTime now,
-) async {
+  DateTime now, {
+  bool checkRing = false,
+}) async {
   if (alarm == null) return true;
+  // First, so it is set even if the screen is left at once. The check ring
+  // itself schedules no further check (no loop).
+  if (!checkRing && alarm.followUpMinutes > 0) {
+    try {
+      await platform.followUp(alarm.id, alarm.followUpMinutes);
+    } catch (_) {
+      // The check is a bonus; stopping must not fail because of it.
+    }
+    if (!context.mounted) return true;
+  }
   // The screen stays open while the reminder or the question is shown; a
   // new ring (the next alarm of the series, or tomorrow's if the phone was
   // locked on this screen) must not ring behind it.
@@ -66,7 +77,7 @@ Future<bool> afterStop(
     );
   });
   try {
-    await _afterStop(context, platform, alarm, now);
+    await _afterStop(context, platform, alarm, now, checkRing: checkRing);
   } finally {
     watch.cancel();
   }
@@ -77,8 +88,9 @@ Future<void> _afterStop(
   BuildContext context,
   AlarmPlatform platform,
   Alarm alarm,
-  DateTime now,
-) async {
+  DateTime now, {
+  required bool checkRing,
+}) async {
   final reminder = alarm.reminder;
   if (reminder != null && !reminder.isEmpty) {
     await Navigator.of(context).push<void>(
@@ -86,7 +98,7 @@ Future<void> _afterStop(
     );
     if (!context.mounted) return;
   }
-  if (alarm.series == null && alarm.parentId == null) return;
+  if (checkRing || (alarm.series == null && alarm.parentId == null)) return;
   List<Alarm> later;
   try {
     later = laterInSeries(alarm, await platform.list(), now);

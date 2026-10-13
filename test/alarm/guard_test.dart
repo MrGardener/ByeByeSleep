@@ -254,6 +254,11 @@ void main() {
       final (fake, auth) = await pumpSeries(tester);
       await tester.tap(find.text('07:20'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('series-switch')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.ensureVisible(find.byKey(const Key('series-switch')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('series-switch')));

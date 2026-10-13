@@ -38,6 +38,9 @@ class GhostHide {
   bool get passed => survived >= visits;
   double get progress => survived / visits;
 
+  /// The app went to the background: the visit starts over on return.
+  void pause() => phase = GhostPhase.uncover;
+
   void update(bool near, Duration now) {
     if (passed) return;
     switch (phase) {
@@ -84,7 +87,16 @@ class GhostHideWorld extends ConsumerStatefulWidget {
   ConsumerState<GhostHideWorld> createState() => _GhostHideState();
 }
 
-class _GhostHideState extends ConsumerState<GhostHideWorld> {
+class _GhostHideState extends ConsumerState<GhostHideWorld>
+    with WidgetsBindingObserver {
+  bool _away = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _away = state != AppLifecycleState.resumed;
+    if (_away) _game.pause();
+  }
+
   final _game = GhostHide(Random());
   late final Watchdog _watchdog;
   StreamSubscription<bool>? _sub;
@@ -95,6 +107,7 @@ class _GhostHideState extends ConsumerState<GhostHideWorld> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _watchdog = Watchdog(() => widget.args.onUnavailable?.call());
     _sub = ref.read(envSensorProvider).proximityNear.listen((near) {
       _watchdog.heard();
@@ -106,7 +119,7 @@ class _GhostHideState extends ConsumerState<GhostHideWorld> {
 
   void _feed() {
     final near = _near;
-    if (near == null || !mounted) return;
+    if (near == null || !mounted || _away) return;
     final before = _game.phase;
     _game.update(near, ref.read(gameClockProvider)());
     if (_game.phase == GhostPhase.warning && before != GhostPhase.warning) {
@@ -125,6 +138,7 @@ class _GhostHideState extends ConsumerState<GhostHideWorld> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _watchdog.cancel();
     _sub?.cancel();
     _timer?.cancel();

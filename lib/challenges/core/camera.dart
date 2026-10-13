@@ -59,13 +59,35 @@ final photoCameraProvider = Provider<PhotoCamera Function()>(
 abstract class PhotoStore {
   Future<String> save(Uint8List bytes);
   Future<Uint8List?> load(String path);
+
+  /// Deletes every stored photo not in [used] (retaken, removed, or from a
+  /// deleted alarm).
+  Future<void> keepOnly(Set<String> used);
 }
 
 class FilePhotoStore implements PhotoStore {
+  FilePhotoStore({Future<Directory> Function()? dir})
+    : _dir = dir ?? _documentsPhotos;
+
+  final Future<Directory> Function() _dir;
+
+  static Future<Directory> _documentsPhotos() async =>
+      Directory('${(await getApplicationDocumentsDirectory()).path}/photos');
+
+  @override
+  Future<void> keepOnly(Set<String> used) async {
+    final dir = await _dir();
+    if (!await dir.exists()) return;
+    await for (final f in dir.list()) {
+      if (f is File && f.path.endsWith('.jpg') && !used.contains(f.path)) {
+        await f.delete();
+      }
+    }
+  }
+
   @override
   Future<String> save(Uint8List bytes) async {
-    final docs = await getApplicationDocumentsDirectory();
-    final dir = Directory('${docs.path}/photos');
+    final dir = await _dir();
     await dir.create(recursive: true);
     final file = File(
       '${dir.path}/${DateTime.now().microsecondsSinceEpoch}.jpg',

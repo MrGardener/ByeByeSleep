@@ -188,4 +188,64 @@ class AlarmLifecycleTest {
         lifecycle.rescheduleAll()
         assertEquals(tomorrow, sched.scheduled[1])
     }
+
+    @Test fun followUp_ringsOnceMoreAfterTheGivenMinutes() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        now = at(2026, 10, 12, 7, 3) // stopped at 07:03
+        val at = lifecycle.followUp(1, 10)
+        assertEquals(ms(at(2026, 10, 12, 7, 13)), at)
+        assertEquals(at, sched.scheduled[1])
+        assertEquals(at, repo.get(1)!!.followUpAtMs)
+    }
+
+    @Test fun onFired_reportsTheCheckRingAndClearsIt() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        now = at(2026, 10, 12, 7, 3)
+        lifecycle.followUp(1, 10)
+        now = at(2026, 10, 12, 7, 13)
+        assertEquals(true, lifecycle.onFired(1))
+        assertNull(repo.get(1)!!.followUpAtMs)
+        // The regular schedule is back: tomorrow 07:00.
+        assertEquals(ms(at(2026, 10, 13, 7, 0)), sched.scheduled[1])
+        now = at(2026, 10, 13, 7, 0)
+        assertEquals(false, lifecycle.onFired(1))
+    }
+
+    @Test fun followUp_survivesReboot() {
+        lifecycle.upsert(spec(7, 0))
+        now = at(2026, 10, 12, 7, 3)
+        val at = lifecycle.followUp(1, 5)
+        sched.scheduled.clear()
+        lifecycle.rescheduleAll()
+        assertEquals(at, sched.scheduled[1])
+    }
+
+    @Test fun aMissedCheck_doesNotTurnTomorrowsAlarmIntoTheEasyOne() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        now = at(2026, 10, 12, 7, 3)
+        lifecycle.followUp(1, 10)
+        // The phone was off at 07:13; it boots at 07:30.
+        now = at(2026, 10, 12, 7, 30)
+        lifecycle.rescheduleAll()
+        assertNull(repo.get(1)!!.followUpAtMs)
+        now = at(2026, 10, 13, 7, 0)
+        assertEquals(false, lifecycle.onFired(1))
+    }
+
+    @Test fun onlyARingNearTheCheckTimeIsTheCheck() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        now = at(2026, 10, 12, 7, 3)
+        lifecycle.followUp(1, 10)
+        // Somehow left over (e.g. scheduling failed): a ring a day later is real.
+        now = at(2026, 10, 13, 7, 0)
+        assertEquals(false, lifecycle.onFired(1))
+    }
+
+    @Test fun skipNext_dropsAPendingCheck() {
+        lifecycle.upsert(spec(7, 0, days = setOf(1, 2, 3)))
+        now = at(2026, 10, 12, 7, 3)
+        lifecycle.followUp(1, 10)
+        lifecycle.skipNext(1)
+        assertNull(repo.get(1)!!.followUpAtMs)
+    }
 }

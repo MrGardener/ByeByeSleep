@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../challenges/core/camera.dart';
 import 'alarm.dart';
 import 'alarm_platform.dart';
 import 'guard.dart';
@@ -11,6 +12,18 @@ import 'stage_config.dart';
 final alarmPlatformProvider = Provider<AlarmPlatform>(
   (_) => MethodChannelAlarmPlatform(),
 );
+
+/// Photo files the alarms still use: reminder photos and photo-match
+/// references.
+Set<String> photosInUse(List<Alarm> alarms) => {
+  for (final a in alarms) ...[
+    ?a.reminder?.photoPath,
+    for (final s in a.stages)
+      if (s.params['photos'] case final List<Object?> photos)
+        for (final p in photos)
+          if (p is String) p,
+  ],
+};
 
 final alarmListProvider = AsyncNotifierProvider<AlarmListNotifier, List<Alarm>>(
   AlarmListNotifier.new,
@@ -132,6 +145,7 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
         ...children,
       ]),
     );
+    _prunePhotos();
   }
 
   /// Writes [changes] in order (null = delete). On a failure, puts back the
@@ -176,11 +190,21 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
   Future<void> split(int mainId) async {
     final current = await future;
     final main = current.firstWhere((a) => a.id == mainId);
-    for (final child in current.where((a) => a.parentId == mainId)) {
-      await save(child.copyWith(parentId: () => null));
+    // Several saves: let go of photos only once all of them succeeded, so
+    // a failure half way cannot delete photos the editor still shows.
+    _holdPhotos = true;
+    try {
+      for (final child in current.where((a) => a.parentId == mainId)) {
+        await save(child.copyWith(parentId: () => null));
+      }
+      await save(main.copyWith(series: () => null));
+    } finally {
+      _holdPhotos = false;
     }
-    await save(main.copyWith(series: () => null));
+    _prunePhotos();
   }
+
+  bool _holdPhotos = false;
 
   /// Removes the alarm and its series (the series first, the main alarm
   /// last). On a failure everything is put back and the error rethrown.
@@ -193,6 +217,18 @@ class AlarmListNotifier extends AsyncNotifier<List<Alarm>> {
     ];
     state = AsyncData(current.where((a) => !gone.contains(a.id)).toList());
     await _apply(current, [for (final g in gone) (g, null)]);
+    _prunePhotos();
+  }
+
+  /// After a successful change: let go of photos no alarm uses any more.
+  /// Never after a failure, when the list may be incomplete.
+  void _prunePhotos() {
+    final alarms = state.value;
+    if (alarms == null || _holdPhotos) return;
+    ref
+        .read(photoStoreProvider)
+        .keepOnly(photosInUse(alarms))
+        .catchError((Object _) {});
   }
 
   static List<Alarm> _sorted(List<Alarm> alarms) => [...alarms]

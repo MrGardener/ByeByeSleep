@@ -31,6 +31,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late Set<int> _days;
   late List<StageConfig> _stages;
   late int _pauseSeconds;
+  late int _followUp;
   SeriesConfig? _series;
   String? _reminderPhoto;
   late final TextEditingController _reminderCaption;
@@ -50,6 +51,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     _days = {...?a?.repeatDays};
     _stages = a?.stages ?? defaultStages;
     _pauseSeconds = a?.pauseSeconds ?? 0;
+    _followUp = a?.followUpMinutes ?? 0;
     _series = a?.series;
     _reminderPhoto = a?.reminder?.photoPath;
     _reminderCaption = TextEditingController(text: a?.reminder?.caption ?? '')
@@ -167,6 +169,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     repeatDays: _days,
     label: _label.text.trim(),
     pauseSeconds: _pauseSeconds,
+    followUpMinutes: _followUp,
     reminder: _reminder.isEmpty ? null : _reminder,
     // Without a reminder an alarm needs at least one challenge.
     stages: _stages.isEmpty && _reminder.isEmpty ? defaultStages : _stages,
@@ -505,6 +508,26 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             ),
           ] else
             const Text('None: this alarm is a reminder only.'),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text("Check I'm awake"),
+            subtitle: const Text(
+              'Rings once more after Stop; one quick challenge proves you '
+              'did not fall asleep again.',
+            ),
+            trailing: DropdownButton<int>(
+              key: const Key('followup-dropdown'),
+              value: _followUp,
+              items: [
+                for (final m in const [0, 5, 10, 15, 20])
+                  DropdownMenuItem(
+                    value: m,
+                    child: Text(m == 0 ? 'Off' : 'After $m min'),
+                  ),
+              ],
+              onChanged: (m) => setState(() => _followUp = m ?? 0),
+            ),
+          ),
           const _SectionTitle(Icons.repeat, 'Series'),
           _seriesSection(),
           const _SectionTitle(Icons.photo_camera_outlined, 'Reminder'),
