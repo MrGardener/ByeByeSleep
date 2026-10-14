@@ -12,14 +12,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/fake_alarm_platform.dart';
+import '../support/memory_stopwatch_store.dart';
 import '../support/memory_timer_store.dart';
 
 class FakeBell implements TimerBell {
   final calls = <String>[];
+  final labels = <String>[];
 
   @override
-  Future<void> schedule(int id, DateTime at, String label) async =>
-      calls.add('schedule:$id:${at.millisecondsSinceEpoch}');
+  Future<void> schedule(int id, DateTime at, String label) async {
+    calls.add('schedule:$id:${at.millisecondsSinceEpoch}');
+    labels.add(label);
+  }
 
   @override
   Future<void> cancel(int id) async => calls.add('cancel:$id');
@@ -51,12 +55,14 @@ void main() {
   late FakeBell bell;
   late MemoryTimerStore store;
   late MemoryWorldStore world;
+  late MemoryStopwatchStore swStore;
 
   setUp(() {
     now = DateTime(2026, 10, 14, 6, 30, 5);
     bell = FakeBell();
     store = MemoryTimerStore();
     world = MemoryWorldStore();
+    swStore = MemoryStopwatchStore();
   });
 
   Future<void> pump(
@@ -72,6 +78,7 @@ void main() {
           timerStoreProvider.overrideWithValue(store),
           zoneOffsetsProvider.overrideWithValue(FakeZones()),
           worldClockStoreProvider.overrideWithValue(world),
+          stopwatchStoreProvider.overrideWithValue(swStore),
           alarmPlatformProvider.overrideWithValue(
             alarms ?? FakeAlarmPlatform(),
           ),
@@ -141,20 +148,61 @@ void main() {
 
   testWidgets('stopwatch: start, lap, pause, reset', (tester) async {
     await pump(tester, const StopwatchScreen());
+    expect(find.text('Stopwatch 1'), findsOneWidget);
     expect(find.text('00:00.00'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('sw-start')));
+    await tester.tap(find.byKey(const Key('sw-1-start')));
     await later(tester, const Duration(seconds: 2));
     expect(find.text('00:02.00'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('sw-lap')));
+    await tester.tap(find.byKey(const Key('sw-1-lap')));
     await later(tester, const Duration(seconds: 1));
-    expect(find.text('Lap 1'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('sw-start'))); // pause
+    expect(find.textContaining('Lap 1'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('sw-1-start'))); // pause
     await later(tester, const Duration(seconds: 5));
     expect(find.text('00:03.00'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('sw-reset')));
+    await tester.tap(find.byKey(const Key('sw-1-reset')));
     await tester.pump();
     expect(find.text('00:00.00'), findsOneWidget);
-    expect(find.text('Lap 1'), findsNothing);
+    expect(find.textContaining('Lap 1'), findsNothing);
+    expect(swStore.saved!.watches.single.state.running, isFalse);
+  });
+
+  testWidgets('stopwatches: several, named; lap and reset only on screen', (
+    tester,
+  ) async {
+    await pump(tester, const StopwatchScreen());
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(const Key('sw-add')));
+      await tester.pump();
+    }
+    // Each one runs on its own.
+    await tester.tap(find.byKey(const Key('sw-2-start')));
+    await later(tester, const Duration(seconds: 4));
+    expect(find.text('00:04.00'), findsOneWidget);
+    // The ones that fit on the screen have lap and reset; the rest only
+    // start/pause.
+    expect(find.byKey(const Key('sw-1-lap')), findsOneWidget);
+    expect(
+      find.byKey(const Key('sw-6-start'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('sw-6-lap'), skipOffstage: false),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('sw-6-reset'), skipOffstage: false),
+      findsNothing,
+    );
+    // Named like the timers.
+    await tester.tap(find.byKey(const Key('sw-1-name')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byKey(const Key('name-field')), 'Morning run');
+    await tester.tap(find.byKey(const Key('name-ok')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Morning run'), findsOneWidget);
+    expect(swStore.saved!.watches.first.name, 'Morning run');
   });
 
   testWidgets('timers: start one from a preset; pause cancels its bell', (
@@ -200,6 +248,30 @@ void main() {
     expect(bell.calls.last, 'cancel:1');
     expect(find.text("Time's up"), findsNothing);
     expect(store.saved!.timers.map((t) => t.id), [2]);
+  });
+
+  testWidgets('timers: named when started, renamed later; the bell says it', (
+    tester,
+  ) async {
+    await pump(tester, const TimerScreen());
+    await tester.enterText(find.byKey(const Key('timer-name-input')), 'Pasta');
+    await tester.tap(find.byKey(const Key('timer-preset-10')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('timer-add')));
+    await tester.pump();
+    expect(find.text('Pasta'), findsOneWidget);
+    expect(bell.labels.last, 'Pasta');
+    await tester.tap(find.byKey(const Key('timer-1-name')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byKey(const Key('name-field')), 'Eggs');
+    await tester.tap(find.byKey(const Key('name-ok')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Eggs'), findsOneWidget);
+    // A running timer's bell gets the new name.
+    expect(bell.labels.last, 'Eggs');
+    expect(store.saved!.timers.single.name, 'Eggs');
   });
 
   testWidgets('timers: a running timer continues after the app restarts', (

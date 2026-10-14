@@ -50,7 +50,7 @@ void main() {
     await tester.tap(find.byKey(const Key('tool-stopwatch')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byKey(const Key('sw-start')), findsOneWidget);
+    expect(find.byKey(const Key('sw-add')), findsOneWidget);
     await tester.tap(find.byKey(const Key('tool-timer')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));

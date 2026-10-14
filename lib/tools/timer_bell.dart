@@ -40,14 +40,22 @@ class MethodChannelTimerBell implements TimerBell {
 final timerBellProvider = Provider<TimerBell>((_) => MethodChannelTimerBell());
 
 class TimerEntry {
-  const TimerEntry({required this.id, required this.state});
+  const TimerEntry({required this.id, required this.state, this.name = ''});
 
   final int id;
   final TimerState state;
 
-  String get label => 'Timer ${formatTimer(state.total)}';
+  /// Optional, e.g. "Pasta".
+  final String name;
 
-  TimerEntry copyWith(TimerState state) => TimerEntry(id: id, state: state);
+  /// Shown on the card and in the "Time's up" notification.
+  String get label => name.isEmpty ? 'Timer ${formatTimer(state.total)}' : name;
+
+  TimerEntry copyWith(TimerState state) =>
+      TimerEntry(id: id, state: state, name: name);
+
+  TimerEntry renamed(String name) =>
+      TimerEntry(id: id, state: state, name: name);
 }
 
 /// Every timer, plus the length picked for the next one.
@@ -64,6 +72,7 @@ class TimersState {
         TimerEntry(
           id: ((t as Map)['id']! as num).toInt(),
           state: TimerState.fromJson(t.cast<String, Object?>()),
+          name: t['name'] as String? ?? '',
         ),
     ],
     nextId: (j['nextId'] as num?)?.toInt() ?? 1,
@@ -78,7 +87,7 @@ class TimersState {
 
   Map<String, Object?> toJson() => {
     'timers': [
-      for (final t in timers) {'id': t.id, ...t.state.toJson()},
+      for (final t in timers) {'id': t.id, 'name': t.name, ...t.state.toJson()},
     ],
     'nextId': nextId,
     'composerMs': composer.inMilliseconds,
@@ -153,12 +162,13 @@ class TimersNotifier extends AsyncNotifier<TimersState> {
       _set(_state.copyWith(composer: length));
 
   /// Starts a new timer of the chosen length.
-  Future<void> add() async {
+  Future<void> add({String name = ''}) async {
     final s = _state;
     if (s.composer <= Duration.zero) return;
     final entry = TimerEntry(
       id: s.nextId,
       state: TimerState(total: s.composer).start(_now()),
+      name: name.trim(),
     );
     await _bell.schedule(entry.id, entry.state.endsAt!, entry.label);
     await _set(s.copyWith(timers: [...s.timers, entry], nextId: s.nextId + 1));
@@ -182,6 +192,16 @@ class TimersNotifier extends AsyncNotifier<TimersState> {
     final t = _find(id);
     if (t == null) return;
     final next = t.copyWith(t.state.addMinute());
+    if (next.state.running) {
+      await _bell.schedule(id, next.state.endsAt!, next.label);
+    }
+    await _replace(next);
+  }
+
+  Future<void> rename(int id, String name) async {
+    final t = _find(id);
+    if (t == null) return;
+    final next = t.renamed(name.trim());
     if (next.state.running) {
       await _bell.schedule(id, next.state.endsAt!, next.label);
     }
