@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'ios_bedtime.dart';
+
 /// Sleep goals offered, in minutes (6 h to 10 h).
 const sleepGoals = [360, 390, 420, 450, 480, 510, 540, 570, 600];
 
@@ -27,7 +29,7 @@ class BedtimeSettings {
 }
 
 abstract class BedtimePlatform {
-  /// Null when this phone has no bedtime reminder (iPhone for now).
+  /// Null when this phone has no bedtime reminder.
   Future<BedtimeSettings?> get();
   Future<BedtimeSettings> set(BedtimeSettings settings);
 }
@@ -70,8 +72,11 @@ class MethodChannelBedtime implements BedtimePlatform {
   );
 }
 
+/// iPhone: planned in Dart (ios_bedtime.dart); Android: Bedtime.kt.
 final bedtimePlatformProvider = Provider<BedtimePlatform>(
-  (_) => MethodChannelBedtime(),
+  (ref) => ref.watch(isIosProvider)
+      ? ref.watch(iosBedtimeProvider)
+      : MethodChannelBedtime(),
 );
 
 class BedtimeNotifier extends AsyncNotifier<BedtimeSettings?> {
