@@ -52,6 +52,31 @@ void main() {
     expect(e.phase, isA<Done>());
   });
 
+  test('engine_nextNow_endsThePauseButKeepsItQuiet', () {
+    final e = engine([calc, stroop, calc]);
+    e.stagePassed();
+    now = now.add(const Duration(seconds: 5));
+    e.nextNow();
+    expect(e.phase, isA<Running>().having((r) => r.index, 'index', 1));
+    expect(e.currentIndex, 1);
+    // Moving on early is rewarded: it stays quiet for the rest of the pause.
+    expect(e.ringLevel, 0.2);
+    now = now.add(const Duration(seconds: 15));
+    expect(e.ringLevel, 1.0);
+    // The challenges still all have to be passed.
+    e.stagePassed();
+    expect(e.phase, isA<Breather>());
+    e.nextNow();
+    e.stagePassed();
+    expect(e.phase, isA<Done>());
+  });
+
+  test('engine_nextNow_outsideAPause_doesNothing', () {
+    final e = engine([calc, stroop]);
+    e.nextNow();
+    expect(e.phase, isA<Running>().having((r) => r.index, 'index', 0));
+  });
+
   test('engine_withoutPause_startsTheNextStageAtOnce', () {
     final e = StageEngine(
       stages: [calc, stroop],

@@ -495,7 +495,10 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Pause between challenges'),
-              subtitle: const Text('The alarm rings quieter during the pause.'),
+              subtitle: const Text(
+                'Quieter after each challenge. You can go on to the next '
+                'one right away; Stop still needs every challenge done.',
+              ),
               trailing: DropdownButton<int>(
                 key: const Key('pause-dropdown'),
                 value: _pauseSeconds,

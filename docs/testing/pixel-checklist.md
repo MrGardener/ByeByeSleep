@@ -90,3 +90,4 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 73 | Practice → Pulse code. | Flashes play (long ≈ 3× short); tapping them back passes; a wrong tap replays the code. |
 | 74 | Practice → Colour hunt in a lit room. | Pointing at an object of the asked colour and tapping Check passes; a grey/dark scene says no clear colour. |
 | 75 | iPhone (iOS 26, sideloaded): alarm in 2 min; tap Stop on the system alert. | Rings again 2 min later; tapping Challenges or opening the app shows the challenges; after finishing them no more rings. |
+| 76 | Alarm with a 30 s pause; pass the first challenge, tap "Next challenge now". | The next challenge starts at once, the sound stays quiet until the 30 s are up, then full; Stop only after the last challenge. |
