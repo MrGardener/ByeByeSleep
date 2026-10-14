@@ -488,6 +488,7 @@ class IosAlarmEngine implements AlarmPlatform {
       PermissionKind.notifications: ok,
       PermissionKind.fullScreenIntent: true,
       PermissionKind.ignoreBatteryOptimizations: true,
+      PermissionKind.overlay: true,
     });
   }
 

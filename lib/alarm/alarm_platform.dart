@@ -9,6 +9,10 @@ enum PermissionKind {
   notifications,
   ignoreBatteryOptimizations,
 
+  /// "Display over other apps": the ring screen opens at once, also while
+  /// the phone is in use, before the sound starts.
+  overlay,
+
   /// Needed only by challenges that use them; asked for during setup.
   activityRecognition,
   camera,
@@ -20,6 +24,7 @@ const corePermissionKinds = {
   PermissionKind.fullScreenIntent,
   PermissionKind.notifications,
   PermissionKind.ignoreBatteryOptimizations,
+  PermissionKind.overlay,
 };
 
 class PermissionStatus {

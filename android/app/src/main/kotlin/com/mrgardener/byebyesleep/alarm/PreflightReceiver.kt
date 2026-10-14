@@ -14,7 +14,7 @@ import java.time.ZonedDateTime
 /** Runs the evening pre-flight check at 21:00 and notifies about problems. */
 class PreflightReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val core = listOf("exactAlarm", "fullScreenIntent", "notifications", "ignoreBatteryOptimizations")
+        val core = listOf("exactAlarm", "fullScreenIntent", "notifications", "ignoreBatteryOptimizations", "overlay")
         val status = Permissions.status(context)
         val problems = Preflight.problems(
             PrefsAlarmRepository(context).all(),

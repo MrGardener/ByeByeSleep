@@ -1,5 +1,6 @@
 package com.mrgardener.byebyesleep.alarm
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,6 +20,7 @@ import android.os.UserManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.Settings
 import android.util.Log
 import com.mrgardener.byebyesleep.RingActivity
 
@@ -27,6 +29,10 @@ class AlarmService : Service() {
     private var player: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var ringing = false
+    private var soundPending = false
+    private var level = 1f
+    private val soundFallback = Runnable { startSound() }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -42,14 +48,18 @@ class AlarmService : Service() {
                 return START_REDELIVER_INTENT
             }
             ACTION_RING_ACTIVITY_GONE -> ringingAlarmId?.let { postNotification(it, repost = true) }
-            ACTION_SET_LEVEL -> intent.getFloatExtra(EXTRA_LEVEL, 1f).coerceIn(0f, 1f).let { player?.setVolume(it, it) }
+            ACTION_SET_LEVEL -> intent.getFloatExtra(EXTRA_LEVEL, 1f).coerceIn(0f, 1f).let {
+                level = it
+                player?.setVolume(it, it)
+            }
+            ACTION_SCREEN_READY -> startSound()
             ACTION_STOP -> stopRinging()
         }
         return START_NOT_STICKY
     }
 
     private fun ring(id: Int, redelivered: Boolean, followUp: Boolean) {
-        val alreadyRinging = player != null
+        val alreadyRinging = ringing
         if (ringingAlarmId == null) ringingAlarmId = id
         ringingAlarmIds = ringingAlarmIds + id
         val notification = postNotification(id, repost = false)
@@ -59,6 +69,8 @@ class AlarmService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
         if (alreadyRinging) return
+        ringing = true
+        level = 1f
 
         // A new ring starts at stage 0; a redelivered one (process restarted) continues.
         val progress = RingProgress.onRing(storedProgress(this), id, System.currentTimeMillis(), redelivered, followUp)
@@ -88,6 +100,33 @@ class AlarmService : Service() {
             audio.setStreamVolume(AudioManager.STREAM_ALARM, audio.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0)
         }
 
+        // The challenges first, then the sound: open the ring screen now and
+        // start the sound once it is showing (at most RingStart.SCREEN_WAIT_MS).
+        val userUnlocked = getSystemService(UserManager::class.java).isUserUnlocked
+        val overlay = Settings.canDrawOverlays(this)
+        if (userUnlocked && overlay) {
+            runCatching { startActivity(RingActivity.intent(this, id)) }
+                .onFailure { Log.w(TAG, "could not open the ring screen", it) }
+        }
+        val canOpen = RingStart.canOpenScreen(
+            canDrawOverlays = overlay,
+            interactive = getSystemService(PowerManager::class.java).isInteractive,
+            keyguardLocked = getSystemService(KeyguardManager::class.java).isKeyguardLocked,
+        )
+        val delay = RingStart.soundDelayMs(canOpen, userUnlocked, redelivered)
+        if (delay == 0L) {
+            startSound()
+        } else {
+            soundPending = true
+            timeout.postDelayed(soundFallback, delay)
+        }
+    }
+
+    /** Starts the sound and vibration (once): the ring screen is up, or it took too long. */
+    private fun startSound() {
+        if (!ringing || player != null || vibrator != null) return
+        soundPending = false
+        timeout.removeCallbacks(soundFallback)
         val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -99,6 +138,7 @@ class AlarmService : Service() {
                 setAudioAttributes(attrs)
                 setDataSource(this@AlarmService, uri)
                 isLooping = true
+                setVolume(level, level)
                 prepare()
                 start()
             }
@@ -157,7 +197,7 @@ class AlarmService : Service() {
 
     /** The ring limit passed with nobody stopping it: silence, and say so. */
     private fun ringTimedOut(id: Int, minutes: Int) {
-        if (player == null) return
+        if (!ringing) return
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(MISSED_CHANNEL_ID, "Missed alarms", NotificationManager.IMPORTANCE_DEFAULT),
@@ -181,6 +221,8 @@ class AlarmService : Service() {
         timeout.removeCallbacksAndMessages(null)
         ringingAlarmId = null
         ringingAlarmIds = emptySet()
+        ringing = false
+        soundPending = false
         player?.run { runCatching { stop() }; release() }
         player = null
         vibrator?.cancel()
@@ -204,7 +246,7 @@ class AlarmService : Service() {
     private fun ringingState() = ringingState(this)
 
     override fun onDestroy() {
-        if (player != null) stopRinging()
+        if (ringing) stopRinging()
         super.onDestroy()
     }
 
@@ -217,6 +259,7 @@ class AlarmService : Service() {
         private const val KEY_PREVIOUS_VOLUME = "previous_alarm_volume"
         private const val KEY_PROGRESS = "ring_progress"
         private const val ACTION_SET_LEVEL = "com.mrgardener.byebyesleep.SET_LEVEL"
+        private const val ACTION_SCREEN_READY = "com.mrgardener.byebyesleep.SCREEN_READY"
         private const val EXTRA_LEVEL = "level"
         private const val TAG = "ByeByeSleep"
 
@@ -268,6 +311,12 @@ class AlarmService : Service() {
             context.startService(
                 Intent(context, AlarmService::class.java).setAction(ACTION_SET_LEVEL).putExtra(EXTRA_LEVEL, level),
             )
+        }
+
+        /** The ring screen shows the challenges: the sound may start. */
+        fun screenReady(context: Context) {
+            if (ringingAlarmId == null) return
+            context.startService(Intent(context, AlarmService::class.java).setAction(ACTION_SCREEN_READY))
         }
 
         fun ringActivityGone(context: Context) {

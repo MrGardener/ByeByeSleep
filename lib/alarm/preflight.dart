@@ -8,6 +8,7 @@ const _permissionNames = {
   PermissionKind.fullScreenIntent: 'Full-screen alarm',
   PermissionKind.notifications: 'Notifications',
   PermissionKind.ignoreBatteryOptimizations: 'Battery optimisation',
+  PermissionKind.overlay: 'Display over other apps',
 };
 
 /// Why [alarm] might not work as intended, one sentence each (spec §6.1).

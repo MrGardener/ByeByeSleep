@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Installs the debug APK, schedules an alarm 30 s ahead, turns the screen off and checks
-# that the alarm rings (ring screen, foreground service, alarm audio playing), then taps
+# Installs the debug APK, schedules an alarm 30 s ahead, goes to the home screen (phone in
+# use, "Display over other apps" allowed) and checks that the ring screen opens by itself
+# and the alarm rings (foreground service, alarm audio playing), then taps
 # Stop and checks that ringing ends and the user's alarm volume is restored.
 set -euo pipefail
 
@@ -20,6 +21,7 @@ alarm_volume() { adb shell cmd media_session volume --stream 4 --get | grep -oE 
 
 adb install -r -g "$APK"
 adb shell appops set "$PKG" USE_FULL_SCREEN_INTENT allow || true
+adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow
 alarm_max() { adb shell dumpsys audio | sed -n '/- STREAM_ALARM:/,/Max:/p' | grep -oE 'Max: [0-9]+' | head -1 | grep -oE '[0-9]+'; }
 USER_VOLUME=$(alarm_volume)
 MAX_VOLUME=$(alarm_max)
@@ -28,7 +30,6 @@ echo "alarm volume before: $USER_VOLUME (max $MAX_VOLUME)"
 adb shell am start -n "$PKG/.MainActivity" --ei debug_ring_in_seconds 30
 sleep 8
 adb shell input keyevent KEYCODE_HOME
-adb shell input keyevent KEYCODE_SLEEP
 
 rang=false
 for _ in $(seq 1 45); do
@@ -39,9 +40,16 @@ $rang || fail "RingActivity did not appear within 90 s"
 
 adb shell dumpsys activity services "$PKG/.alarm.AlarmService" | grep -q "isForeground=true" \
   || fail "AlarmService is not in the foreground"
+# The sound starts once the ring screen shows (at most 4 s later).
 # Only the live player list: a started player with alarm usage.
-adb shell dumpsys audio | grep -E "AudioPlaybackConfiguration" | grep "USAGE_ALARM" | grep -q "state:started" \
-  || fail "No alarm audio playing"
+playing=false
+for _ in $(seq 1 10); do
+  if adb shell dumpsys audio | grep -E "AudioPlaybackConfiguration" | grep "USAGE_ALARM" | grep -q "state:started"; then
+    playing=true; break
+  fi
+  sleep 1
+done
+$playing || fail "No alarm audio playing"
 [ "$(alarm_volume)" = "$MAX_VOLUME" ] || fail "alarm volume not raised to max while ringing (got $(alarm_volume))"
 echo "RINGING OK"
 
