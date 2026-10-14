@@ -7,6 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 class FakeBedtime implements BedtimePlatform {
   BedtimeSettings current = const BedtimeSettings();
   final sets = <BedtimeSettings>[];
+  var quietAllowed = false;
+  var accessOpened = 0;
+
+  @override
+  Future<void> openQuietHoursAccess() async => accessOpened++;
 
   @override
   Future<BedtimeSettings> get() async => current;
@@ -17,6 +22,10 @@ class FakeBedtime implements BedtimePlatform {
     return current = BedtimeSettings(
       enabled: s.enabled,
       sleepMinutes: s.sleepMinutes,
+      windDownMinutes: s.windDownMinutes,
+      quietHours: s.quietHours,
+      quietHoursAllowed: quietAllowed,
+      quietHoursSupported: true,
       nextAt: s.enabled ? DateTime(2026, 10, 14, 22, 30) : null,
     );
   }
@@ -34,6 +43,9 @@ void main() {
     tester,
   ) async {
     final fake = FakeBedtime();
+    tester.view.physicalSize = const Size(1080, 6000);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [bedtimePlatformProvider.overrideWithValue(fake)],
@@ -41,7 +53,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Off'), findsOneWidget);
+    expect(find.text('Off'), findsWidgets);
     await tester.tap(find.byKey(const Key('bedtime-switch')));
     await tester.pumpAndSettle();
     expect(fake.sets.last.enabled, isTrue);
@@ -51,6 +63,46 @@ void main() {
     await tester.tap(find.text('7 h 30 min').last);
     await tester.pumpAndSettle();
     expect(fake.sets.last.sleepMinutes, 450);
+  });
+
+  testWidgets('settings: wind-down reminder and quiet hours', (tester) async {
+    final fake = FakeBedtime()
+      ..current = const BedtimeSettings(
+        enabled: true,
+        quietHoursSupported: true,
+      );
+    tester.view.physicalSize = const Size(1080, 6000);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [bedtimePlatformProvider.overrideWithValue(fake)],
+        child: const MaterialApp(home: SettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('bedtime-wind-down')));
+    await tester.tap(find.byKey(const Key('bedtime-wind-down')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('30 min before').last);
+    await tester.pumpAndSettle();
+    expect(fake.sets.last.windDownMinutes, 30);
+    // Quiet hours need Do Not Disturb access first.
+    await tester.ensureVisible(find.byKey(const Key('bedtime-quiet')));
+    await tester.tap(find.byKey(const Key('bedtime-quiet')));
+    await tester.pumpAndSettle();
+    expect(fake.accessOpened, 1);
+    expect(fake.sets.last.quietHours, isFalse);
+    fake.quietAllowed = true;
+    fake.current = const BedtimeSettings(
+      enabled: true,
+      windDownMinutes: 30,
+      quietHoursAllowed: true,
+      quietHoursSupported: true,
+    );
+    await tester.tap(find.byKey(const Key('bedtime-quiet')));
+    await tester.pumpAndSettle();
+    expect(fake.sets.last.quietHours, isTrue);
   });
 
   testWidgets('settings: no native bedtime (iPhone) hides the section', (

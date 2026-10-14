@@ -38,9 +38,6 @@ void main() {
     expect(searchCities('tok').map((c) => c.name), contains('Tokyo'));
     expect(searchCities('SAO').map((c) => c.name), contains('São Paulo'));
     expect(searchCities('zzz'), isEmpty);
-    expect(
-      worldCities.map((c) => c.zone).toSet(),
-      hasLength(worldCities.length),
-    );
+    expect(worldCities.map((c) => c.id).toSet(), hasLength(worldCities.length));
   });
 }

@@ -1,6 +1,7 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/alarm/guard.dart';
+import 'package:byebyesleep/tools/clock_prefs.dart';
 import 'package:byebyesleep/tools/clock_screen.dart';
 import 'package:byebyesleep/tools/stopwatch_screen.dart';
 import 'package:byebyesleep/tools/timer_bell.dart';
@@ -41,13 +42,23 @@ class FakeZones implements ZoneOffsets {
 }
 
 class MemoryWorldStore implements WorldClockStore {
-  List<String> saved = [];
+  List<City> saved = [];
 
   @override
-  Future<List<String>> load() async => saved;
+  Future<List<City>> load() async => saved;
 
   @override
-  Future<void> save(List<String> zones) async => saved = zones;
+  Future<void> save(List<City> cities) async => saved = cities;
+}
+
+/// Open-Meteo stand-in: one search result and rainy weather everywhere.
+Future<String> fakeHttp(Uri url) async {
+  if (url.host.startsWith('geocoding')) {
+    return '{"results":[{"name":"Ushuaia","latitude":-54.8,"longitude":-68.3,'
+        '"country":"Argentina","admin1":"Tierra del Fuego",'
+        '"timezone":"America/Argentina/Ushuaia"}]}';
+  }
+  return '{"current":{"temperature_2m":12.6,"weather_code":61,"is_day":1}}';
 }
 
 void main() {
@@ -79,6 +90,8 @@ void main() {
           zoneOffsetsProvider.overrideWithValue(FakeZones()),
           worldClockStoreProvider.overrideWithValue(world),
           stopwatchStoreProvider.overrideWithValue(swStore),
+          httpGetProvider.overrideWithValue(fakeHttp),
+          clockPrefsStoreProvider.overrideWithValue(MemoryClockPrefsStore()),
           alarmPlatformProvider.overrideWithValue(
             alarms ?? FakeAlarmPlatform(),
           ),
@@ -103,12 +116,13 @@ void main() {
       alarms: FakeAlarmPlatform(seed: [Alarm(id: 1, hour: 7, minute: 15)]),
     );
     await tester.pump();
-    expect(find.text('06:30'), findsOneWidget);
+    expect(find.text('6:30'), findsOneWidget); // the test phone uses 12 h
+    expect(find.text(' AM'), findsOneWidget);
     expect(find.textContaining('Wednesday'), findsOneWidget);
-    expect(find.textContaining('Next alarm 07:15'), findsOneWidget);
+    expect(find.textContaining('Next alarm 7:15 AM'), findsOneWidget);
     expect(find.textContaining('in 44 min'), findsOneWidget);
     await later(tester, const Duration(minutes: 1));
-    expect(find.text('06:31'), findsOneWidget);
+    expect(find.text('6:31'), findsOneWidget);
   });
 
   testWidgets('world clocks: add a city, see its time, remove it', (
@@ -121,23 +135,45 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.enterText(find.byKey(const Key('world-search')), 'tok');
     await tester.pump();
-    await tester.tap(find.byKey(const Key('city-Asia/Tokyo')));
+    await tester.tap(find.byKey(const Key('city-Tokyo@Asia/Tokyo')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
-    expect(world.saved, ['Asia/Tokyo']);
+    expect(world.saved.map((c) => c.zone), ['Asia/Tokyo']);
     expect(find.text('Tokyo'), findsOneWidget);
     // 06:30 here (UTC in tests) is 15:30 in Tokyo.
     expect(find.text('15:30'), findsOneWidget);
     expect(find.textContaining('+9 h'), findsOneWidget);
     await tester.drag(
-      find.byKey(const Key('world-Asia/Tokyo')),
+      find.byKey(const Key('world-Tokyo@Asia/Tokyo')),
       const Offset(-600, 0),
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
     expect(world.saved, isEmpty);
+  });
+
+  testWidgets('world clocks: any city from the online search, with weather', (
+    tester,
+  ) async {
+    await pump(tester, const ClockScreen());
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('world-add')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byKey(const Key('world-search')), 'Ushuaia');
+    await tester.pump(const Duration(milliseconds: 500)); // debounce
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('city-Ushuaia@America/Argentina/Ushuaia')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(world.saved.single.name, 'Ushuaia');
+    expect(find.text('Ushuaia'), findsOneWidget);
+    expect(find.textContaining('13° Rain'), findsOneWidget);
   });
 
   testWidgets('clock without alarms says so', (tester) async {

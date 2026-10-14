@@ -99,3 +99,8 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 82 | Timer: start 1 min and 3 min timers; close the app. | Both count down; each rings separately ("Time's up"), and Stop silences only that one. |
 | 83 | Settings → Bedtime reminder on, goal 8 h, with a 07:00 alarm. | "Next reminder 23:00"; at 23:00 a "Time for bed" notification. Changing the alarm moves the reminder. |
 | 84 | New icon. | Sunrise icon on the home screen, in the app drawer (themed icons too) and on the watch; night-coloured splash. |
+| 93 | Clock → Stopwatch: add 6 stopwatches, name one "Run". | Each runs on its own; the ones that fit on screen have Lap/Reset, the rest only start/pause; names stay after reopening. |
+| 94 | Timer: type "Pasta", start 10 min; rename a running timer. | The card and the "Time's up" notification use the name. |
+| 95 | Clock → Add city → type a small town (e.g. "Ushuaia"). | Found online; its time, day and current weather (°C or °F per Settings) show. Offline: the 134 built-in cities still work. |
+| 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
+| 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |

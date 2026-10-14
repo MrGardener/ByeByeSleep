@@ -6,6 +6,10 @@
     <!-- Opens the ring screen at once, even while the phone is in use. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- World clock city search and weather (Open-Meteo, free, no account). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Optional quiet hours: Do Not Disturb from bedtime until the alarm. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

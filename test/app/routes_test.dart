@@ -50,6 +50,7 @@ void main() {
     await tester.tap(find.byKey(const Key('tool-stopwatch')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await tester.pump(); // the stopwatches load their saved state
     expect(find.byKey(const Key('sw-add')), findsOneWidget);
     await tester.tap(find.byKey(const Key('tool-timer')));
     await tester.pump();
@@ -65,6 +66,11 @@ void main() {
     await pumpApp(tester, FakeAlarmPlatform());
     await tester.tap(find.byKey(const Key('open-settings')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('settings-watch')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Not set up'), findsOneWidget);
     await tester.tap(find.byKey(const Key('settings-watch')));
     await tester.pumpAndSettle();
