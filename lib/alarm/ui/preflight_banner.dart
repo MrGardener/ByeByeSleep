@@ -9,6 +9,7 @@ const _labels = {
   PermissionKind.fullScreenIntent: 'Full-screen alarm',
   PermissionKind.notifications: 'Notifications',
   PermissionKind.ignoreBatteryOptimizations: 'Battery optimisation off',
+  PermissionKind.overlay: 'Display over other apps (challenges open at once)',
   PermissionKind.activityRecognition: 'Physical activity (step challenges)',
   PermissionKind.camera: 'Camera (photo and barcode challenges)',
 };

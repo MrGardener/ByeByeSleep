@@ -23,6 +23,7 @@ object Permissions {
             "notifications" to nm.areNotificationsEnabled(),
             "ignoreBatteryOptimizations" to context.getSystemService(PowerManager::class.java)
                 .isIgnoringBatteryOptimizations(context.packageName),
+            "overlay" to Settings.canDrawOverlays(context),
             "activityRecognition" to granted(context, Manifest.permission.ACTIVITY_RECOGNITION),
             "camera" to granted(context, Manifest.permission.CAMERA),
         )
@@ -44,6 +45,7 @@ object Permissions {
                 .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
             "ignoreBatteryOptimizations" ->
                 Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            "overlay" -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkg)
             else -> null
         } ?: Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)
         runCatching { activity.startActivity(intent) }.onFailure {

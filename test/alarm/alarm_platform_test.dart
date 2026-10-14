@@ -79,6 +79,24 @@ void main() {
     expect(status.coreMissing, isEmpty);
   });
 
+  test(
+    'showing the ring screen at once over other apps is a core permission',
+    () async {
+      mock(
+        (_) async => {
+          'exactAlarm': true,
+          'fullScreenIntent': true,
+          'notifications': true,
+          'ignoreBatteryOptimizations': true,
+          'overlay': false,
+        },
+      );
+      expect((await platform.permissions()).coreMissing, [
+        PermissionKind.overlay,
+      ]);
+    },
+  );
+
   test('snooze and openSettings send arguments', () async {
     final calls = <MethodCall>[];
     mock((call) async {
