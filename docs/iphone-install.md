@@ -40,6 +40,18 @@ Repeating alarms are armed a week ahead (backups on the next two rings).
 Opening the app (finishing the challenges does this) arms the next ones, and
 also moves alarms to local time after you change time zone.
 
+## Timers and the bedtime reminder on iPhone
+
+- **Timers** ring with the app closed too. With Alarms allowed, a timer that
+  ends is a real iOS alarm ("Time's up · Timer 5:00"), loud even in silent mode
+  or a Focus; tap Stop to silence it. If Alarms is not allowed, the timer shows
+  a notification instead (allow notifications when asked; it follows the ringer
+  switch).
+- **Bedtime reminder** (Settings → Sleep): the app works out the "Time for bed"
+  notifications from your alarms and sets the next 7 nights at once. They are
+  updated whenever you change an alarm or the sleep goal, and each time the app
+  opens; open it at least once a week to keep them coming.
+
 ## What is different from Android
 
 | | Android | iPhone |
@@ -48,3 +60,5 @@ also moves alarms to local time after you change time zone.
 | Alarm volume forced up | Yes | No: iOS alarm volume |
 | Lights on, climbing stairs, NFC sticker | Yes | Replaced by a fallback challenge (no light sensor or barometer access; NFC needs a paid account) |
 | Pixel Watch challenges | Yes | Not yet |
+| Timer rings until Stop, app closed | Yes | Yes (iOS alarm; a notification if Alarms is not allowed) |
+| Bedtime reminder | Follows the alarms by itself | Planned a week ahead; renewed when the app opens or alarms change |

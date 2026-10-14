@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../alarm/alarm_providers.dart';
+import '../tools/ios_bedtime.dart';
 import 'ring_screen.dart';
 
 /// On iPhone the system shows the alarm, not the app: the challenges open
@@ -102,5 +103,9 @@ class _RingLauncherState extends ConsumerState<RingLauncher>
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    // iPhone: keep the bedtime reminders in step with the alarms.
+    ref.watch(iosBedtimeSyncProvider);
+    return widget.child;
+  }
 }

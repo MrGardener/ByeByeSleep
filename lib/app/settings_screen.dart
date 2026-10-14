@@ -138,30 +138,33 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  ListTile(
-                    enabled: bedtime.enabled,
-                    title: const Text('Wind-down reminder'),
-                    subtitle: const Text('A heads-up before bedtime.'),
-                    trailing: DropdownButton<int>(
-                      key: const Key('bedtime-wind-down'),
-                      value: bedtime.windDownMinutes,
-                      onChanged: !bedtime.enabled
-                          ? null
-                          : (m) => ref
-                                .read(bedtimeProvider.notifier)
-                                .change((b) => b.copyWith(windDownMinutes: m)),
-                      items: [
-                        for (final m in {
-                          ...windDownChoices,
-                          bedtime.windDownMinutes,
-                        })
-                          DropdownMenuItem(
-                            value: m,
-                            child: Text(windDownLabel(m)),
-                          ),
-                      ],
+                  if (bedtime.quietHoursSupported)
+                    ListTile(
+                      enabled: bedtime.enabled,
+                      title: const Text('Wind-down reminder'),
+                      subtitle: const Text('A heads-up before bedtime.'),
+                      trailing: DropdownButton<int>(
+                        key: const Key('bedtime-wind-down'),
+                        value: bedtime.windDownMinutes,
+                        onChanged: !bedtime.enabled
+                            ? null
+                            : (m) => ref
+                                  .read(bedtimeProvider.notifier)
+                                  .change(
+                                    (b) => b.copyWith(windDownMinutes: m),
+                                  ),
+                        items: [
+                          for (final m in {
+                            ...windDownChoices,
+                            bedtime.windDownMinutes,
+                          })
+                            DropdownMenuItem(
+                              value: m,
+                              child: Text(windDownLabel(m)),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
                   if (bedtime.quietHoursSupported)
                     SwitchListTile(
                       key: const Key('bedtime-quiet'),

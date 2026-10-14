@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'ios_bedtime.dart';
+
 /// Sleep goals offered, in minutes (6 h to 10 h).
 const sleepGoals = [360, 390, 420, 450, 480, 510, 540, 570, 600];
 
@@ -35,7 +37,7 @@ class BedtimeSettings {
   /// The app may switch Do Not Disturb (Android asks once).
   final bool quietHoursAllowed;
 
-  /// This phone can do quiet hours at all (Android).
+  /// This phone can do quiet hours and the wind-down reminder (Android).
   final bool quietHoursSupported;
 
   /// When the next reminder shows (null: off or no alarm ahead).
@@ -126,8 +128,11 @@ class MethodChannelBedtime implements BedtimePlatform {
       _channel.invokeMethod<void>('openQuietHoursAccess');
 }
 
+/// iPhone: planned in Dart (ios_bedtime.dart); Android: Bedtime.kt.
 final bedtimePlatformProvider = Provider<BedtimePlatform>(
-  (_) => MethodChannelBedtime(),
+  (ref) => ref.watch(isIosProvider)
+      ? ref.watch(iosBedtimeProvider)
+      : MethodChannelBedtime(),
 );
 
 class BedtimeNotifier extends AsyncNotifier<BedtimeSettings?> {
