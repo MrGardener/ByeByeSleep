@@ -1,6 +1,7 @@
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/app/app.dart';
 import 'package:byebyesleep/app/routes.dart';
+import 'package:byebyesleep/app/theme.dart';
 import 'package:byebyesleep/watch_setup/watch_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ Future<void> pumpApp(
   String initialRoute = '/',
   List<Object> extraOverrides = const [],
   WatchSettings watch = const WatchSettings(),
+  ThemeMode themeMode = ThemeMode.dark,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -25,6 +27,10 @@ Future<void> pumpApp(
         ...extraOverrides.cast(),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: themeMode,
         builder: appBuilder,
         onGenerateRoute: generateRoute,
         onGenerateInitialRoutes: (name) => [

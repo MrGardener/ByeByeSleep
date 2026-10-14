@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/theme.dart';
 import 'emergency.dart';
 
 /// The emergency protocol: anyone (a partner, a roommate) can stop the alarm
@@ -66,7 +67,9 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                 _protocol.done.contains(step)
                     ? Icons.check_circle
                     : Icons.radio_button_unchecked,
-                color: _protocol.done.contains(step) ? Colors.green : null,
+                color: _protocol.done.contains(step)
+                    ? SunriseColors.of(context).success
+                    : null,
               ),
               title: Text(step.label),
             ),

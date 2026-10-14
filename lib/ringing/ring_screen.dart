@@ -10,6 +10,8 @@ import '../alarm/alarm.dart';
 import '../alarm/alarm_platform.dart';
 import '../alarm/alarm_providers.dart';
 import '../alarm/stage_config.dart';
+import '../app/theme.dart';
+import '../app/ui_kit.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/types.dart';
 import '../challenges/registry.dart';
@@ -210,53 +212,88 @@ class _RingScreenState extends ConsumerState<RingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Always the night-sky look: high contrast, calm, readable half asleep.
+    return Theme(
+      data: AppTheme.dark(),
+      child: Builder(builder: _screen),
+    );
+  }
+
+  Widget _screen(BuildContext context) {
     final engine = _engine;
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     final now = widget.clock();
     final label = _alarm?.label ?? '';
     return PopScope(
       canPop: false,
-      child: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  '${now.hour.toString().padLeft(2, '0')}:'
-                  '${now.minute.toString().padLeft(2, '0')}',
-                  style: text.displayMedium,
-                ),
-                if (_progress?.followUp ?? false)
-                  Text('Still awake?', style: text.headlineSmall),
-                if (label.isNotEmpty) Text(label, style: text.titleMedium),
-                if (_alarm?.reminder case final r? when !r.isEmpty)
-                  RingReminderCard(reminder: r),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: engine == null
-                      ? const Center(child: CircularProgressIndicator())
-                      : _body(engine),
-                ),
-                if (engine != null && engine.phase is! Done)
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    children: [
-                      TextButton.icon(
-                        key: const Key('emergency'),
-                        onPressed: _emergency,
-                        icon: const Icon(Icons.emergency_outlined),
-                        label: const Text('Emergency stop'),
-                      ),
-                      if (engine.safetyExitAvailable)
-                        TextButton(
-                          key: const Key('safety-exit'),
-                          onPressed: _safetyExit,
-                          child: const Text("I can't finish — type to stop"),
-                        ),
-                    ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(gradient: SunriseColors.of(context).sky),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                children: [
+                  Text(
+                    '${now.hour.toString().padLeft(2, '0')}:'
+                    '${now.minute.toString().padLeft(2, '0')}',
+                    style: text.displayLarge?.copyWith(
+                      fontSize: 88,
+                      fontWeight: FontWeight.w300,
+                      color: scheme.onSurface,
+                    ),
                   ),
-              ],
+                  if (_progress?.followUp ?? false)
+                    Text(
+                      'Still awake?',
+                      style: text.headlineSmall?.copyWith(
+                        color: scheme.secondary,
+                      ),
+                    ),
+                  if (label.isNotEmpty)
+                    Text(
+                      label,
+                      style: text.titleLarge?.copyWith(color: scheme.secondary),
+                    ),
+                  if (_alarm?.reminder case final r? when !r.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: RingReminderCard(reminder: r),
+                    ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: engine == null
+                        ? const Center(child: CircularProgressIndicator())
+                        : _body(engine),
+                  ),
+                  if (engine != null && engine.phase is! Done)
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      children: [
+                        TextButton.icon(
+                          key: const Key('emergency'),
+                          onPressed: _emergency,
+                          style: TextButton.styleFrom(
+                            foregroundColor: scheme.onSurfaceVariant,
+                          ),
+                          icon: const Icon(Icons.emergency_outlined),
+                          label: const Text('Emergency stop'),
+                        ),
+                        if (engine.safetyExitAvailable)
+                          TextButton(
+                            key: const Key('safety-exit'),
+                            onPressed: _safetyExit,
+                            style: TextButton.styleFrom(
+                              foregroundColor: scheme.onSurfaceVariant,
+                            ),
+                            child: const Text("I can't finish — type to stop"),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -265,18 +302,38 @@ class _RingScreenState extends ConsumerState<RingScreen> {
   }
 
   Widget _body(StageEngine engine) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     return switch (engine.phase) {
       final Running r => Column(
         children: [
-          Text('Stage ${r.index + 1} of $_stageCount'),
-          const SizedBox(height: 8),
+          _StageDots(index: r.index, count: _stageCount),
+          const SizedBox(height: 6),
+          Text(
+            'Stage ${r.index + 1} of $_stageCount',
+            style: text.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
           Expanded(
-            child: StageRunner(
-              key: ValueKey('stage-${r.index}-$_fallbacks'),
-              phase: r,
-              random: _random,
-              onPassed: _stagePassed,
-              onFallback: () => _fallback(r),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainer.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: StageRunner(
+                    key: ValueKey('stage-${r.index}-$_fallbacks'),
+                    phase: r,
+                    random: _random,
+                    onPassed: _stagePassed,
+                    onFallback: () => _fallback(r),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -286,9 +343,11 @@ class _RingScreenState extends ConsumerState<RingScreen> {
           key: const Key('breather'),
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.celebration_outlined, size: 72, color: scheme.secondary),
+            const SizedBox(height: 12),
             Text(
               'Well done!',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: text.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -296,12 +355,14 @@ class _RingScreenState extends ConsumerState<RingScreen> {
               'Quieter for ${b.remaining.inSeconds} s. Ready? Go on now: '
               'it stays quieter for the rest of the pause.',
               textAlign: TextAlign.center,
+              style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               key: const Key('next-now'),
               onPressed: _nextNow,
-              icon: const Icon(Icons.skip_next),
+              style: FilledButton.styleFrom(minimumSize: const Size(64, 60)),
+              icon: const Icon(Icons.skip_next_rounded),
               label: const Text('Next challenge now'),
             ),
           ],
@@ -315,6 +376,39 @@ class _RingScreenState extends ConsumerState<RingScreen> {
         ),
       ),
     };
+  }
+}
+
+/// One dot per stage: done, current (wide) and still to come.
+class _StageDots extends StatelessWidget {
+  const _StageDots({required this.index, required this.count});
+
+  final int index;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < count; i++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: i == index ? 28 : 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: i < index
+                  ? scheme.secondary
+                  : i == index
+                  ? scheme.primary
+                  : scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -350,28 +444,46 @@ class _ActionButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final platform = ref.read(alarmPlatformProvider);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FilledButton(
+          Icon(Icons.wb_sunny_rounded, size: 88, color: scheme.secondary),
+          const SizedBox(height: 12),
+          Text(
+            'Rise and shine',
+            textAlign: TextAlign.center,
+            style: text.headlineMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Challenges done. You are awake.',
+            textAlign: TextAlign.center,
+            style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 40),
+          GlowButton(
             key: const Key('stop'),
+            height: 80,
             onPressed: () => _attempt(
               context,
               platform.stopRinging,
               'Stop failed — try again.',
               onStopped,
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Stop'),
-            ),
+            child: const Text('Stop'),
           ),
           const SizedBox(height: 16),
-          OutlinedButton(
+          OutlinedButton.icon(
             key: const Key('snooze'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(64),
+              textStyle: text.titleMedium,
+            ),
             onPressed: () => _attempt(
               context,
               () async {
@@ -381,10 +493,8 @@ class _ActionButtons extends ConsumerWidget {
               'Snooze failed — the alarm keeps ringing.',
               onSnoozed,
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Snooze $snoozeMinutes min'),
-            ),
+            icon: const Icon(Icons.snooze_rounded),
+            label: const Text('Snooze $snoozeMinutes min'),
           ),
         ],
       ),

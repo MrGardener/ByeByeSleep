@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/theme.dart';
+import '../../app/ui_kit.dart';
 import '../../challenges/core/challenge.dart';
 import '../../challenges/core/challenge_id.dart';
 import '../../challenges/registry.dart';
@@ -62,6 +64,7 @@ class StageEditor extends ConsumerWidget {
     ];
     Widget tile(BuildContext context, ChallengeId id) => ListTile(
       key: Key('pick-${id.name}'),
+      leading: IconBadge(challengeIcon(id)),
       title: Text(definitionFor(id).title),
       subtitle: Text(definitionFor(id).instructions),
       trailing: definitionFor(id).setup != null
@@ -138,20 +141,29 @@ class StageEditor extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final watch =
         ref.watch(watchSettingsProvider).value ?? const WatchSettings();
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Stop and Snooze appear after the last one.'),
+        Text(
+          'Stop and Snooze appear after the last one.',
+          style: TextStyle(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 4),
         Row(
           children: [
-            const Icon(Icons.timer_outlined, size: 18),
-            const SizedBox(width: 4),
-            Text(
-              estimateLabel(stages, pauseSeconds),
-              key: const Key('estimate'),
+            Icon(Icons.timer_outlined, size: 18, color: scheme.primary),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                estimateLabel(stages, pauseSeconds),
+                key: const Key('estimate'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
             ),
           ],
         ),
+        const SizedBox(height: 8),
         ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -164,20 +176,39 @@ class StageEditor extends ConsumerWidget {
             for (var i = 0; i < stages.length; i++)
               Card(
                 key: ValueKey('stage-row-$i'),
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radius),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 40, 4),
+                  padding: const EdgeInsets.fromLTRB(12, 6, 40, 2),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(radius: 12, child: Text('${i + 1}')),
-                          const SizedBox(width: 8),
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: scheme.primary,
+                            foregroundColor: scheme.onPrimary,
+                            child: Text(
+                              '${i + 1}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(definitionFor(stages[i].challenge).title),
+                                Text(
+                                  definitionFor(stages[i].challenge).title,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium,
+                                ),
                                 // Under the title: on a phone a chip in the
                                 // row pushed the buttons off the edge.
                                 if (!definitionFor(stages[i].challenge)

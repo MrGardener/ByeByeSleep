@@ -7,6 +7,7 @@ import '../alarm/alarm_platform.dart';
 import '../alarm/series.dart';
 import '../alarm/ui/stored_photo.dart';
 import '../app/routes.dart';
+import '../app/ui_kit.dart';
 
 /// Alarms of [ringing]'s series that ring in the next 3 hours after [now].
 List<Alarm> laterInSeries(Alarm ringing, List<Alarm> all, DateTime now) {
@@ -168,16 +169,13 @@ class ReminderScreen extends StatelessWidget {
                   child: Text(
                     reminder.caption,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
-              FilledButton(
+              GlowButton(
                 key: const Key('reminder-done'),
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Got it'),
-                ),
+                child: const Text('Got it'),
               ),
             ],
           ),
@@ -196,18 +194,27 @@ class RingReminderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final photo = reminder.photoPath;
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       key: const Key('ring-reminder'),
+      margin: EdgeInsets.zero,
+      color: scheme.secondaryContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         child: Row(
           children: [
             if (photo != null)
-              SizedBox(
-                width: 48,
-                height: 48,
-                child: StoredPhoto(photo, fit: BoxFit.cover),
-              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: StoredPhoto(photo, fit: BoxFit.cover),
+                ),
+              )
+            else
+              Icon(Icons.lightbulb_outline, color: scheme.onSecondaryContainer),
             const SizedBox(width: 12),
             // Kept to two lines: the challenge below needs the room.
             Expanded(
@@ -215,6 +222,8 @@ class RingReminderCard extends StatelessWidget {
                 reminder.caption.isEmpty
                     ? "Don't forget!"
                     : "Don't forget: ${reminder.caption}",
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: scheme.onSecondaryContainer),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/theme.dart';
+import '../../app/ui_kit.dart';
 import '../alarm.dart';
 import '../alarm_platform.dart';
 import '../alarm_providers.dart';
@@ -437,40 +439,88 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   Widget build(BuildContext context) {
     final timeText =
         '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+    final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.alarm == null ? 'New alarm' : 'Edit alarm'),
         actions: [
-          TextButton(
-            key: const Key('save-alarm'),
-            onPressed: _saving ? null : _save,
-            child: const Text('Save'),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton(
+              key: const Key('save-alarm'),
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(minimumSize: const Size(88, 44)),
+              child: const Text('Save'),
+            ),
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
-          const _SectionTitle(Icons.schedule, 'When'),
-          Center(
-            child: TextButton(
-              key: const Key('time-button'),
-              onPressed: _pickTime,
-              child: Text(
-                timeText,
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
+          HeroCard(
+            margin: EdgeInsets.zero,
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            child: Column(
+              children: [
+                Text(
+                  'WAKE UP AT',
+                  style: text.labelMedium?.copyWith(
+                    color: Colors.white,
+                    letterSpacing: 1.6,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                TextButton(
+                  key: const Key('time-button'),
+                  onPressed: _pickTime,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                    ),
+                  ),
+                  child: Text(
+                    timeText,
+                    style: text.displayLarge?.copyWith(
+                      color: Colors.white,
+                      fontSize: 88,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.touch_app_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Tap the time to change it',
+                        style: text.bodyMedium?.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
           Wrap(
-            spacing: 6,
+            spacing: 4,
+            runSpacing: 4,
             alignment: WrapAlignment.center,
             children: [
               for (var d = 1; d <= 7; d++)
                 FilterChip(
                   key: Key('day-chip-$d'),
                   label: Text(dayName(d)),
+                  showCheckmark: false,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
                   selected: _days.contains(d),
                   onSelected: (on) => setState(() {
                     final day = d;
@@ -479,113 +529,131 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              repeatSummary(_days),
+              style: text.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           TextField(
             key: const Key('label-field'),
             controller: _label,
-            decoration: const InputDecoration(labelText: 'Label'),
+            decoration: const InputDecoration(
+              labelText: 'Label',
+              prefixIcon: Icon(Icons.label_outline),
+            ),
           ),
-          const _SectionTitle(Icons.extension_outlined, 'Challenges'),
-          if (_stages.isNotEmpty) ...[
-            StageEditor(
-              stages: _stages,
-              pauseSeconds: _pauseSeconds,
-              onChanged: (s) => setState(() => _stages = s),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Pause between challenges'),
-              subtitle: const Text(
-                'Quieter after each challenge. You can go on to the next '
-                'one right away; Stop still needs every challenge done.',
-              ),
-              trailing: DropdownButton<int>(
-                key: const Key('pause-dropdown'),
-                value: _pauseSeconds,
-                items: [
-                  for (final s in pauseChoices)
-                    DropdownMenuItem(
-                      value: s,
-                      child: Text(s == 0 ? 'No pause' : '$s seconds'),
-                    ),
-                ],
-                onChanged: (s) => setState(() => _pauseSeconds = s ?? 0),
-              ),
-            ),
-          ] else
-            const Text('None: this alarm is a reminder only.'),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text("Check I'm awake"),
-            subtitle: const Text(
-              'Rings once more after Stop; one quick challenge proves you '
-              'did not fall asleep again.',
-            ),
-            trailing: DropdownButton<int>(
-              key: const Key('followup-dropdown'),
-              value: _followUp,
-              items: [
-                for (final m in const [0, 5, 10, 15, 20])
-                  DropdownMenuItem(
-                    value: m,
-                    child: Text(m == 0 ? 'Off' : 'After $m min'),
+          const SectionHeader(Icons.extension_outlined, 'Challenges'),
+          _Panel(
+            children: [
+              if (_stages.isNotEmpty) ...[
+                StageEditor(
+                  stages: _stages,
+                  pauseSeconds: _pauseSeconds,
+                  onChanged: (s) => setState(() => _stages = s),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Pause between challenges'),
+                  subtitle: const Text(
+                    'Quieter after each challenge. You can go on to the next '
+                    'one right away; Stop still needs every challenge done.',
                   ),
-              ],
-              onChanged: (m) => setState(() => _followUp = m ?? 0),
-            ),
+                  trailing: DropdownButton<int>(
+                    key: const Key('pause-dropdown'),
+                    value: _pauseSeconds,
+                    borderRadius: BorderRadius.circular(AppTheme.radius),
+                    items: [
+                      for (final s in pauseChoices)
+                        DropdownMenuItem(
+                          value: s,
+                          child: Text(s == 0 ? 'No pause' : '$s seconds'),
+                        ),
+                    ],
+                    onChanged: (s) => setState(() => _pauseSeconds = s ?? 0),
+                  ),
+                ),
+              ] else
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text('None: this alarm is a reminder only.'),
+                ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text("Check I'm awake"),
+                subtitle: const Text(
+                  'Rings once more after Stop; one quick challenge proves you '
+                  'did not fall asleep again.',
+                ),
+                trailing: DropdownButton<int>(
+                  key: const Key('followup-dropdown'),
+                  value: _followUp,
+                  borderRadius: BorderRadius.circular(AppTheme.radius),
+                  items: [
+                    for (final m in const [0, 5, 10, 15, 20])
+                      DropdownMenuItem(
+                        value: m,
+                        child: Text(m == 0 ? 'Off' : 'After $m min'),
+                      ),
+                  ],
+                  onChanged: (m) => setState(() => _followUp = m ?? 0),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Stop ringing after'),
+                subtitle: const Text(
+                  'If nobody stops it (you are away), it stops by itself and '
+                  'leaves a "missed alarm" notification.',
+                ),
+                trailing: DropdownButton<int>(
+                  key: const Key('maxring-dropdown'),
+                  value: _maxRing,
+                  borderRadius: BorderRadius.circular(AppTheme.radius),
+                  items: [
+                    for (final m in const [10, 20, 30, 45, 60])
+                      DropdownMenuItem(value: m, child: Text('After $m min')),
+                  ],
+                  onChanged: (m) =>
+                      setState(() => _maxRing = m ?? Alarm.defaultMaxRing),
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Stop ringing after'),
-            subtitle: const Text(
-              'If nobody stops it (you are away), it stops by itself and '
-              'leaves a "missed alarm" notification.',
-            ),
-            trailing: DropdownButton<int>(
-              key: const Key('maxring-dropdown'),
-              value: _maxRing,
-              items: [
-                for (final m in const [10, 20, 30, 45, 60])
-                  DropdownMenuItem(value: m, child: Text('After $m min')),
-              ],
-              onChanged: (m) =>
-                  setState(() => _maxRing = m ?? Alarm.defaultMaxRing),
-            ),
-          ),
-          const _SectionTitle(Icons.repeat, 'Series'),
-          _seriesSection(),
-          const _SectionTitle(Icons.photo_camera_outlined, 'Reminder'),
-          _reminderSection(),
+          const SectionHeader(Icons.repeat_rounded, 'Series'),
+          _Panel(children: [_seriesSection()]),
+          const SectionHeader(Icons.photo_camera_outlined, 'Reminder'),
+          _Panel(children: [_reminderSection()]),
         ],
       ),
     );
   }
 }
 
-/// Heading of one tool in the editor: When, Challenges, Series, Reminder.
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.icon, this.title);
+/// One tonal, rounded block of the editor.
+class _Panel extends StatelessWidget {
+  const _Panel({required this.children});
 
-  final IconData icon;
-  final String title;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(color: color),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(child: Divider()),
-        ],
+    // Material, not a DecoratedBox: the list tiles inside paint on it.
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
       ),
     );
   }
