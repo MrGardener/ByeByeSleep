@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_clock_label">Clock</string>
+    <string name="widget_clock_description">Big time and date, with your next ByeByeSleep alarm.</string>
+    <string name="widget_next_alarm_label">Next alarm</string>
+    <string name="widget_next_alarm_description">When your next alarm rings, on a sunrise gradient.</string>
+    <string name="widget_world_label">World clock</string>
+    <string name="widget_world_description">The time in up to 3 cities you pick.</string>
+
+    <string name="widget_no_alarm">No alarm set</string>
+    <string name="widget_no_alarm_hint">Tap to add one</string>
+    <string name="widget_open_app">Open ByeByeSleep</string>
+    <string name="widget_alarm_icon">Alarm</string>
+
+    <!-- Shown in the widget picker previews; replaced with real data on the home screen. -->
+    <string name="widget_preview_summary">Next alarm 06:30 · Tomorrow</string>
+    <string name="widget_preview_time">06:30</string>
+    <string name="widget_preview_detail">Tomorrow · Wake up</string>
+    <string name="widget_preview_city_1">London</string>
+    <string name="widget_preview_city_2">New York</string>
+    <string name="widget_preview_city_3">Tokyo</string>
+
+    <string name="world_config_title">World clock widget</string>
+    <string name="world_config_hint">Pick up to 3 cities</string>
+    <string name="world_config_search">Search cities</string>
+    <string name="world_config_done">Done</string>
+    <string name="world_config_cancel">Cancel</string>
+    <string name="world_config_limit">Up to 3 cities</string>
+
+    <string name="dream_label">ByeByeSleep clock</string>
+    <string name="dream_settings_title">ByeByeSleep clock</string>
+    <string name="dream_night_colours">Night colours</string>
+    <string name="dream_night_colours_summary">Dim amber on black, so the clock does not light up the bedroom.</string>
+    <string name="dream_show_alarm">Show next alarm</string>
+</resources>

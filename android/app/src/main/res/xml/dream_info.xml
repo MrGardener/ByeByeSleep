@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ByeByeSleep clock screen saver: the settings activity toggles night colours. -->
+<dream xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.mrgardener.byebyesleep/com.mrgardener.byebyesleep.widget.ClockDreamSettingsActivity" />

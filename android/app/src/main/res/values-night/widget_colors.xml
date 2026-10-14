@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Sunrise" colours for the home-screen widgets in dark theme (Night). -->
+<resources>
+    <color name="widget_surface">#FF191433</color>
+    <color name="widget_outline">#1FF5F0FF</color>
+    <color name="widget_text">#FFF5F0FF</color>
+    <color name="widget_text_secondary">#FFBDB3DA</color>
+    <color name="widget_accent">#FFFF8A65</color>
+    <color name="widget_accent_soft">#33FF8A65</color>
+</resources>
