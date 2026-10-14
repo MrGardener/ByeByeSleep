@@ -99,3 +99,16 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 82 | Timer: start 1 min and 3 min timers; close the app. | Both count down; each rings separately ("Time's up"), and Stop silences only that one. |
 | 83 | Settings → Bedtime reminder on, goal 8 h, with a 07:00 alarm. | "Next reminder 23:00"; at 23:00 a "Time for bed" notification. Changing the alarm moves the reminder. |
 | 84 | New icon. | Sunrise icon on the home screen, in the app drawer (themed icons too) and on the watch; night-coloured splash. |
+| 85 | Long-press the home screen → Widgets → ByeByeSleep. | Three widgets with live previews and descriptions: Clock, Next alarm, World clock. |
+| 86 | Add the Clock widget with a 06:30 alarm for tomorrow; resize it small and large. | Big time and date tick by themselves; "Next alarm 06:30 · Tomorrow"; rounded corners like other widgets; the time scales with the size. Tapping opens the app. |
+| 87 | Add the Next alarm widget; then switch every alarm off in the app. | Sunrise gradient with "06:30" and "Tomorrow · label"; after switching off, within seconds "No alarm set · Tap to add one". Tapping opens the app. |
+| 88 | Add the World clock widget: search "sao", pick São Paulo, Tokyo, London; try a 4th. | The picker starts with the Clock tab's cities; a 4th says "Up to 3 cities". The widget shows each city, its weekday and "+N h", with the right time. Long-press → widget settings changes the cities. |
+| 89 | Change an alarm, snooze one, skip one in the app; set the phone's time zone to another city; switch dark theme on/off. | Clock and Next alarm widgets follow at once; the time zone change updates them; widget colours follow light/dark. |
+| 90 | Leave the widgets overnight (or set the phone clock to 23:59). | After midnight "Tomorrow" became "Today"; after the alarm rang the widgets show the following alarm. |
+| 91 | Settings → Display → Screen saver → ByeByeSleep clock → Preview (with "Night colours" on). | Very dim amber clock on black, date and next alarm under it; the clock moves slightly each minute; touching ends it. |
+| 92 | Screen saver settings (gear next to ByeByeSleep clock): Night colours off, Show next alarm off; Preview. | Full Sunrise colours on night blue, brighter; no alarm line. |
+| 93 | Clock → Stopwatch: add 6 stopwatches, name one "Run". | Each runs on its own; the ones that fit on screen have Lap/Reset, the rest only start/pause; names stay after reopening. |
+| 94 | Timer: type "Pasta", start 10 min; rename a running timer. | The card and the "Time's up" notification use the name. |
+| 95 | Clock → Add city → type a small town (e.g. "Ushuaia"). | Found online; its time, day and current weather (°C or °F per Settings) show. Offline: the 134 built-in cities still work. |
+| 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
+| 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |

@@ -70,6 +70,8 @@ class AlarmService : Service() {
         }
         if (alreadyRinging) return
         ringing = true
+        // Morning: quiet hours (if ours) end with the alarm.
+        runCatching { QuietHours.end(this) }
         level = 1f
 
         // A new ring starts at stage 0; a redelivered one (process restarted) continues.

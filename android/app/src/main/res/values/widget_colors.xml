@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Sunrise" colours for the home-screen widgets (light: Dawn). Dark in values-night. -->
+<resources>
+    <color name="widget_surface">#FFFFF8F4</color>
+    <color name="widget_outline">#1F24172A</color>
+    <color name="widget_text">#FF24172A</color>
+    <color name="widget_text_secondary">#FF5E4E66</color>
+    <color name="widget_accent">#FFA93A1C</color>
+    <color name="widget_accent_soft">#26FF8A65</color>
+
+    <!-- Hero gradient (same in both themes; white text passes AA on every stop). -->
+    <color name="hero_dusk">#FF2A1B5C</color>
+    <color name="hero_plum">#FF6E2A78</color>
+    <color name="hero_ember">#FFC4475C</color>
+    <color name="hero_text">#FFFFFFFF</color>
+    <color name="hero_text_secondary">#E6FFFFFF</color>
+    <color name="hero_chip">#33FFFFFF</color>
+
+    <!-- Screen saver (always dark: it is a bedside clock). -->
+    <color name="dream_black">#FF000000</color>
+    <color name="dream_night_text">#FFFFC155</color>
+    <color name="dream_full_bg">#FF120E24</color>
+    <color name="dream_full_text">#FFF5F0FF</color>
+    <color name="dream_full_secondary">#FFBDB3DA</color>
+    <color name="dream_full_accent">#FFFF8A65</color>
+</resources>

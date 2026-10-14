@@ -45,6 +45,36 @@ class StopwatchState {
 
   bool get running => startedAt != null;
 
+  factory StopwatchState.fromJson(Map<String, Object?> j) => StopwatchState(
+    before: Duration(milliseconds: (j['beforeMs'] as num?)?.toInt() ?? 0),
+    startedAt: j['startedAtMs'] is num
+        ? DateTime.fromMillisecondsSinceEpoch(
+            (j['startedAtMs']! as num).toInt(),
+          )
+        : null,
+    laps: [
+      for (final l in (j['laps'] as List? ?? const []))
+        Lap(
+          number: ((l as Map)['n']! as num).toInt(),
+          split: Duration(milliseconds: (l['splitMs']! as num).toInt()),
+          total: Duration(milliseconds: (l['totalMs']! as num).toInt()),
+        ),
+    ],
+  );
+
+  Map<String, Object?> toJson() => {
+    'beforeMs': before.inMilliseconds,
+    if (startedAt != null) 'startedAtMs': startedAt!.millisecondsSinceEpoch,
+    'laps': [
+      for (final l in laps)
+        {
+          'n': l.number,
+          'splitMs': l.split.inMilliseconds,
+          'totalMs': l.total.inMilliseconds,
+        },
+    ],
+  };
+
   Duration elapsed(DateTime now) =>
       before + (startedAt == null ? Duration.zero : now.difference(startedAt!));
 

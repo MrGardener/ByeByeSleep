@@ -1,6 +1,7 @@
 package com.mrgardener.byebyesleep.alarm
 
 import android.app.Activity
+import com.mrgardener.byebyesleep.widget.Widgets
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 
@@ -60,6 +61,10 @@ object AlarmChannel {
             // Alarms may have changed: the bedtime reminder follows them.
             if (call.method in setOf("upsert", "delete", "skipNext")) {
                 runCatching { BedtimeSchedule.refresh(activity.applicationContext) }
+            }
+            // So do the home-screen widgets (a snooze or "check I'm awake" ring too).
+            if (call.method in setOf("upsert", "delete", "skipNext", "snooze", "followUp", "stopRinging")) {
+                runCatching { Widgets.refresh(activity.applicationContext) }
             }
         }
     }

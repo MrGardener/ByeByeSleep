@@ -38,4 +38,25 @@ object Bedtime {
         val sleep = if (m == 0) "$h h" else "$h h $m min"
         return "Your alarm rings at %02d:%02d — go to bed now for %s of sleep.".format(alarm.hour, alarm.minute, sleep)
     }
+
+    enum class Kind { WIND_DOWN, BEDTIME, QUIET_OFF }
+
+    data class Event(val kind: Kind, val at: ZonedDateTime)
+
+    /**
+     * What happens around one night: an optional wind-down reminder, the
+     * bedtime reminder (which also starts quiet hours when they are on) and
+     * the end of quiet hours at the alarm. Events already past are dropped.
+     */
+    fun plan(reminder: Reminder, now: ZonedDateTime, windDownMinutes: Int, quietHours: Boolean): List<Event> =
+        listOfNotNull(
+            if (windDownMinutes > 0) Event(Kind.WIND_DOWN, reminder.at.minusMinutes(windDownMinutes.toLong())) else null,
+            Event(Kind.BEDTIME, reminder.at),
+            if (quietHours) Event(Kind.QUIET_OFF, reminder.alarm) else null,
+        ).filter { it.at.isAfter(now) }
+
+    fun windDownText(minutes: Int): String {
+        val time = if (minutes % 60 == 0) "${minutes / 60} h" else "$minutes min"
+        return "Bedtime in $time — time to wind down."
+    }
 }

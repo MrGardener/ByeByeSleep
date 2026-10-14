@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Sunrise hero gradient: night through plum into the first coral light. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="315"
+        android:startColor="@color/hero_dusk"
+        android:centerColor="@color/hero_plum"
+        android:endColor="@color/hero_ember"
+        android:type="linear" />
+    <corners android:radius="@dimen/widget_radius" />
+</shape>

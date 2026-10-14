@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../alarm/guard.dart';
+import 'name_dialog.dart';
 import 'timer_bell.dart';
 import 'timer_state.dart';
 
@@ -20,6 +21,7 @@ class TimerScreen extends ConsumerStatefulWidget {
 
 class _TimerScreenState extends ConsumerState<TimerScreen> {
   Timer? _ticker;
+  final _name = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +35,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _name.dispose();
     super.dispose();
   }
 
@@ -117,10 +120,23 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('timer-name-input'),
+                  controller: _name,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.label_outline),
+                    hintText: 'Name (optional), e.g. Pasta',
+                  ),
+                ),
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   key: const Key('timer-add'),
-                  onPressed: notifier.add,
+                  onPressed: () {
+                    notifier.add(name: _name.text);
+                    _name.clear();
+                  },
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: Text('Start ${formatTimer(s.composer)}'),
                 ),
@@ -130,7 +146,19 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
         ),
         const SizedBox(height: 8),
         for (final t in s.timers.reversed)
-          _TimerCard(entry: t, now: now, notifier: notifier),
+          _TimerCard(
+            entry: t,
+            now: now,
+            notifier: notifier,
+            onRename: () async {
+              final name = await askName(
+                context,
+                title: 'Name this timer',
+                initial: t.name,
+              );
+              if (name != null) await notifier.rename(t.id, name);
+            },
+          ),
       ],
     );
   }
@@ -141,11 +169,13 @@ class _TimerCard extends StatelessWidget {
     required this.entry,
     required this.now,
     required this.notifier,
+    required this.onRename,
   });
 
   final TimerEntry entry;
   final DateTime now;
   final TimersNotifier notifier;
+  final VoidCallback onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -178,6 +208,29 @@ class _TimerCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  InkWell(
+                    key: Key('timer-$id-name'),
+                    onTap: onRename,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            entry.label,
+                            style: text.titleSmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.edit,
+                          size: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
                   Text(
                     done ? "Time's up" : formatTimer(left),
                     style: text.headlineMedium?.copyWith(

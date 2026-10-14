@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Native screens around the widgets and the screen saver (city picker, screen saver settings). -->
+    <style name="WidgetSettingsTheme" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:colorAccent">@color/widget_accent</item>
+    </style>
+</resources>

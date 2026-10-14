@@ -48,4 +48,32 @@ class BedtimeTest {
             Bedtime.text(at(2026, 10, 13, 6, 30), 450),
         )
     }
+
+    @Test fun plan_windDownBedtimeAndQuietHours() {
+        val r = Bedtime.Reminder(at(2026, 10, 12, 23, 0), at(2026, 10, 13, 7, 0))
+        val now = at(2026, 10, 12, 20, 0)
+        assertEquals(
+            listOf(
+                Bedtime.Event(Bedtime.Kind.WIND_DOWN, at(2026, 10, 12, 22, 30)),
+                Bedtime.Event(Bedtime.Kind.BEDTIME, at(2026, 10, 12, 23, 0)),
+                Bedtime.Event(Bedtime.Kind.QUIET_OFF, at(2026, 10, 13, 7, 0)),
+            ),
+            Bedtime.plan(r, now, windDownMinutes = 30, quietHours = true),
+        )
+        // No wind-down, no quiet hours: only the bedtime reminder.
+        assertEquals(
+            listOf(Bedtime.Event(Bedtime.Kind.BEDTIME, at(2026, 10, 12, 23, 0))),
+            Bedtime.plan(r, now, windDownMinutes = 0, quietHours = false),
+        )
+        // Wind-down time already passed: skipped.
+        assertEquals(
+            Bedtime.Kind.BEDTIME,
+            Bedtime.plan(r, at(2026, 10, 12, 22, 45), windDownMinutes = 30, quietHours = false).first().kind,
+        )
+    }
+
+    @Test fun windDownText() {
+        assertEquals("Bedtime in 30 min — time to wind down.", Bedtime.windDownText(30))
+        assertEquals("Bedtime in 1 h — time to wind down.", Bedtime.windDownText(60))
+    }
 }
