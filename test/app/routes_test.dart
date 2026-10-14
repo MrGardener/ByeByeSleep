@@ -55,7 +55,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(); // the timer loads its saved state
-    expect(find.byKey(const Key('timer-start')), findsOneWidget);
+    expect(find.byKey(const Key('timer-add')), findsOneWidget);
     // Back to alarms so the screens' tickers stop.
     await tester.tap(find.byKey(const Key('tab-alarms')));
     await tester.pump(const Duration(seconds: 1));

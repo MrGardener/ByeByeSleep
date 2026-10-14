@@ -10,16 +10,16 @@ import 'timer_state.dart';
 
 /// Rings when a timer ends, also with the app closed (TimerBell.kt).
 abstract class TimerBell {
-  Future<void> schedule(DateTime at, String label);
+  Future<void> schedule(int id, DateTime at, String label);
 
   /// Cancels a pending timer and silences one that is ringing.
-  Future<void> cancel();
+  Future<void> cancel(int id);
 }
 
 class MethodChannelTimerBell implements TimerBell {
   static const _channel = MethodChannel('byebyesleep/timer');
 
-  Future<void> _call(String method, [Object? args]) async {
+  Future<void> _call(String method, Map<String, Object?> args) async {
     try {
       await _channel.invokeMethod<void>(method, args);
     } on MissingPluginException {
@@ -28,90 +28,180 @@ class MethodChannelTimerBell implements TimerBell {
   }
 
   @override
-  Future<void> schedule(DateTime at, String label) =>
-      _call('schedule', {'atMs': at.millisecondsSinceEpoch, 'label': label});
+  Future<void> schedule(int id, DateTime at, String label) => _call(
+    'schedule',
+    {'id': id, 'atMs': at.millisecondsSinceEpoch, 'label': label},
+  );
 
   @override
-  Future<void> cancel() => _call('cancel');
+  Future<void> cancel(int id) => _call('cancel', {'id': id});
 }
 
 final timerBellProvider = Provider<TimerBell>((_) => MethodChannelTimerBell());
 
-abstract class TimerStore {
-  Future<TimerState?> load();
-  Future<void> save(TimerState state);
+class TimerEntry {
+  const TimerEntry({required this.id, required this.state});
+
+  final int id;
+  final TimerState state;
+
+  String get label => 'Timer ${formatTimer(state.total)}';
+
+  TimerEntry copyWith(TimerState state) => TimerEntry(id: id, state: state);
 }
 
-/// `timer.json` in the documents folder.
+/// Every timer, plus the length picked for the next one.
+class TimersState {
+  const TimersState({
+    this.timers = const [],
+    this.nextId = 1,
+    this.composer = const Duration(minutes: 5),
+  });
+
+  factory TimersState.fromJson(Map<String, Object?> j) => TimersState(
+    timers: [
+      for (final t in (j['timers'] as List? ?? const []))
+        TimerEntry(
+          id: ((t as Map)['id']! as num).toInt(),
+          state: TimerState.fromJson(t.cast<String, Object?>()),
+        ),
+    ],
+    nextId: (j['nextId'] as num?)?.toInt() ?? 1,
+    composer: Duration(
+      milliseconds: (j['composerMs'] as num?)?.toInt() ?? 300000,
+    ),
+  );
+
+  final List<TimerEntry> timers;
+  final int nextId;
+  final Duration composer;
+
+  Map<String, Object?> toJson() => {
+    'timers': [
+      for (final t in timers) {'id': t.id, ...t.state.toJson()},
+    ],
+    'nextId': nextId,
+    'composerMs': composer.inMilliseconds,
+  };
+
+  TimersState copyWith({
+    List<TimerEntry>? timers,
+    int? nextId,
+    Duration? composer,
+  }) => TimersState(
+    timers: timers ?? this.timers,
+    nextId: nextId ?? this.nextId,
+    composer: composer ?? this.composer,
+  );
+}
+
+abstract class TimerStore {
+  Future<TimersState?> load();
+  Future<void> save(TimersState state);
+}
+
+/// `timers.json` in the documents folder.
 class FileTimerStore implements TimerStore {
   Future<File> get _file async =>
-      File('${(await getApplicationDocumentsDirectory()).path}/timer.json');
+      File('${(await getApplicationDocumentsDirectory()).path}/timers.json');
 
   @override
-  Future<TimerState?> load() async {
+  Future<TimersState?> load() async {
     try {
       final j = jsonDecode(await (await _file).readAsString());
-      return TimerState.fromJson((j as Map).cast<String, Object?>());
+      return TimersState.fromJson((j as Map).cast<String, Object?>());
     } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<void> save(TimerState state) async =>
+  Future<void> save(TimersState state) async =>
       (await _file).writeAsString(jsonEncode(state.toJson()));
 }
 
 final timerStoreProvider = Provider<TimerStore>((_) => FileTimerStore());
 
-const defaultTimer = TimerState(total: Duration(minutes: 5));
-
-class TimerNotifier extends AsyncNotifier<TimerState> {
+class TimersNotifier extends AsyncNotifier<TimersState> {
   DateTime _now() => ref.read(nowProvider)();
   TimerBell get _bell => ref.read(timerBellProvider);
+  TimersState get _state => state.value ?? const TimersState();
 
   @override
-  Future<TimerState> build() async =>
-      await ref.read(timerStoreProvider).load() ?? defaultTimer;
+  Future<TimersState> build() async =>
+      await ref.read(timerStoreProvider).load() ?? const TimersState();
 
-  Future<void> _set(TimerState next) async {
+  Future<void> _set(TimersState next) async {
     state = AsyncData(next);
     await ref.read(timerStoreProvider).save(next);
   }
 
-  Future<void> choose(Duration total) async {
-    await _bell.cancel();
-    await _set(TimerState(total: total));
+  TimerEntry? _find(int id) {
+    for (final t in _state.timers) {
+      if (t.id == id) return t;
+    }
+    return null;
   }
 
-  Future<void> startOrPause() async {
-    final t = await future;
-    if (t.running) {
-      await _bell.cancel();
-      await _set(t.pause(_now()));
+  Future<void> _replace(TimerEntry entry) => _set(
+    _state.copyWith(
+      timers: [for (final t in _state.timers) t.id == entry.id ? entry : t],
+    ),
+  );
+
+  Future<void> choose(Duration length) =>
+      _set(_state.copyWith(composer: length));
+
+  /// Starts a new timer of the chosen length.
+  Future<void> add() async {
+    final s = _state;
+    if (s.composer <= Duration.zero) return;
+    final entry = TimerEntry(
+      id: s.nextId,
+      state: TimerState(total: s.composer).start(_now()),
+    );
+    await _bell.schedule(entry.id, entry.state.endsAt!, entry.label);
+    await _set(s.copyWith(timers: [...s.timers, entry], nextId: s.nextId + 1));
+  }
+
+  Future<void> toggle(int id) async {
+    final t = _find(id);
+    if (t == null) return;
+    if (t.state.running) {
+      await _bell.cancel(id);
+      await _replace(t.copyWith(t.state.pause(_now())));
     } else {
-      final started = t.start(_now());
+      final started = t.state.start(_now());
       if (!started.running) return;
-      await _bell.schedule(started.endsAt!, 'Timer ${formatTimer(t.total)}');
-      await _set(started);
+      await _bell.schedule(id, started.endsAt!, t.label);
+      await _replace(t.copyWith(started));
     }
   }
 
-  Future<void> addMinute() async {
-    final t = (await future).addMinute();
-    if (t.running) {
-      await _bell.schedule(t.endsAt!, 'Timer ${formatTimer(t.total)}');
+  Future<void> addMinute(int id) async {
+    final t = _find(id);
+    if (t == null) return;
+    final next = t.copyWith(t.state.addMinute());
+    if (next.state.running) {
+      await _bell.schedule(id, next.state.endsAt!, next.label);
     }
-    await _set(t);
+    await _replace(next);
   }
 
-  /// Reset, or Stop once the time is up.
-  Future<void> reset() async {
-    await _bell.cancel();
-    await _set((await future).reset());
+  /// Delete, or Stop once the time is up.
+  Future<void> remove(int id) async {
+    await _bell.cancel(id);
+    await _set(
+      _state.copyWith(
+        timers: [
+          for (final t in _state.timers)
+            if (t.id != id) t,
+        ],
+      ),
+    );
   }
 }
 
-final timerProvider = AsyncNotifierProvider<TimerNotifier, TimerState>(
-  TimerNotifier.new,
+final timersProvider = AsyncNotifierProvider<TimersNotifier, TimersState>(
+  TimersNotifier.new,
 );

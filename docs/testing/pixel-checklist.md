@@ -95,3 +95,7 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 78 | Clock tab → Clock. | Live time and date; "Next alarm HH:MM · in …" matches the alarm list. |
 | 79 | Clock tab → Timer: 1 min, Start, close the app. | After 1 min a "Time's up" notification rings at alarm volume and keeps ringing until Stop. |
 | 80 | Clock tab → Stopwatch: Start, Lap twice, Pause, Reset. | Laps show split and total; Reset clears everything. |
+| 81 | Clock → Add city → "Tokyo", then swipe it away. | Tokyo shows its time, Today/Tomorrow and the difference ("+7 h"); swiping removes it. |
+| 82 | Timer: start 1 min and 3 min timers; close the app. | Both count down; each rings separately ("Time's up"), and Stop silences only that one. |
+| 83 | Settings → Bedtime reminder on, goal 8 h, with a 07:00 alarm. | "Next reminder 23:00"; at 23:00 a "Time for bed" notification. Changing the alarm moves the reminder. |
+| 84 | New icon. | Sunrise icon on the home screen, in the app drawer (themed icons too) and on the watch; night-coloured splash. |

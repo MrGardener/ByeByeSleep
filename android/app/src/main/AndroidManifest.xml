@@ -24,7 +24,8 @@
     <application
         android:label="ByeByeSleep"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -66,6 +67,7 @@
         <receiver android:name=".alarm.AlarmReceiver" android:exported="false" android:directBootAware="true" />
         <receiver android:name=".alarm.PreflightReceiver" android:exported="false" />
         <receiver android:name=".alarm.TimerReceiver" android:exported="false" />
+        <receiver android:name=".alarm.BedtimeReceiver" android:exported="false" />
         <receiver android:name=".alarm.BootReceiver" android:exported="true" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />

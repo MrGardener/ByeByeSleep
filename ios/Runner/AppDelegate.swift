@@ -21,6 +21,33 @@ import UIKit
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AlarmKitChannel") {
       AlarmKitChannel.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ZonesChannel") {
+      ZonesChannel.register(with: registrar)
+    }
+  }
+}
+
+/// UTC offsets of time zones for the world clocks (lib/tools/world_clock.dart).
+class ZonesChannel: NSObject, FlutterPlugin {
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let channel = FlutterMethodChannel(
+      name: "byebyesleep/zones", binaryMessenger: registrar.messenger())
+    registrar.addMethodCallDelegate(ZonesChannel(), channel: channel)
+  }
+
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard call.method == "offsets", let args = call.arguments as? [String: Any] else {
+      result(FlutterMethodNotImplemented)
+      return
+    }
+    let zones = args["zones"] as? [String] ?? []
+    let atMs = (args["atMs"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970 * 1000
+    let date = Date(timeIntervalSince1970: atMs / 1000)
+    var offsets: [String: Int] = [:]
+    for id in zones {
+      if let zone = TimeZone(identifier: id) { offsets[id] = zone.secondsFromGMT(for: date) }
+    }
+    result(offsets)
   }
 }
 
