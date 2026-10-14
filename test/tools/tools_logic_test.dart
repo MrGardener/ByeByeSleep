@@ -1,4 +1,5 @@
 import 'package:byebyesleep/tools/stopwatch_state.dart';
+import 'package:byebyesleep/tools/timer_bell.dart';
 import 'package:byebyesleep/tools/timer_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -107,5 +108,24 @@ void main() {
       // Rounds up: 0.2 s left still shows 00:01.
       expect(formatTimer(const Duration(milliseconds: 200)), '00:01');
     });
+  });
+
+  test('timers survive a restart (json)', () {
+    final s = TimersState(
+      timers: [
+        TimerEntry(
+          id: 1,
+          state: const TimerState(total: Duration(minutes: 3)).start(t0),
+        ),
+        const TimerEntry(id: 2, state: TimerState(total: Duration(minutes: 9))),
+      ],
+      nextId: 3,
+      composer: const Duration(minutes: 15),
+    );
+    final back = TimersState.fromJson(s.toJson());
+    expect(back.timers.map((t) => t.id), [1, 2]);
+    expect(back.timers.first.state, s.timers.first.state);
+    expect(back.nextId, 3);
+    expect(back.composer, const Duration(minutes: 15));
   });
 }

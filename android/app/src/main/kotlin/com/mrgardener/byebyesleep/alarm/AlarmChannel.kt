@@ -57,6 +57,10 @@ object AlarmChannel {
                     else -> result.notImplemented()
                 }
             }.onFailure { result.error("alarm_error", it.message, null) }
+            // Alarms may have changed: the bedtime reminder follows them.
+            if (call.method in setOf("upsert", "delete", "skipNext")) {
+                runCatching { BedtimeSchedule.refresh(activity.applicationContext) }
+            }
         }
     }
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../tools/bedtime.dart';
 import '../watch_setup/watch_settings.dart';
 import '../watch_setup/watch_setup_screen.dart';
 import 'ui_kit.dart';
 
-/// App settings: for now, the smartwatch.
+/// App settings: the smartwatch and the bedtime reminder.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -25,6 +26,9 @@ class SettingsScreen extends ConsumerWidget {
       WatchChoice.verified =>
         'Ready: ${watch.sensors.map((s) => _names[s.name]).join(', ')}',
     };
+    final bedtime = ref.watch(bedtimeProvider).value;
+    final scheme = Theme.of(context).colorScheme;
+    String two(int n) => n.toString().padLeft(2, '0');
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -62,6 +66,79 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (bedtime != null) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text(
+                'SLEEP',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.primary,
+                  letterSpacing: 1.6,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Card(
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    key: const Key('bedtime-switch'),
+                    secondary: IconBadge(
+                      Icons.bedtime_outlined,
+                      color: scheme.tertiary,
+                    ),
+                    title: const Text('Bedtime reminder'),
+                    subtitle: Text(
+                      !bedtime.enabled
+                          ? 'Off'
+                          : bedtime.nextAt == null
+                          ? 'No alarm ahead'
+                          : 'Next reminder ${two(bedtime.nextAt!.hour)}:'
+                                '${two(bedtime.nextAt!.minute)}, for '
+                                '${sleepLabel(bedtime.sleepMinutes)} of sleep',
+                    ),
+                    value: bedtime.enabled,
+                    onChanged: (on) => ref
+                        .read(bedtimeProvider.notifier)
+                        .set(
+                          BedtimeSettings(
+                            enabled: on,
+                            sleepMinutes: bedtime.sleepMinutes,
+                          ),
+                        ),
+                  ),
+                  ListTile(
+                    enabled: bedtime.enabled,
+                    title: const Text('Sleep goal'),
+                    subtitle: const Text(
+                      'The reminder comes this long before your first alarm.',
+                    ),
+                    trailing: DropdownButton<int>(
+                      key: const Key('bedtime-goal'),
+                      value: bedtime.sleepMinutes,
+                      onChanged: !bedtime.enabled
+                          ? null
+                          : (m) => ref
+                                .read(bedtimeProvider.notifier)
+                                .set(
+                                  BedtimeSettings(
+                                    enabled: true,
+                                    sleepMinutes: m!,
+                                  ),
+                                ),
+                      items: [
+                        for (final m in {...sleepGoals, bedtime.sleepMinutes})
+                          DropdownMenuItem(
+                            value: m,
+                            child: Text(sleepLabel(m)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

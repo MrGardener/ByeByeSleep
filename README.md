@@ -53,9 +53,13 @@ The **Clock** tab has three tools (first versions, more to come):
 
 | Tool | What it does |
 |---|---|
-| Clock | Big live time, the date, and when your next alarm rings ("in 44 min"). |
-| Timer | Presets (1–30 min) or any length; pause, +1 min, reset. It rings at alarm volume, over and over until you tap Stop, even with the app closed or after a restart. |
+| Clock | Big live time, the date, and when your next alarm rings ("in 44 min"). World clock: add cities (47 to choose from), with the time there, today/tomorrow and the difference; summer time comes from the phone. Swipe a city away to remove it. |
+| Timer | Several timers at once: pick a length (presets 1–30 min or any length) and start it; each one can pause, +1 min or be deleted. Each rings at alarm volume, over and over until you tap Stop, even with the app closed or after a restart. |
 | Stopwatch | Start, pause, laps (split and total), reset; keeps running while you switch tabs. |
+
+**Bedtime reminder** (Settings → Sleep): a "Time for bed" notification your sleep goal
+(6–10 h) before the next morning's first alarm. It follows your alarms by itself, also when
+the app is not opened (Android).
 
 ## iPhone
 

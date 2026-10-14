@@ -1,12 +1,11 @@
 import 'package:byebyesleep/tools/timer_bell.dart';
-import 'package:byebyesleep/tools/timer_state.dart';
 
 class MemoryTimerStore implements TimerStore {
-  TimerState? saved;
+  TimersState? saved;
 
   @override
-  Future<TimerState?> load() async => saved;
+  Future<TimersState?> load() async => saved;
 
   @override
-  Future<void> save(TimerState state) async => saved = state;
+  Future<void> save(TimersState state) async => saved = state;
 }
