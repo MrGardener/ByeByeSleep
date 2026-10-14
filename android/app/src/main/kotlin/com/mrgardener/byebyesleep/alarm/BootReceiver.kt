@@ -16,6 +16,7 @@ class BootReceiver : BroadcastReceiver() {
             -> {
                 AlarmGraph.lifecycle(context).rescheduleAll()
                 PreflightReceiver.schedule(context)
+                if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) TimerBell.restore(context)
             }
         }
     }

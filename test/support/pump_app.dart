@@ -1,12 +1,14 @@
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/app/app.dart';
 import 'package:byebyesleep/app/routes.dart';
+import 'package:byebyesleep/tools/timer_bell.dart';
 import 'package:byebyesleep/watch_setup/watch_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fake_alarm_platform.dart';
+import 'memory_timer_store.dart';
 import 'memory_watch_store.dart';
 
 /// Pumps the app's routing with [fake] as the alarm platform.
@@ -22,6 +24,7 @@ Future<void> pumpApp(
       overrides: [
         alarmPlatformProvider.overrideWithValue(fake),
         watchSettingsStoreProvider.overrideWithValue(MemoryWatchStore(watch)),
+        timerStoreProvider.overrideWithValue(MemoryTimerStore()),
         ...extraOverrides.cast(),
       ],
       child: MaterialApp(
