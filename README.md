@@ -13,7 +13,7 @@ contains Sensor Quest, a game that uses every sensor of the phone.
 Each alarm has a list of stages (by default four challenges: orientation hopscotch,
 tilt maze, broken calculator and colour words). When it rings you must finish every
 stage; the next one starts straight away, unless the alarm has a pause between
-challenges (Off, 5–60 s; the sound drops during it). Stop and Snooze only
+challenges (Off, 5–60 s; the sound drops during it; "Next challenge now" skips the wait and keeps it quieter until the pause would end). Stop and Snooze only
 appear after the last stage.
 
 **Emergency stop.** Anyone can stop a ringing alarm without the challenges: tap

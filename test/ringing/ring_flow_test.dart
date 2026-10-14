@@ -114,6 +114,30 @@ void main() {
     expect(fake.calls, contains('saveRingProgress:7:2'));
   });
 
+  testWidgets('ringFlow_pauseCanBeSkipped', (tester) async {
+    await pumpRing(tester);
+    await solveCalculator(tester);
+    expect(find.byKey(const Key('breather')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('next-now')));
+    await advance(tester, const Duration(milliseconds: 500));
+    expect(find.byKey(const Key('breather')), findsNothing);
+    expect(find.text('Stage 2 of 2'), findsOneWidget);
+    expect(find.byKey(const Key('stop')), findsNothing);
+    expect(fake.calls, contains('saveRingProgress:7:1'));
+    // Still quieter until the pause would have ended.
+    expect(
+      fake.calls.where((c) => c.startsWith('setRingLevel')).last,
+      'setRingLevel:0.2',
+    );
+    await advance(tester, const Duration(seconds: 20));
+    expect(
+      fake.calls.where((c) => c.startsWith('setRingLevel')).last,
+      'setRingLevel:1.0',
+    );
+    await solveStroop(tester);
+    expect(find.byKey(const Key('stop')), findsOneWidget);
+  });
+
   testWidgets('ringFlow_withoutPause_nextStageStartsAtOnce', (tester) async {
     fake.stored[7] = fake.stored[7]!.copyWith(pauseSeconds: 0);
     await pumpRing(tester);

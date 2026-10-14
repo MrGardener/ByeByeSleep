@@ -58,6 +58,10 @@ class StageEngine {
   late DateTime _stageStartedAt;
   DateTime? _breatherEndsAt;
 
+  /// After moving on before a pause ended, the alarm stays quieter until
+  /// the pause would have ended.
+  DateTime? _quietUntil;
+
   /// Index of the stage being run (or next to run); equals the stage count
   /// once every stage is passed.
   int get currentIndex => _breatherEndsAt == null ? _index : _index + 1;
@@ -87,7 +91,21 @@ class StageEngine {
   bool get safetyExitAvailable =>
       clock().difference(ringStartedAt) >= safetyExitAfter;
 
-  double get ringLevel => phase is Breather ? breatherLevel : 1.0;
+  double get ringLevel {
+    if (phase is Breather) return breatherLevel;
+    final quiet = _quietUntil;
+    return quiet != null && clock().isBefore(quiet) ? breatherLevel : 1.0;
+  }
+
+  /// Ends the pause now and starts the next stage ("Next challenge now").
+  void nextNow() {
+    final end = _breatherEndsAt;
+    if (end == null) return;
+    _quietUntil = end;
+    _breatherEndsAt = null;
+    _index++;
+    _stageStartedAt = clock();
+  }
 
   void stagePassed() {
     if (_done || _breatherEndsAt != null) return;

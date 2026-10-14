@@ -163,6 +163,11 @@ class _RingScreenState extends ConsumerState<RingScreen> {
     _sync();
   }
 
+  void _nextNow() {
+    setState(() => _engine!.nextNow());
+    _sync();
+  }
+
   void _fallback(Running phase) {
     setState(() {
       _engine!.useFallback(fallbackFor(phase.stage.challenge));
@@ -277,11 +282,29 @@ class _RingScreenState extends ConsumerState<RingScreen> {
         ],
       ),
       final Breather b => Center(
-        child: Text(
-          'Well done! Next stage in ${b.remaining.inSeconds} s',
+        child: Column(
           key: const Key('breather'),
-          style: Theme.of(context).textTheme.headlineSmall,
-          textAlign: TextAlign.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Well done!',
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Quieter for ${b.remaining.inSeconds} s. Ready? Go on now: '
+              'it stays quieter for the rest of the pause.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              key: const Key('next-now'),
+              onPressed: _nextNow,
+              icon: const Icon(Icons.skip_next),
+              label: const Text('Next challenge now'),
+            ),
+          ],
         ),
       ),
       Done() => Center(
