@@ -47,6 +47,16 @@ combines these tools, in labelled sections of the editor:
 | Stop ringing after | Default 30 min: an alarm nobody stops (you are away) stops itself and leaves a "Missed alarm" notification. See [docs/safety.md](docs/safety.md). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
 
+## Clock, timer and stopwatch
+
+The **Clock** tab has three tools (first versions, more to come):
+
+| Tool | What it does |
+|---|---|
+| Clock | Big live time, the date, and when your next alarm rings ("in 44 min"). |
+| Timer | Presets (1–30 min) or any length; pause, +1 min, reset. It rings at alarm volume, over and over until you tap Stop, even with the app closed or after a restart. |
+| Stopwatch | Start, pause, laps (split and total), reset; keeps running while you switch tabs. |
+
 ## iPhone
 
 An unsigned iPhone build (`ByeByeSleep.ipa`, iOS 26+) is published next to the

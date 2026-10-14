@@ -4,8 +4,9 @@ import '../alarm/ui/alarm_list_screen.dart';
 import '../game/practice_screen.dart';
 import '../game/quest_screen.dart';
 import '../ringing/ring_launcher.dart';
+import '../tools/tools_screen.dart';
 
-/// The app's three tools, one tab each.
+/// The app's tools, one tab each.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,8 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Only the open tab is built, so the game's sensor probes do not run
       // while you are just setting alarms.
       body: switch (_tab) {
-        1 => const QuestScreen(),
-        2 => const PracticeScreen(),
+        1 => const ToolsScreen(),
+        2 => const QuestScreen(),
+        3 => const PracticeScreen(),
         _ => const AlarmListScreen(),
       },
       bottomNavigationBar: NavigationBar(
@@ -38,6 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
             key: Key('tab-alarms'),
             icon: Icon(Icons.alarm),
             label: 'Alarms',
+          ),
+          NavigationDestination(
+            key: Key('tab-clock'),
+            icon: Icon(Icons.schedule),
+            label: 'Clock',
           ),
           NavigationDestination(
             key: Key('tab-quest'),

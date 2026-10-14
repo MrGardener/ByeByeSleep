@@ -42,6 +42,25 @@ void main() {
     expect(find.byType(AlarmListScreen), findsOneWidget);
   });
 
+  testWidgets('the clock tab has clock, timer and stopwatch', (tester) async {
+    await pumpApp(tester, FakeAlarmPlatform());
+    await tester.tap(find.byKey(const Key('tab-clock')));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byKey(const Key('clock-time')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tool-stopwatch')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byKey(const Key('sw-start')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tool-timer')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(); // the timer loads its saved state
+    expect(find.byKey(const Key('timer-start')), findsOneWidget);
+    // Back to alarms so the screens' tickers stop.
+    await tester.tap(find.byKey(const Key('tab-alarms')));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('settings → smartwatch opens the watch setup', (tester) async {
     await pumpApp(tester, FakeAlarmPlatform());
     await tester.tap(find.byKey(const Key('open-settings')));

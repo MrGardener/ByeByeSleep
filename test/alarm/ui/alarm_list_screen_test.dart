@@ -7,7 +7,15 @@ import '../../support/fake_alarm_platform.dart';
 import '../../support/pump_app.dart';
 
 void main() {
+  /// A tall screen, so every alarm card of the list is built at once.
+  void tallScreen(WidgetTester tester) {
+    tester.view.physicalSize = const Size(1200, 4800);
+    tester.view.devicePixelRatio = 1.5;
+    addTearDown(tester.view.reset);
+  }
+
   testWidgets('listShowsAlarmsWithRepeatSummary', (tester) async {
+    tallScreen(tester);
     final fake = FakeAlarmPlatform(
       seed: [
         Alarm(id: 1, hour: 6, minute: 0, repeatDays: {1, 2, 3, 4, 5}),
@@ -39,6 +47,7 @@ void main() {
   });
 
   testWidgets('seriesAlarmsAreNestedUnderTheirMainAlarm', (tester) async {
+    tallScreen(tester);
     final main = Alarm(
       id: 4,
       hour: 17,

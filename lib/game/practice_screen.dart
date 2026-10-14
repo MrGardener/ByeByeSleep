@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/theme.dart';
+import '../app/ui_kit.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/challenge.dart';
 import '../challenges/core/challenge_id.dart';
@@ -32,6 +34,7 @@ class PracticeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Practice')),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 16),
         children: [
           for (final id in [
             for (final id in ChallengeId.values)
@@ -40,31 +43,26 @@ class PracticeScreen extends ConsumerWidget {
             ...watchIds,
           ])
             if (id == null) ...[
-              Padding(
-                key: const Key('watch-section'),
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
-                child: Row(
-                  children: [
-                    const Icon(Icons.watch),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Watch challenges',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                ),
+              const SectionHeader(
+                Icons.watch_outlined,
+                'Watch challenges',
+                key: Key('watch-section'),
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
               ),
               if (watchIds.isEmpty)
-                ListTile(
-                  key: const Key('practice-watch-setup'),
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Set up your watch first'),
-                  subtitle: const Text(
-                    'Watch challenges appear here once the watch is tested.',
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const WatchSetupScreen(),
+                Card(
+                  child: ListTile(
+                    key: const Key('practice-watch-setup'),
+                    leading: const IconBadge(Icons.settings_outlined),
+                    title: const Text('Set up your watch first'),
+                    subtitle: const Text(
+                      'Watch challenges appear here once the watch is tested.',
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const WatchSetupScreen(),
+                      ),
                     ),
                   ),
                 ),
@@ -78,15 +76,40 @@ class PracticeScreen extends ConsumerWidget {
                       ? const <SensorKind>{}
                       : d.requires(1).difference(caps);
                   final playable = missing.every(_permissionGated.contains);
-                  return ListTile(
-                    enabled: playable,
-                    title: Text(d.title),
-                    subtitle: Text(
-                      playable ? d.instructions : 'Not on this phone',
+                  final scheme = Theme.of(context).colorScheme;
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 3,
                     ),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PracticeRunScreen(id: id),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                    ),
+                    child: ListTile(
+                      enabled: playable,
+                      minVerticalPadding: 8,
+                      contentPadding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
+                      leading: IconBadge(
+                        challengeIcon(id),
+                        color: playable
+                            ? accentAt(scheme, id.index)
+                            : scheme.onSurfaceVariant,
+                      ),
+                      title: Text(d.title),
+                      subtitle: Text(
+                        playable ? d.instructions : 'Not on this phone',
+                      ),
+                      trailing: playable
+                          ? Icon(
+                              Icons.play_circle_fill_rounded,
+                              color: scheme.primary,
+                              size: 32,
+                            )
+                          : null,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => PracticeRunScreen(id: id),
+                        ),
                       ),
                     ),
                   );
@@ -144,10 +167,21 @@ class _PracticeRunScreenState extends State<PracticeRunScreen> {
             child: switch (_run) {
               _Run.choosing => Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(_d.instructions, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  Text('Difficulty $_difficulty'),
+                  Center(child: IconBadge(challengeIcon(widget.id), size: 112)),
+                  const SizedBox(height: 24),
+                  Text(
+                    _d.instructions,
+                    textAlign: TextAlign.center,
+                    style: text.titleMedium,
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Difficulty $_difficulty',
+                    textAlign: TextAlign.center,
+                    style: text.labelLarge,
+                  ),
                   Slider(
                     value: _difficulty.toDouble(),
                     min: 1,
@@ -178,7 +212,11 @@ class _PracticeRunScreenState extends State<PracticeRunScreen> {
                   Icon(
                     _run == _Run.passed ? Icons.verified : Icons.sensors_off,
                     size: 96,
+                    color: _run == _Run.passed
+                        ? SunriseColors.of(context).success
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                  const SizedBox(height: 8),
                   Text(
                     _run == _Run.passed ? 'Passed!' : 'Not available right now',
                     style: text.headlineMedium,

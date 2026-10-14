@@ -66,9 +66,17 @@ class _WorldScreenState extends ConsumerState<WorldScreen> {
     Widget end(IconData icon, String title, String detail) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 96),
+        Icon(icon, size: 96, color: Theme.of(context).colorScheme.secondary),
+        const SizedBox(height: 8),
         Text(title, style: text.headlineMedium),
-        Text(detail, textAlign: TextAlign.center),
+        const SizedBox(height: 4),
+        Text(
+          detail,
+          textAlign: TextAlign.center,
+          style: text.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 24),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),

@@ -12,6 +12,7 @@ import com.mrgardener.byebyesleep.alarm.PreflightReceiver
 import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
+import com.mrgardener.byebyesleep.alarm.TimerBell
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -58,5 +59,6 @@ class MainActivity : FlutterFragmentActivity() {
         AlarmChannel.register(flutterEngine.dartExecutor.binaryMessenger, this)
         envSensors.register(flutterEngine.dartExecutor.binaryMessenger)
         watch.register(flutterEngine.dartExecutor.binaryMessenger)
+        TimerBell.register(flutterEngine.dartExecutor.binaryMessenger, this)
     }
 }

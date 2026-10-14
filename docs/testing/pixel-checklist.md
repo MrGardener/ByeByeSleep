@@ -92,3 +92,6 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 75 | iPhone (iOS 26, sideloaded): alarm in 2 min; tap Stop on the system alert. | Rings again 2 min later; tapping Challenges or opening the app shows the challenges; after finishing them no more rings. |
 | 76 | Alarm with a 30 s pause; pass the first challenge, tap "Next challenge now". | The next challenge starts at once, the sound stays quiet until the 30 s are up, then full; Stop only after the last challenge. |
 | 77 | Allow "Display over other apps"; set an alarm 1 min ahead and keep using the phone (another app open). | At the alarm time the challenges open by themselves, and the sound starts once they show; no notification tap needed. Also with the screen off/locked. |
+| 78 | Clock tab → Clock. | Live time and date; "Next alarm HH:MM · in …" matches the alarm list. |
+| 79 | Clock tab → Timer: 1 min, Start, close the app. | After 1 min a "Time's up" notification rings at alarm volume and keeps ringing until Stop. |
+| 80 | Clock tab → Stopwatch: Start, Lap twice, Pause, Reset. | Laps show split and total; Reset clears everything. |
