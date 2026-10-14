@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../challenges/core/capabilities.dart';
 import '../challenges/core/types.dart';
 import '../challenges/core/watch.dart';
+import '../app/theme.dart';
+import '../app/ui_kit.dart';
 import 'watch_settings.dart';
 
 enum _Step { ask, install, test }
@@ -65,7 +67,7 @@ class _WatchSetupScreenState extends ConsumerState<WatchSetupScreen> {
         key: Key('check-$key-${done == true ? 'done' : 'todo'}'),
         leading: Icon(
           done == true ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: done == true ? Colors.green : null,
+          color: done == true ? SunriseColors.of(context).success : null,
         ),
         title: Text(label),
         subtitle: hint == null ? null : Text(hint),
@@ -80,6 +82,9 @@ class _WatchSetupScreenState extends ConsumerState<WatchSetupScreen> {
         padding: const EdgeInsets.all(16),
         children: switch (_step) {
           _Step.ask => [
+            const SizedBox(height: 8),
+            const Center(child: IconBadge(Icons.watch_outlined, size: 112)),
+            const SizedBox(height: 24),
             Text(
               'Do you have a smartwatch you want to use with ByeByeSleep?',
               style: text.titleLarge,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'routes.dart';
+import 'theme.dart';
 
 class ByeByeSleepApp extends StatelessWidget {
   const ByeByeSleepApp({super.key});
@@ -10,13 +11,9 @@ class ByeByeSleepApp extends StatelessWidget {
     return MaterialApp(
       title: 'ByeByeSleep',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepOrange,
-          brightness: Brightness.dark,
-        ),
-      ),
+      themeMode: AppTheme.mode,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       builder: appBuilder,
       initialRoute: WidgetsBinding.instance.platformDispatcher.defaultRouteName,
       onGenerateRoute: generateRoute,

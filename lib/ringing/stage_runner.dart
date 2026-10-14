@@ -28,8 +28,19 @@ class StageRunner extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Column(
       children: [
-        Text(definition.title, style: text.titleLarge),
-        Text(definition.instructions, textAlign: TextAlign.center),
+        Text(
+          definition.title,
+          style: text.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          definition.instructions,
+          textAlign: TextAlign.center,
+          style: text.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         if (phase.hintVisible)
           Padding(
             padding: const EdgeInsets.only(top: 4),

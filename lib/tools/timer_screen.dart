@@ -149,6 +149,11 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
                 ChoiceChip(
                   key: Key('timer-preset-$m'),
                   label: Text('$m min'),
+                  labelStyle: TextStyle(
+                    color: t.total == Duration(minutes: m)
+                        ? scheme.onPrimary
+                        : scheme.onSurface,
+                  ),
                   selected: t.total == Duration(minutes: m),
                   onSelected: (_) => notifier.choose(Duration(minutes: m)),
                 ),

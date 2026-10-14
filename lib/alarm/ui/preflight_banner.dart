@@ -25,7 +25,7 @@ class PreflightBanner extends ConsumerWidget {
       return Card(
         key: const Key('unsupported-banner'),
         color: Theme.of(context).colorScheme.errorContainer,
-        margin: const EdgeInsets.all(12),
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         child: const ListTile(
           title: Text("Alarms can't ring on this phone yet"),
           subtitle: Text('iPhone support arrives in a later update.'),
@@ -42,24 +42,37 @@ class PreflightBanner extends ConsumerWidget {
     return Card(
       key: const Key('preflight-banner'),
       color: scheme.errorContainer,
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Text(
-                'Alarms may not ring',
-                style: Theme.of(context).textTheme.titleMedium,
+              padding: const EdgeInsets.fromLTRB(20, 8, 16, 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: scheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Alarms may not ring',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(color: scheme.onErrorContainer),
+                  ),
+                ],
               ),
             ),
             for (final kind in status.coreMissing)
               ListTile(
                 dense: true,
-                title: Text(_labels[kind]!),
-                trailing: TextButton(
+                title: Text(
+                  _labels[kind]!,
+                  style: TextStyle(color: scheme.onErrorContainer),
+                ),
+                trailing: FilledButton.tonal(
                   key: Key('fix-${kind.name}'),
                   onPressed: () =>
                       ref.read(alarmPlatformProvider).openSettings(kind),

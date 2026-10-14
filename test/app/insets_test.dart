@@ -57,8 +57,15 @@ void main() {
   }
 
   Future<void> scrollToEnd(WidgetTester tester) async {
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -5000));
-    await tester.pumpAndSettle();
+    // A lazy list only learns its full length while scrolling, so one drag
+    // can stop short of the end: drag until it really is at the end.
+    final list = find.byType(Scrollable).first;
+    for (var i = 0; i < 5; i++) {
+      await tester.drag(list, const Offset(0, -5000));
+      await tester.pumpAndSettle();
+      final p = tester.state<ScrollableState>(list).position;
+      if (p.pixels >= p.maxScrollExtent) break;
+    }
   }
 
   testWidgets('alarm list: add button and tabs above the nav bar', (
