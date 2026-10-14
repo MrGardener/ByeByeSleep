@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bedside screen saver: a big dim clock, the date and the next alarm. Colours set in code. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dream_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dream_black">
+
+    <LinearLayout
+        android:id="@+id/dream_clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextClock
+            android:id="@+id/dream_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-thin"
+            android:format12Hour="h:mm"
+            android:format24Hour="HH:mm"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/dream_night_text"
+            android:textSize="120sp" />
+
+        <TextClock
+            android:id="@+id/dream_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:format12Hour="EEEE, d MMMM"
+            android:format24Hour="EEEE, d MMMM"
+            android:maxLines="1"
+            android:textColor="@color/dream_night_text"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/dream_alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textColor="@color/dream_night_text"
+            android:textSize="18sp" />
+    </LinearLayout>
+</FrameLayout>

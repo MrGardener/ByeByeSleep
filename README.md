@@ -61,6 +61,29 @@ The **Clock** tab has three tools (first versions, more to come):
 (6–10 h) before the next morning's first alarm. It follows your alarms by itself, also when
 the app is not opened (Android).
 
+## Widgets and screen saver
+
+Android only, built natively so they tick without the app running.
+
+**Widgets**: long-press the home screen → **Widgets** → **ByeByeSleep**, then drag one
+onto the home screen. All three are resizable, use the Sunrise colours, and follow
+light and dark theme. Tapping one opens the app.
+
+| Widget | What it shows |
+|---|---|
+| Clock | Big time and the date, and "Next alarm 06:30 · Tomorrow" from your alarms (a snooze shows as "Snoozed until …"). |
+| Next alarm | Compact, on the sunrise gradient: the next alarm's time with its day and label, or "No alarm set". |
+| World clock | Up to 3 cities you pick when you add it (it starts with your Clock tab cities): the time, weekday and difference ("+7 h") for each. Long-press the widget → widget settings to change them. |
+
+The widgets update as soon as you change, snooze or skip an alarm, after a restart, and
+when the time, time zone or date changes.
+
+**Screen saver**: Settings → Display → **Screen saver** → **ByeByeSleep clock** (shown
+while the phone charges, e.g. on the nightstand). A big bedside clock with the date and
+your next alarm. "Night colours" (default, in the screen saver's settings) makes it dim
+amber on black so it does not light up the bedroom; off gives the full Sunrise colours.
+The clock drifts a little every minute to protect the screen from burn-in.
+
 ## iPhone
 
 An unsigned iPhone build (`ByeByeSleep.ipa`, iOS 26+) is published next to the

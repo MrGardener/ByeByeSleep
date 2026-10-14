@@ -74,9 +74,77 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- Home-screen widgets (widget/). -->
+        <receiver
+            android:name=".widget.ClockWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_clock_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_clock_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.NextAlarmWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_next_alarm_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_alarm_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.WorldClockWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_world_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_world_info" />
+        </receiver>
+        <receiver android:name=".widget.WidgetTickReceiver" android:exported="false" />
+        <activity
+            android:name=".widget.WorldClockConfigureActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/world_config_title"
+            android:taskAffinity=""
+            android:theme="@style/WidgetSettingsTheme"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <!-- Screen saver: Settings → Display → Screen saver → ByeByeSleep clock. -->
+        <service
+            android:name=".widget.ClockDreamService"
+            android:exported="true"
+            android:label="@string/dream_label"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/dream_info" />
+        </service>
+        <activity
+            android:name=".widget.ClockDreamSettingsActivity"
+            android:exported="true"
+            android:label="@string/dream_settings_title"
+            android:taskAffinity=""
+            android:theme="@style/WidgetSettingsTheme" />
         <service
             android:name=".alarm.AlarmService"
             android:exported="false"
