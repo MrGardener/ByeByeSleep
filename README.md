@@ -43,6 +43,7 @@ combines these tools, in labelled sections of the editor:
 | Series | One alarm that rings N times, every M minutes, starting or ending at its time. The others are listed under it and follow its changes; follow-ups need the same challenges or one quick sum. After Stop you can skip the rest of the series today. "Split into separate alarms" makes them independent. |
 | Reminder | A photo and caption of what not to forget, shown while ringing and full screen after Stop. "Reminder only" = no challenges. |
 | Watch | With the ByeByeSleep watch app (Pixel Watch 3, other Wear OS watches): "Get your heart going" (heart rate), "Wrist workout" (arm swings) and "Walk with your watch" (steps) use the watch's sensors live ([install guide](docs/watch-install.md)). |
+| Sound | Choose the alarm's sound from the phone's own sounds (alarm, ringtone, notification) with a preview; "Gradually louder" rises from soft to full over 30 s–5 min; vibration on/off. Android (iPhone uses its system alarm sound). |
 | Check I'm awake | Optional: some minutes after Stop the alarm rings once more with one quick challenge, so dozing off again does not work. |
 | Stop ringing after | Default 30 min: an alarm nobody stops (you are away) stops itself and leaves a "Missed alarm" notification. See [docs/safety.md](docs/safety.md). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
@@ -117,6 +118,12 @@ the challenges are done.
 | Time sense | Stop a hidden timer at exactly 20–45 s, counting in your head | — |
 | Pulse code | Watch short/long flashes and tap them back | — |
 | Colour hunt | Photograph something of the colour shown | — |
+| Memory grid | Tap back the tiles that lit up (3 of 3×3 → 8 of 5×5) | — |
+| Shake it | Shake the phone hard 20–60 times (accelerometer) | — |
+| Retype | Type a cheerful sentence exactly; capitals and punctuation don't count (3 → 15 words) | — |
+| Number order | Tap 1…N scattered on screen in order (9 → 25); a wrong tap restarts | — |
+| Word unscramble | Spell the word from its shuffled letters (4 → 8 letters) | — |
+| Odd one out | Find the turned symbol three times in a row (3×3, half turn → 6×6, 15°) | — |
 | Watch challenges | Wrist workout, walk with your watch, heart rate (own section, only after Settings → Smartwatch test) | Watch set up and tested |
 
 "Use wake-up routine" in the alarm editor sets Lights → Walk → Photo → Maze → Calculator.

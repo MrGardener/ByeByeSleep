@@ -22,4 +22,10 @@ enum ChallengeId {
   timeSense,
   pulseCode,
   colourHunt,
+  memoryGrid,
+  shakeIt,
+  retype,
+  numberOrder,
+  wordUnscramble,
+  oddOneOut,
 }

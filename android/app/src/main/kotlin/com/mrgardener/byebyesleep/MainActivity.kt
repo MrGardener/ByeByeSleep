@@ -13,6 +13,7 @@ import com.mrgardener.byebyesleep.alarm.AlarmGraph
 import com.mrgardener.byebyesleep.alarm.AlarmService
 import com.mrgardener.byebyesleep.alarm.AndroidAlarmClockScheduler
 import com.mrgardener.byebyesleep.alarm.BedtimeSchedule
+import com.mrgardener.byebyesleep.alarm.SoundsChannel
 import com.mrgardener.byebyesleep.alarm.TimerBell
 import com.mrgardener.byebyesleep.alarm.ZonesChannel
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -33,6 +34,12 @@ class MainActivity : FlutterFragmentActivity() {
         scheduleDebugRingIfRequested()
     }
 
+    override fun onPause() {
+        // Never leave a sound preview playing.
+        sounds.stop()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
         // If notifications are blocked the ring screen never pops up by itself;
@@ -49,6 +56,7 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private val envSensors = EnvSensorsChannel(this)
+    private val sounds = SoundsChannel(this)
     private val watch = WatchChannel(this)
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -64,5 +72,6 @@ class MainActivity : FlutterFragmentActivity() {
         TimerBell.register(flutterEngine.dartExecutor.binaryMessenger, this)
         BedtimeSchedule.register(flutterEngine.dartExecutor.binaryMessenger, this)
         ZonesChannel.register(flutterEngine.dartExecutor.binaryMessenger)
+        sounds.register(flutterEngine.dartExecutor.binaryMessenger)
     }
 }

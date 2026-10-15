@@ -7,6 +7,14 @@
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Watch timer: exact alarm that rings in Doze, full-screen "Time's up", vibration. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- USE_EXACT_ALARM exists from API 33; API 31-32 need this one. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:label="ByeByeSleep"
@@ -14,17 +22,38 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.DeviceDefault">
         <uses-library android:name="com.google.android.wearable" android:required="false" />
-        <!-- Works only together with the phone app. -->
+        <!-- Installed with the phone app (the heart-rate challenge needs it);
+             the clock, timer and stopwatch work on the watch alone. -->
         <meta-data android:name="com.google.android.wearable.standalone" android:value="false" />
+
+        <!-- Home: Clock, Timer, Stopwatch, Heart rate. -->
+        <activity
+            android:name=".WatchHomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ClockActivity" android:exported="false" />
+        <activity android:name=".TimerActivity" android:exported="false" android:launchMode="singleTop" />
+        <activity android:name=".StopwatchActivity" android:exported="false" android:launchMode="singleTop" />
+
+        <!-- Opened by the timer notification's full-screen intent. -->
+        <activity
+            android:name=".TimesUpActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:taskAffinity="com.mrgardener.byebyesleep.wear.timesup"
+            android:turnScreenOn="true" />
 
         <activity
             android:name=".HeartRateActivity"
             android:exported="true"
             android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- Opened by the phone when the heart-rate challenge starts. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -33,5 +62,13 @@
                 <data android:scheme="byebyesleep" android:host="heart-rate" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".TimerReceiver" android:exported="false" />
+        <receiver android:name=".TimerBootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
