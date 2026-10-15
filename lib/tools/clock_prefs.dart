@@ -16,7 +16,6 @@ class ClockPrefs {
     this.face = ClockFace.digital,
     this.hours = TimeFormat.system,
     this.showSeconds = true,
-    this.fahrenheit = false,
     this.home,
     this.homeClockWhenAway = true,
   });
@@ -25,7 +24,6 @@ class ClockPrefs {
     face: ClockFace.values.asNameMap()[j['face']] ?? ClockFace.digital,
     hours: TimeFormat.values.asNameMap()[j['hours']] ?? TimeFormat.system,
     showSeconds: j['seconds'] != false,
-    fahrenheit: j['fahrenheit'] == true,
     home: City.fromSaved(j['home']),
     homeClockWhenAway: j['homeClock'] != false,
   );
@@ -33,7 +31,6 @@ class ClockPrefs {
   final ClockFace face;
   final TimeFormat hours;
   final bool showSeconds;
-  final bool fahrenheit;
 
   /// Your main time zone; when the phone is in another one (travelling),
   /// the clock shows home time too. Null: the phone's zone is home.
@@ -44,7 +41,6 @@ class ClockPrefs {
     'face': face.name,
     'hours': hours.name,
     'seconds': showSeconds,
-    'fahrenheit': fahrenheit,
     'home': ?home?.toJson(),
     'homeClock': homeClockWhenAway,
   };
@@ -53,14 +49,12 @@ class ClockPrefs {
     ClockFace? face,
     TimeFormat? hours,
     bool? showSeconds,
-    bool? fahrenheit,
     City? Function()? home,
     bool? homeClockWhenAway,
   }) => ClockPrefs(
     face: face ?? this.face,
     hours: hours ?? this.hours,
     showSeconds: showSeconds ?? this.showSeconds,
-    fahrenheit: fahrenheit ?? this.fahrenheit,
     home: home != null ? home() : this.home,
     homeClockWhenAway: homeClockWhenAway ?? this.homeClockWhenAway,
   );
@@ -139,7 +133,3 @@ final clockPrefsProvider =
     AsyncNotifierProvider<ClockPrefsNotifier, ClockPrefs>(
       ClockPrefsNotifier.new,
     );
-
-final fahrenheitProvider = Provider<bool>(
-  (ref) => ref.watch(clockPrefsProvider).value?.fahrenheit ?? false,
-);

@@ -78,29 +78,12 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
     ref.read(zoneOffsetsProvider).offsets(zones, now).then((o) {
       if (mounted) setState(() => _offsets = o);
     }, onError: (Object _) {});
-    _refreshWeather(cities);
   }
 
   bool _sameZones(List<String> zones) =>
       zones.length == _offsetsFor.length &&
       [for (var i = 0; i < zones.length; i++) zones[i] == _offsetsFor[i]]
           .every((same) => same);
-
-  /// Weather per city (cached for 30 min by the source).
-  var _weather = <String, Weather>{};
-
-  void _refreshWeather(List<City> cities) {
-    final source = ref.read(weatherSourceProvider);
-    for (final c in cities) {
-      final lat = c.latitude, lon = c.longitude;
-      if (lat == null || lon == null) continue;
-      source.current(lat, lon).then((w) {
-        if (w != null && mounted) {
-          setState(() => _weather = {..._weather, c.id: w});
-        }
-      }, onError: (Object _) {});
-    }
-  }
 
   Future<void> _addCity() async {
     final city = await showModalBottomSheet<City>(
@@ -125,7 +108,6 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final cities = ref.watch(worldClocksProvider).value ?? const <City>[];
-    final fahrenheit = ref.watch(fahrenheitProvider);
     final prefs = ref.watch(clockPrefsProvider).value ?? const ClockPrefs();
     final use24 = uses24(
       prefs.hours,
@@ -271,31 +253,19 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
                       cityTime(now, o, now.timeZoneOffset).difference,
                     ] else
                       city.place,
-                    if (_weather[city.id] case final w?)
-                      '${w.temperatureText(fahrenheit: fahrenheit)} ${w.description}',
                   ].join(' · '),
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_weather[city.id] case final w?)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Icon(weatherIcon(w), color: scheme.tertiary),
-                      ),
-                    Text(
-                      _offsets[city.zone] == null
-                          ? '--:--'
-                          : cityTime(
-                              now,
-                              _offsets[city.zone]!,
-                              now.timeZoneOffset,
-                            ).time,
-                      style: text.headlineMedium?.copyWith(
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
+                trailing: Text(
+                  _offsets[city.zone] == null
+                      ? '--:--'
+                      : cityTime(
+                          now,
+                          _offsets[city.zone]!,
+                          now.timeZoneOffset,
+                        ).time,
+                  style: text.headlineMedium?.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ),
@@ -365,16 +335,6 @@ class AnalogClockPainter extends CustomPainter {
       old.time != time || old.seconds != seconds;
 }
 
-IconData weatherIcon(Weather w) => switch (w.code) {
-  0 || 1 => w.isDay ? Icons.wb_sunny_outlined : Icons.nightlight_outlined,
-  2 || 3 => Icons.cloud_outlined,
-  45 || 48 => Icons.foggy,
-  >= 71 && <= 77 || 85 || 86 => Icons.ac_unit,
-  >= 95 => Icons.thunderstorm_outlined,
-  >= 51 => Icons.water_drop_outlined,
-  _ => Icons.cloud_outlined,
-};
-
 class CityPicker extends ConsumerStatefulWidget {
   const CityPicker({super.key});
 
@@ -384,49 +344,20 @@ class CityPicker extends ConsumerStatefulWidget {
 
 class _CityPickerState extends ConsumerState<CityPicker> {
   var _query = '';
-  var _online = const <City>[];
-  var _searching = false;
-  Timer? _debounce;
+  var _zones = const <String>[];
 
   @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _changed(String q) {
-    setState(() => _query = q);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
-      if (q.trim().length < 2) {
-        if (mounted) setState(() => _online = const []);
-        return;
-      }
-      setState(() => _searching = true);
-      List<City> found;
-      try {
-        found = await searchCitiesOnline(ref.read(httpGetProvider), q);
-      } catch (_) {
-        found = const []; // offline: the built-in cities still work
-      }
-      if (mounted && q == _query) {
-        setState(() {
-          _online = found;
-          _searching = false;
-        });
-      }
-    });
+  void initState() {
+    super.initState();
+    // Every place in the phone's own time zone list; no internet needed.
+    ref.read(zoneOffsetsProvider).all().then((zones) {
+      if (mounted) setState(() => _zones = zones);
+    }, onError: (Object _) {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final local = searchCities(_query);
-    final known = {for (final c in local) '${c.name}|${c.zone}'};
-    final cities = [
-      ...local,
-      for (final c in _online)
-        if (!known.contains('${c.name}|${c.zone}')) c,
-    ];
+    final cities = searchCities(_query, zones: _zones);
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SizedBox(
@@ -438,20 +369,11 @@ class _CityPickerState extends ConsumerState<CityPicker> {
               child: TextField(
                 key: const Key('world-search'),
                 autofocus: true,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: 'Search any city in the world',
-                  suffixIcon: _searching
-                      ? const Padding(
-                          padding: EdgeInsets.all(14),
-                          child: SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: 'Search a city or country',
                 ),
-                onChanged: _changed,
+                onChanged: (q) => setState(() => _query = q),
               ),
             ),
             Expanded(

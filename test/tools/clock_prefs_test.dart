@@ -22,7 +22,6 @@ void main() {
       face: ClockFace.analog,
       hours: TimeFormat.h12,
       showSeconds: false,
-      fahrenheit: true,
       home: City(
         'Madrid',
         'Spain',
@@ -36,13 +35,12 @@ void main() {
     expect(back.face, ClockFace.analog);
     expect(back.hours, TimeFormat.h12);
     expect(back.showSeconds, isFalse);
-    expect(back.fahrenheit, isTrue);
     expect(back.home!.zone, 'Europe/Madrid');
     expect(back.homeClockWhenAway, isFalse);
     expect(ClockPrefs.fromJson(const {}).face, ClockFace.digital);
   });
 
-  testWidgets('settings: clock style, 24 h, °F and the home time zone', (
+  testWidgets('settings: clock style, 24 h and the home time zone', (
     tester,
   ) async {
     final store = MemoryClockPrefsStore();
@@ -51,10 +49,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          clockPrefsStoreProvider.overrideWithValue(store),
-          httpGetProvider.overrideWithValue((_) async => '{}'),
-        ],
+        overrides: [clockPrefsStoreProvider.overrideWithValue(store)],
         child: const MaterialApp(home: SettingsScreen()),
       ),
     );
@@ -65,9 +60,6 @@ void main() {
     await tester.tap(find.byKey(const Key('clock-hours-h24')));
     await tester.pumpAndSettle();
     expect(store.saved.hours, TimeFormat.h24);
-    await tester.tap(find.byKey(const Key('clock-fahrenheit')));
-    await tester.pumpAndSettle();
-    expect(store.saved.fahrenheit, isTrue);
     await tester.ensureVisible(find.byKey(const Key('clock-home')));
     await tester.tap(find.byKey(const Key('clock-home')));
     await tester.pumpAndSettle();
