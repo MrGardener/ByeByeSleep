@@ -109,6 +109,6 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 92 | Screen saver settings (gear next to ByeByeSleep clock): Night colours off, Show next alarm off; Preview. | Full Sunrise colours on night blue, brighter; no alarm line. |
 | 93 | Clock → Stopwatch: add 6 stopwatches, name one "Run". | Each runs on its own; the ones that fit on screen have Lap/Reset, the rest only start/pause; names stay after reopening. |
 | 94 | Timer: type "Pasta", start 10 min; rename a running timer. | The card and the "Time's up" notification use the name. |
-| 95 | Clock → Add city → type a small town (e.g. "Ushuaia"). | Found online; its time, day and current weather (°C or °F per Settings) show. Offline: the 134 built-in cities still work. |
+| 95 | Airplane mode on; Clock → Add city → type "Ushuaia", then "tokyo". | Both found offline (built-in cities plus every place in the phone's time zone list); time, day and difference show. Settings → Apps → ByeByeSleep → Permissions lists no internet access. |
 | 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
 | 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |

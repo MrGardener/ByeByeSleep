@@ -5,7 +5,7 @@ import 'clock_prefs.dart';
 import 'clock_screen.dart';
 import 'world_clock.dart';
 
-/// Settings → Clock: face, 12/24 h, seconds, °C/°F and the home time zone.
+/// Settings → Clock: face, 12/24 h, seconds and the home time zone.
 class ClockSettingsSection extends ConsumerWidget {
   const ClockSettingsSection({super.key});
 
@@ -73,13 +73,6 @@ class ClockSettingsSection extends ConsumerWidget {
             value: p.showSeconds,
             onChanged: (v) =>
                 notifier.change((p) => p.copyWith(showSeconds: v)),
-          ),
-          SwitchListTile(
-            key: const Key('clock-fahrenheit'),
-            title: const Text('Temperature in °F'),
-            subtitle: const Text('World clock weather'),
-            value: p.fahrenheit,
-            onChanged: (v) => notifier.change((p) => p.copyWith(fahrenheit: v)),
           ),
           ListTile(
             key: const Key('clock-home'),

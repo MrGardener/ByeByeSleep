@@ -42,6 +42,13 @@ jobs:
           PY
       - name: Release build (debug-signed fallback, no keystore in CI)
         run: flutter build apk --release
+      - name: The app works offline (no internet permission, merged manifest included)
+        run: |
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          "$AAPT2" dump permissions build/app/outputs/flutter-apk/app-release.apk | tee permissions.txt
+          if grep -qE "android.permission.(INTERNET|ACCESS_NETWORK_STATE)'" permissions.txt; then
+            echo "The release app must not ask for internet access"; exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: byebyesleep-debug-apk-${{ github.sha }}

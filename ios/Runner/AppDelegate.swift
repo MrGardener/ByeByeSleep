@@ -59,6 +59,10 @@ class ZonesChannel: NSObject, FlutterPlugin {
   }
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    if call.method == "all" {
+      result(TimeZone.knownTimeZoneIdentifiers.sorted())
+      return
+    }
     guard call.method == "offsets", let args = call.arguments as? [String: Any] else {
       result(FlutterMethodNotImplemented)
       return

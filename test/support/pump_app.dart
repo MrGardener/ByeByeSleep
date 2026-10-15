@@ -1,12 +1,9 @@
-import 'dart:io';
-
 import 'package:byebyesleep/alarm/alarm_providers.dart';
 import 'package:byebyesleep/app/app.dart';
 import 'package:byebyesleep/app/routes.dart';
 import 'package:byebyesleep/app/theme.dart';
 import 'package:byebyesleep/tools/clock_prefs.dart';
 import 'package:byebyesleep/tools/stopwatch_screen.dart';
-import 'package:byebyesleep/tools/world_clock.dart';
 import 'package:byebyesleep/tools/timer_bell.dart';
 import 'package:byebyesleep/watch_setup/watch_settings.dart';
 import 'package:flutter/material.dart';
@@ -35,10 +32,6 @@ Future<void> pumpApp(
         timerStoreProvider.overrideWithValue(MemoryTimerStore()),
         stopwatchStoreProvider.overrideWithValue(MemoryStopwatchStore()),
         clockPrefsStoreProvider.overrideWithValue(MemoryClockPrefsStore()),
-        // No network in tests.
-        httpGetProvider.overrideWithValue(
-          (url) async => throw const SocketException('offline in tests'),
-        ),
         ...extraOverrides.cast(),
       ],
       child: MaterialApp(

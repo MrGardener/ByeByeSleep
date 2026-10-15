@@ -1,4 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Offline app: libraries (Play services, ML Kit) add these; strip them. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- USE_EXACT_ALARM exists from API 33; API 31-32 need this one. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
@@ -6,8 +10,6 @@
     <!-- Opens the ring screen at once, even while the phone is in use. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- World clock city search and weather (Open-Meteo, free, no account). -->
-    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Optional quiet hours: Do Not Disturb from bedtime until the alarm. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />

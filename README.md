@@ -47,13 +47,20 @@ combines these tools, in labelled sections of the editor:
 | Stop ringing after | Default 30 min: an alarm nobody stops (you are away) stops itself and leaves a "Missed alarm" notification. See [docs/safety.md](docs/safety.md). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |
 
+## Works offline
+
+ByeByeSleep never uses the internet: the Android app does not even ask for the
+permission (CI checks the release APK). Cities, time zones and summer time come
+from the phone itself; alarms, challenges and the watch link work without a
+connection.
+
 ## Clock, timer and stopwatch
 
 The **Clock** tab has three tools (first versions, more to come):
 
 | Tool | What it does |
 |---|---|
-| Clock | Big live time, the date, and when your next alarm rings ("in 44 min"). World clock: add cities (47 to choose from), with the time there, today/tomorrow and the difference; summer time comes from the phone. Swipe a city away to remove it. |
+| Clock | Big live time, the date, and when your next alarm rings ("in 44 min"). World clock: add any city by name: 134 built in, plus every place in the phone's own time zone list (about 400). Swipe a city away to remove it. |
 | Timer | Several timers at once: pick a length (presets 1–30 min or any length) and start it; each one can pause, +1 min or be deleted. Each rings at alarm volume, over and over until you tap Stop, even with the app closed or after a restart. |
 | Stopwatch | Start, pause, laps (split and total), reset; keeps running while you switch tabs. |
 

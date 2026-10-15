@@ -62,8 +62,8 @@ class City {
   };
 }
 
-/// Built in: works offline and opens instantly. Any other city comes from
-/// the online search (Open-Meteo, free, the same service as the weather).
+/// Built in, with their countries. Every other place comes from the phone's
+/// own time zone list (see [zoneCity]); all of it works offline.
 const worldCities = [
   City(
     'Honolulu',
@@ -708,11 +708,35 @@ String _fold(String s) => s
     .replaceAll(RegExp('[úùûü]'), 'u')
     .replaceAll('ã', 'a');
 
-List<City> searchCities(String query) {
+/// A city named after a time zone id, e.g. America/Argentina/Ushuaia →
+/// "Ushuaia" (America); null for ids that are not places (UTC, Etc/GMT+3).
+City? zoneCity(String zone) {
+  final parts = zone.split('/');
+  if (parts.length < 2) return null;
+  const regions = {
+    'Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', //
+    'Australia', 'Europe', 'Indian', 'Pacific',
+  };
+  if (!regions.contains(parts.first)) return null;
+  return City(parts.last.replaceAll('_', ' '), parts.first, zone);
+}
+
+/// Built-in cities first, then the places in the phone's time zone list
+/// ([zones]) that are not built in. Offline: matches names and countries.
+List<City> searchCities(String query, {List<String> zones = const []}) {
   final q = _fold(query.trim());
-  return [
+  bool hit(City c) => _fold(c.name).contains(q) || _fold(c.country).contains(q);
+  final builtIn = [
     for (final c in worldCities)
-      if (_fold(c.name).contains(q) || _fold(c.country).contains(q)) c,
+      if (hit(c)) c,
+  ];
+  final known = {for (final c in worldCities) c.zone};
+  return [
+    ...builtIn,
+    if (q.isNotEmpty)
+      for (final z in zones)
+        if (!known.contains(z))
+          if (zoneCity(z) case final c? when hit(c)) c,
   ];
 }
 
@@ -767,6 +791,9 @@ CityTime cityTime(DateTime nowUtc, Duration offset, Duration localOffset) {
 /// (so summer time is right).
 abstract class ZoneOffsets {
   Future<Map<String, Duration>> offsets(List<String> zones, DateTime at);
+
+  /// Every time zone the phone knows (offline).
+  Future<List<String>> all();
 }
 
 class MethodChannelZoneOffsets implements ZoneOffsets {
@@ -785,6 +812,15 @@ class MethodChannelZoneOffsets implements ZoneOffsets {
       };
     } on MissingPluginException {
       return const {};
+    }
+  }
+
+  @override
+  Future<List<String>> all() async {
+    try {
+      return await _channel.invokeListMethod<String>('all') ?? const [];
+    } on MissingPluginException {
+      return const [];
     }
   }
 }
@@ -852,145 +888,3 @@ final worldClocksProvider =
     AsyncNotifierProvider<WorldClocksNotifier, List<City>>(
       WorldClocksNotifier.new,
     );
-
-// ---------------------------------------------------------------------------
-// Online: city search and weather from Open-Meteo (free, no account, no key).
-
-/// GETs a URL and returns the body; tests pass a fake.
-typedef HttpGet = Future<String> Function(Uri url);
-
-Future<String> _httpGet(Uri url) async {
-  final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
-  try {
-    final request = await client.getUrl(url);
-    final response = await request.close().timeout(const Duration(seconds: 10));
-    if (response.statusCode != 200) {
-      throw HttpException('HTTP ${response.statusCode}', uri: url);
-    }
-    return await response.transform(utf8.decoder).join();
-  } finally {
-    client.close();
-  }
-}
-
-final httpGetProvider = Provider<HttpGet>((_) => _httpGet);
-
-/// Cities from an Open-Meteo geocoding answer; results without a time zone
-/// are left out (no clock without one).
-List<City> parseGeocoding(String body) {
-  final results = (jsonDecode(body) as Map)['results'] as List? ?? const [];
-  return [
-    for (final r in results.cast<Map<Object?, Object?>>())
-      if (r['timezone'] is String && r['name'] is String)
-        City(
-          r['name']! as String,
-          r['country'] as String? ?? '',
-          r['timezone']! as String,
-          latitude: (r['latitude'] as num?)?.toDouble(),
-          longitude: (r['longitude'] as num?)?.toDouble(),
-          region: [
-            if (r['admin1'] case final String a when a.isNotEmpty) a,
-            if (r['country'] case final String c when c.isNotEmpty) c,
-          ].join(', '),
-        ),
-  ];
-}
-
-/// Any city in the world, by name (Open-Meteo geocoding).
-Future<List<City>> searchCitiesOnline(HttpGet get, String query) async {
-  final q = query.trim();
-  if (q.length < 2) return const [];
-  final body = await get(
-    Uri.https('geocoding-api.open-meteo.com', '/v1/search', {
-      'name': q,
-      'count': '20',
-      'language': 'en',
-      'format': 'json',
-    }),
-  );
-  return parseGeocoding(body);
-}
-
-class Weather {
-  const Weather({
-    required this.temperatureC,
-    required this.code,
-    this.isDay = true,
-  });
-
-  final double temperatureC;
-
-  /// WMO weather code.
-  final int code;
-  final bool isDay;
-
-  String get description => weatherDescription(code);
-
-  String temperatureText({required bool fahrenheit}) =>
-      '${(fahrenheit ? temperatureC * 9 / 5 + 32 : temperatureC).round()}°';
-}
-
-Weather? parseWeather(String body) {
-  final current = (jsonDecode(body) as Map)['current'];
-  if (current is! Map) return null;
-  final t = current['temperature_2m'];
-  final code = current['weather_code'];
-  if (t is! num || code is! num) return null;
-  return Weather(
-    temperatureC: t.toDouble(),
-    code: code.toInt(),
-    isDay: current['is_day'] != 0,
-  );
-}
-
-/// Words for the WMO weather codes Open-Meteo uses.
-String weatherDescription(int code) => switch (code) {
-  0 => 'Clear',
-  1 || 2 => 'Partly cloudy',
-  3 => 'Cloudy',
-  45 || 48 => 'Fog',
-  >= 51 && <= 57 => 'Drizzle',
-  >= 61 && <= 67 || >= 80 && <= 82 => 'Rain',
-  >= 71 && <= 77 || 85 || 86 => 'Snow',
-  >= 95 => 'Thunderstorm',
-  _ => 'Unknown',
-};
-
-/// Current weather at a place, cached for 30 minutes.
-class WeatherSource {
-  WeatherSource(this._get, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
-
-  final HttpGet _get;
-  final DateTime Function() _now;
-  final _cache = <String, (DateTime, Weather?)>{};
-
-  Future<Weather?> current(double lat, double lon) async {
-    final key = '${lat.toStringAsFixed(2)},${lon.toStringAsFixed(2)}';
-    final hit = _cache[key];
-    if (hit != null &&
-        _now().difference(hit.$1) < const Duration(minutes: 30)) {
-      return hit.$2;
-    }
-    Weather? w;
-    try {
-      w = parseWeather(
-        await _get(
-          Uri.https('api.open-meteo.com', '/v1/forecast', {
-            'latitude': '$lat',
-            'longitude': '$lon',
-            'current': 'temperature_2m,weather_code,is_day',
-          }),
-        ),
-      );
-    } catch (_) {
-      w = null; // offline: no weather, the clock still works
-    }
-    _cache[key] = (_now(), w);
-    return w;
-  }
-}
-
-final weatherSourceProvider = Provider<WeatherSource>(
-  (ref) => WeatherSource(ref.read(httpGetProvider)),
-);

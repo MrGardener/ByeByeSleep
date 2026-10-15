@@ -32,6 +32,13 @@ class FakeBell implements TimerBell {
 
 class FakeZones implements ZoneOffsets {
   @override
+  Future<List<String>> all() async => const [
+    'America/Argentina/Ushuaia',
+    'Asia/Tokyo',
+    'Etc/UTC',
+  ];
+
+  @override
   Future<Map<String, Duration>> offsets(
     List<String> zones,
     DateTime at,
@@ -49,16 +56,6 @@ class MemoryWorldStore implements WorldClockStore {
 
   @override
   Future<void> save(List<City> cities) async => saved = cities;
-}
-
-/// Open-Meteo stand-in: one search result and rainy weather everywhere.
-Future<String> fakeHttp(Uri url) async {
-  if (url.host.startsWith('geocoding')) {
-    return '{"results":[{"name":"Ushuaia","latitude":-54.8,"longitude":-68.3,'
-        '"country":"Argentina","admin1":"Tierra del Fuego",'
-        '"timezone":"America/Argentina/Ushuaia"}]}';
-  }
-  return '{"current":{"temperature_2m":12.6,"weather_code":61,"is_day":1}}';
 }
 
 void main() {
@@ -90,7 +87,6 @@ void main() {
           zoneOffsetsProvider.overrideWithValue(FakeZones()),
           worldClockStoreProvider.overrideWithValue(world),
           stopwatchStoreProvider.overrideWithValue(swStore),
-          httpGetProvider.overrideWithValue(fakeHttp),
           clockPrefsStoreProvider.overrideWithValue(MemoryClockPrefsStore()),
           alarmPlatformProvider.overrideWithValue(
             alarms ?? FakeAlarmPlatform(),
@@ -154,7 +150,7 @@ void main() {
     expect(world.saved, isEmpty);
   });
 
-  testWidgets('world clocks: any city from the online search, with weather', (
+  testWidgets('world clocks: any place in the phone time zone list, offline', (
     tester,
   ) async {
     await pump(tester, const ClockScreen());
@@ -163,7 +159,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.enterText(find.byKey(const Key('world-search')), 'Ushuaia');
-    await tester.pump(const Duration(milliseconds: 500)); // debounce
     await tester.pump();
     await tester.tap(
       find.byKey(const Key('city-Ushuaia@America/Argentina/Ushuaia')),
@@ -173,7 +168,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(world.saved.single.name, 'Ushuaia');
     expect(find.text('Ushuaia'), findsOneWidget);
-    expect(find.textContaining('13° Rain'), findsOneWidget);
   });
 
   testWidgets('clock without alarms says so', (tester) async {

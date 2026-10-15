@@ -40,4 +40,27 @@ void main() {
     expect(searchCities('zzz'), isEmpty);
     expect(worldCities.map((c) => c.id).toSet(), hasLength(worldCities.length));
   });
+
+  test('places from the phone time zone list, offline', () {
+    expect(zoneCity('America/Argentina/Ushuaia')!.name, 'Ushuaia');
+    expect(zoneCity('America/Argentina/Ushuaia')!.country, 'America');
+    expect(zoneCity('America/Port_of_Spain')!.name, 'Port of Spain');
+    expect(zoneCity('Etc/GMT+3'), isNull);
+    expect(zoneCity('UTC'), isNull);
+    const zones = ['America/Argentina/Ushuaia', 'Asia/Tokyo', 'Etc/UTC'];
+    expect(
+      searchCities('ushu', zones: zones).single.zone,
+      'America/Argentina/Ushuaia',
+    );
+    // Built-in cities are not listed twice.
+    expect(searchCities('tokyo', zones: zones), hasLength(1));
+    expect(searchCities('', zones: zones), hasLength(worldCities.length));
+  });
+
+  test('a city round-trips through json; old saved zones still load', () {
+    const c = City('Tokyo', 'Japan', 'Asia/Tokyo');
+    expect(City.fromJson(c.toJson()).zone, 'Asia/Tokyo');
+    expect(City.fromSaved('Asia/Tokyo')!.name, 'Tokyo');
+    expect(City.fromSaved('Not/AZone'), isNull);
+  });
 }
