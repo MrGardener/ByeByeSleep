@@ -112,3 +112,4 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 95 | Airplane mode on; Clock → Add city → type "Ushuaia", then "tokyo". | Both found offline (built-in cities plus every place in the phone's time zone list); time, day and difference show. Settings → Apps → ByeByeSleep → Permissions lists no internet access. |
 | 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
 | 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |
+| 98 | Alarm editor → Sound: pick another sound (tap to hear it), Gradually louder "Over 1 min", Vibrate off. | Preview plays and stops when the sheet closes; at ring time the chosen sound starts soft and reaches full volume after 1 min; no vibration. |

@@ -43,6 +43,7 @@ combines these tools, in labelled sections of the editor:
 | Series | One alarm that rings N times, every M minutes, starting or ending at its time. The others are listed under it and follow its changes; follow-ups need the same challenges or one quick sum. After Stop you can skip the rest of the series today. "Split into separate alarms" makes them independent. |
 | Reminder | A photo and caption of what not to forget, shown while ringing and full screen after Stop. "Reminder only" = no challenges. |
 | Watch | With the ByeByeSleep watch app (Pixel Watch 3, other Wear OS watches): "Get your heart going" (heart rate), "Wrist workout" (arm swings) and "Walk with your watch" (steps) use the watch's sensors live ([install guide](docs/watch-install.md)). |
+| Sound | Choose the alarm's sound from the phone's own sounds (alarm, ringtone, notification) with a preview; "Gradually louder" rises from soft to full over 30 s–5 min; vibration on/off. Android (iPhone uses its system alarm sound). |
 | Check I'm awake | Optional: some minutes after Stop the alarm rings once more with one quick challenge, so dozing off again does not work. |
 | Stop ringing after | Default 30 min: an alarm nobody stops (you are away) stops itself and leaves a "Missed alarm" notification. See [docs/safety.md](docs/safety.md). |
 | Emergency stop | On the ring screen, for anyone: volume button + Wi-Fi off + Bluetooth off + airplane mode on, any order. |

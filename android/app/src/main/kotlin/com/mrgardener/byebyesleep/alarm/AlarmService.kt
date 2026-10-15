@@ -33,6 +33,25 @@ class AlarmService : Service() {
     private var soundPending = false
     private var level = 1f
     private val soundFallback = Runnable { startSound() }
+    private var soundStarted = false
+    private var soundStartedAt = 0L
+    private var sound = AlarmSound.Settings(null, 0, true)
+
+    /** Gradual alarm: raises the volume every half second until the ramp is done. */
+    private val rampTick = object : Runnable {
+        override fun run() {
+            applyVolume()
+            if (System.currentTimeMillis() - soundStartedAt < sound.rampSeconds * 1000L) {
+                timeout.postDelayed(this, 500)
+            }
+        }
+    }
+
+    /** Breather level (quieter between stages) times the gradual ramp. */
+    private fun applyVolume() {
+        val v = level * AlarmSound.rampFactor(System.currentTimeMillis() - soundStartedAt, sound.rampSeconds)
+        player?.setVolume(v, v)
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -50,7 +69,7 @@ class AlarmService : Service() {
             ACTION_RING_ACTIVITY_GONE -> ringingAlarmId?.let { postNotification(it, repost = true) }
             ACTION_SET_LEVEL -> intent.getFloatExtra(EXTRA_LEVEL, 1f).coerceIn(0f, 1f).let {
                 level = it
-                player?.setVolume(it, it)
+                applyVolume()
             }
             ACTION_SCREEN_READY -> startSound()
             ACTION_STOP -> stopRinging()
@@ -126,26 +145,36 @@ class AlarmService : Service() {
 
     /** Starts the sound and vibration (once): the ring screen is up, or it took too long. */
     private fun startSound() {
-        if (!ringing || player != null || vibrator != null) return
+        if (!ringing || soundStarted) return
+        soundStarted = true
         soundPending = false
         timeout.removeCallbacks(soundFallback)
+        sound = runCatching {
+            ringingAlarmId?.let { PrefsAlarmRepository(applicationContext).get(it) }
+                ?.let { AlarmSound.parse(it.extrasJson) }
+        }.getOrNull() ?: AlarmSound.Settings(null, 0, true)
+        soundStartedAt = System.currentTimeMillis()
         val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val fallback = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        player = runCatching {
+        fun play(uri: android.net.Uri) = runCatching {
             MediaPlayer().apply {
                 setAudioAttributes(attrs)
                 setDataSource(this@AlarmService, uri)
                 isLooping = true
-                setVolume(level, level)
                 prepare()
                 start()
             }
         }.getOrNull()
+        // The chosen sound; if it is gone (deleted file), the default alarm.
+        player = sound.uri?.let { play(android.net.Uri.parse(it)) } ?: play(fallback)
+        applyVolume()
+        if (sound.rampSeconds > 0) timeout.postDelayed(rampTick, 500)
 
+        if (!sound.vibrate) return
         vibrator = (if (Build.VERSION.SDK_INT >= 31) {
             getSystemService(VibratorManager::class.java).defaultVibrator
         } else {
@@ -225,6 +254,7 @@ class AlarmService : Service() {
         ringingAlarmIds = emptySet()
         ringing = false
         soundPending = false
+        soundStarted = false
         player?.run { runCatching { stop() }; release() }
         player = null
         vibrator?.cancel()

@@ -1,3 +1,4 @@
+import 'package:byebyesleep/alarm/sounds.dart';
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/alarm/series.dart';
 import 'package:byebyesleep/challenges/core/camera.dart';
@@ -9,6 +10,23 @@ import '../../challenges/photo_match_test.dart'
     show FakeCamera, MemoryPhotoStore;
 import '../../support/fake_alarm_platform.dart';
 import '../../support/pump_app.dart';
+
+class FakeSounds implements SoundsSource {
+  final previewed = <String?>[];
+  var stopped = 0;
+
+  @override
+  Future<List<AlarmSoundChoice>> list() async => const [
+    AlarmSoundChoice('content://birds', 'Morning birds', kind: 'Alarm'),
+    AlarmSoundChoice('content://bells', 'Bells', kind: 'Ringtone'),
+  ];
+
+  @override
+  Future<void> preview(String? uri) async => previewed.add(uri);
+
+  @override
+  Future<void> stopPreview() async => stopped++;
+}
 
 void main() {
   testWidgets('addFlowCreatesAlarm', (tester) async {
@@ -181,6 +199,50 @@ void main() {
     await tester.tap(find.byKey(const Key('save-alarm')));
     await tester.pumpAndSettle();
     expect(fake.stored.values.single.maxRingMinutes, 10);
+  });
+
+  testWidgets('sound, gradual volume and vibration are chosen per alarm', (
+    tester,
+  ) async {
+    final fake = FakeAlarmPlatform();
+    final sounds = FakeSounds();
+    await pumpApp(
+      tester,
+      fake,
+      extraOverrides: [
+        soundsSourceProvider.overrideWithValue(sounds),
+        alarmSoundsSupportedProvider.overrideWithValue(true),
+      ],
+    );
+    await tester.tap(find.byKey(const Key('add-alarm')));
+    await tester.pumpAndSettle();
+    await reveal(tester, const Key('sound-tile'));
+    expect(find.text('Default alarm sound'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('sound-tile')));
+    await tester.pumpAndSettle();
+    // Tapping a sound previews it; Choose keeps it.
+    await tester.tap(find.text('Morning birds'));
+    await tester.pumpAndSettle();
+    expect(sounds.previewed.last, 'content://birds');
+    await tester.tap(find.byKey(const Key('sound-choose')));
+    await tester.pumpAndSettle();
+    expect(sounds.stopped, greaterThan(0));
+    expect(find.text('Morning birds'), findsOneWidget);
+    await reveal(tester, const Key('ramp-dropdown'));
+    await tester.tap(find.byKey(const Key('ramp-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Over 1 min').last);
+    await tester.pumpAndSettle();
+    await reveal(tester, const Key('vibrate-switch'));
+    await tester.tap(find.byKey(const Key('vibrate-switch')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-alarm')));
+    await tester.pumpAndSettle();
+    final saved = fake.stored.values.single;
+    expect(saved.sound!.uri, 'content://birds');
+    expect(saved.sound!.title, 'Morning birds');
+    expect(saved.rampSeconds, 60);
+    expect(saved.vibrate, isFalse);
   });
 
   testWidgets('editFlowUpdatesExistingAlarm', (tester) async {

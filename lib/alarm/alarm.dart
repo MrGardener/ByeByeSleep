@@ -24,6 +24,9 @@ class Alarm {
     this.onceAt,
     this.followUpMinutes = 0,
     this.maxRingMinutes = defaultMaxRing,
+    this.sound,
+    this.rampSeconds = 0,
+    this.vibrate = true,
   }) : assert(hour >= 0 && hour < 24),
        assert(minute >= 0 && minute < 60),
        assert(repeatDays.every((d) => d >= 1 && d <= 7));
@@ -53,6 +56,14 @@ class Alarm {
     parentId: (_extras(m)['parent'] as num?)?.toInt(),
     followUpMinutes: (_extras(m)['followUp'] as num?)?.toInt() ?? 0,
     maxRingMinutes: (_extras(m)['maxRing'] as num?)?.toInt() ?? defaultMaxRing,
+    sound: _extras(m)['sound'] is String
+        ? AlarmSoundChoice(
+            _extras(m)['sound']! as String,
+            _extras(m)['soundTitle'] as String? ?? 'Sound',
+          )
+        : null,
+    rampSeconds: (_extras(m)['ramp'] as num?)?.toInt() ?? 0,
+    vibrate: _extras(m)['vibrate'] != false,
     onceAt: m['atMs'] is num
         ? DateTime.fromMillisecondsSinceEpoch((m['atMs']! as num).toInt())
         : null,
@@ -102,6 +113,15 @@ class Alarm {
   final int maxRingMinutes;
   static const defaultMaxRing = 30;
 
+  /// The phone sound it rings with; null = the default alarm sound. Read
+  /// natively (AlarmSound.kt), like the two below.
+  final AlarmSoundChoice? sound;
+
+  /// Seconds to rise from soft to full volume; 0 = full at once.
+  final int rampSeconds;
+
+  final bool vibrate;
+
   /// A one-shot series alarm rings exactly here (its date included), so it
   /// stays with its main alarm's ring instead of the next free time of day.
   final DateTime? onceAt;
@@ -126,6 +146,9 @@ class Alarm {
     DateTime? Function()? onceAt,
     int? followUpMinutes,
     int? maxRingMinutes,
+    AlarmSoundChoice? Function()? sound,
+    int? rampSeconds,
+    bool? vibrate,
   }) => Alarm(
     id: id ?? this.id,
     hour: hour ?? this.hour,
@@ -141,6 +164,9 @@ class Alarm {
     onceAt: onceAt != null ? onceAt() : this.onceAt,
     followUpMinutes: followUpMinutes ?? this.followUpMinutes,
     maxRingMinutes: maxRingMinutes ?? this.maxRingMinutes,
+    sound: sound != null ? sound() : this.sound,
+    rampSeconds: rampSeconds ?? this.rampSeconds,
+    vibrate: vibrate ?? this.vibrate,
   );
 
   Map<String, Object?> toMap() => {
@@ -159,6 +185,9 @@ class Alarm {
       if (parentId != null) 'parent': parentId,
       if (followUpMinutes > 0) 'followUp': followUpMinutes,
       if (maxRingMinutes != defaultMaxRing) 'maxRing': maxRingMinutes,
+      if (sound != null) ...{'sound': sound!.uri, 'soundTitle': sound!.title},
+      if (rampSeconds > 0) 'ramp': rampSeconds,
+      if (!vibrate) 'vibrate': false,
     }),
   };
 
@@ -178,7 +207,10 @@ class Alarm {
       other.parentId == parentId &&
       other.onceAt == onceAt &&
       other.followUpMinutes == followUpMinutes &&
-      other.maxRingMinutes == maxRingMinutes;
+      other.maxRingMinutes == maxRingMinutes &&
+      other.sound == sound &&
+      other.rampSeconds == rampSeconds &&
+      other.vibrate == vibrate;
 
   @override
   int get hashCode => Object.hash(
@@ -194,4 +226,23 @@ class Alarm {
   @override
   String toString() =>
       'Alarm($id, $timeLabel, $repeatDays, "$label", $enabled)';
+}
+
+/// A sound from the phone (alarm, ringtone or notification sounds).
+@immutable
+class AlarmSoundChoice {
+  const AlarmSoundChoice(this.uri, this.title, {this.kind = ''});
+
+  final String uri;
+  final String title;
+
+  /// "Alarm", "Ringtone" or "Notification" (for the picker only).
+  final String kind;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AlarmSoundChoice && other.uri == uri && other.title == title;
+
+  @override
+  int get hashCode => Object.hash(uri, title);
 }

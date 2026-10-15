@@ -9,9 +9,11 @@ import '../alarm_providers.dart';
 import '../guard.dart';
 import '../preflight.dart';
 import '../series.dart';
+import '../sounds.dart';
 import '../stage_config.dart';
 import 'reminder_photo_screen.dart';
 import 'repeat_summary.dart';
+import 'sound_picker.dart';
 import 'stage_editor.dart';
 import 'stored_photo.dart';
 
@@ -35,6 +37,9 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   late int _pauseSeconds;
   late int _followUp;
   late int _maxRing;
+  AlarmSoundChoice? _sound;
+  late int _ramp;
+  late bool _vibrate;
   SeriesConfig? _series;
   String? _reminderPhoto;
   late final TextEditingController _reminderCaption;
@@ -56,6 +61,9 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     _pauseSeconds = a?.pauseSeconds ?? 0;
     _followUp = a?.followUpMinutes ?? 0;
     _maxRing = a?.maxRingMinutes ?? Alarm.defaultMaxRing;
+    _sound = a?.sound;
+    _ramp = a?.rampSeconds ?? 0;
+    _vibrate = a?.vibrate ?? true;
     _series = a?.series;
     _reminderPhoto = a?.reminder?.photoPath;
     _reminderCaption = TextEditingController(text: a?.reminder?.caption ?? '')
@@ -175,6 +183,9 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     pauseSeconds: _pauseSeconds,
     followUpMinutes: _followUp,
     maxRingMinutes: _maxRing,
+    sound: _sound,
+    rampSeconds: _ramp,
+    vibrate: _vibrate,
     reminder: _reminder.isEmpty ? null : _reminder,
     // Without a reminder an alarm needs at least one challenge.
     stages: _stages.isEmpty && _reminder.isEmpty ? defaultStages : _stages,
@@ -300,6 +311,45 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     }
     if (mounted) Navigator.of(context).pop();
   }
+
+  Widget _soundSection() => Column(
+    children: [
+      ListTile(
+        key: const Key('sound-tile'),
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.library_music_outlined),
+        title: Text(_sound?.title ?? 'Default alarm sound'),
+        subtitle: const Text('Tap to choose and listen'),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () async {
+          final picked = await pickAlarmSound(context, _sound);
+          if (picked != null && mounted) setState(() => _sound = picked.$1);
+        },
+      ),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Gradually louder'),
+        subtitle: const Text('Starts soft and rises to full volume.'),
+        trailing: DropdownButton<int>(
+          key: const Key('ramp-dropdown'),
+          value: _ramp,
+          borderRadius: BorderRadius.circular(AppTheme.radius),
+          items: [
+            for (final r in {...rampChoices, _ramp})
+              DropdownMenuItem(value: r, child: Text(rampLabel(r))),
+          ],
+          onChanged: (r) => setState(() => _ramp = r ?? 0),
+        ),
+      ),
+      SwitchListTile(
+        key: const Key('vibrate-switch'),
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Vibrate'),
+        value: _vibrate,
+        onChanged: (v) => setState(() => _vibrate = v),
+      ),
+    ],
+  );
 
   Widget _seriesSection() {
     final series = _series;
@@ -624,6 +674,10 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
               ),
             ],
           ),
+          if (ref.watch(alarmSoundsSupportedProvider)) ...[
+            const SectionHeader(Icons.music_note_rounded, 'Sound'),
+            _Panel(children: [_soundSection()]),
+          ],
           const SectionHeader(Icons.repeat_rounded, 'Series'),
           _Panel(children: [_seriesSection()]),
           const SectionHeader(Icons.photo_camera_outlined, 'Reminder'),

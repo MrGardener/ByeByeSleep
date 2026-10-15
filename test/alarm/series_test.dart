@@ -230,4 +230,34 @@ void main() {
     expect(Alarm.fromMap(a.toMap()).maxRingMinutes, 10);
     expect(seriesChildren(a).single.maxRingMinutes, 10);
   });
+
+  test(
+    'sound, gradual volume and vibration: saved and shared by the series',
+    () {
+      final plain = Alarm(id: 1, hour: 7, minute: 0);
+      expect(plain.sound, isNull);
+      expect(plain.rampSeconds, 0);
+      expect(plain.vibrate, isTrue);
+      final a = Alarm(
+        id: 1,
+        hour: 7,
+        minute: 0,
+        sound: const AlarmSoundChoice(
+          'content://media/internal/audio/media/7',
+          'Sunrise',
+        ),
+        rampSeconds: 60,
+        vibrate: false,
+        series: const SeriesConfig(count: 2, everyMinutes: 5),
+      );
+      final back = Alarm.fromMap(a.toMap());
+      expect(back.sound, a.sound);
+      expect(back.rampSeconds, 60);
+      expect(back.vibrate, isFalse);
+      final child = seriesChildren(a).single;
+      expect(child.sound, a.sound);
+      expect(child.rampSeconds, 60);
+      expect(child.vibrate, isFalse);
+    },
+  );
 }
