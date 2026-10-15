@@ -206,6 +206,12 @@ IconData challengeIcon(ChallengeId id) => switch (id) {
   ChallengeId.timeSense => Icons.hourglass_bottom,
   ChallengeId.pulseCode => Icons.vibration,
   ChallengeId.colourHunt => Icons.colorize,
+  ChallengeId.memoryGrid => Icons.grid_view,
+  ChallengeId.shakeIt => Icons.edgesensor_high,
+  ChallengeId.retype => Icons.keyboard_outlined,
+  ChallengeId.numberOrder => Icons.format_list_numbered,
+  ChallengeId.wordUnscramble => Icons.spellcheck,
+  ChallengeId.oddOneOut => Icons.manage_search,
 };
 
 /// An icon for each Sensor Quest world.

@@ -1,6 +1,8 @@
 import 'package:byebyesleep/alarm/alarm.dart';
 import 'package:byebyesleep/challenges/core/capabilities.dart';
+import 'package:byebyesleep/challenges/core/challenge_id.dart';
 import 'package:byebyesleep/challenges/core/types.dart';
+import 'package:byebyesleep/challenges/registry.dart';
 import 'package:byebyesleep/game/progress_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -110,7 +112,9 @@ void main() {
       of: find.byType(BottomSheet),
       matching: find.byType(Scrollable),
     );
-    final last = find.byKey(const Key('pick-compass'));
+    // The last phone challenge (the watch section has only a setup tile).
+    final lastId = ChallengeId.values.lastWhere((id) => !isWatchChallenge(id));
+    final last = find.byKey(Key('pick-${lastId.name}'));
     await tester.scrollUntilVisible(last, 200, scrollable: sheet);
     await tester.drag(sheet, const Offset(0, -2000)); // to the very end
     await tester.pumpAndSettle();

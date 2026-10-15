@@ -12,6 +12,12 @@ import '../game/worlds/world_kit.dart';
 import '../watch_setup/watch_settings.dart';
 import 'colour_hunt/widget.dart';
 import 'compass/widget.dart';
+import 'memory_grid/widget.dart';
+import 'number_order/widget.dart';
+import 'odd_one_out/widget.dart';
+import 'retype/widget.dart';
+import 'shake_it/widget.dart';
+import 'word_unscramble/widget.dart';
 import 'pulse_code/widget.dart';
 import 'time_sense/widget.dart';
 import 'core/types.dart';
@@ -140,6 +146,48 @@ final Map<ChallengeId, ChallengeDefinition> _definitions = {
     instructions: 'Find something of the colour shown and photograph it.',
     requires: (_) => const {SensorKind.camera},
     build: (args) => ColourHuntChallenge(args: args),
+  ),
+  ChallengeId.memoryGrid: ChallengeDefinition(
+    id: ChallengeId.memoryGrid,
+    title: 'Memory grid',
+    instructions: 'Watch which tiles light up, then tap the same tiles.',
+    requires: (_) => const {},
+    build: (args) => MemoryGridChallenge(args: args),
+  ),
+  ChallengeId.shakeIt: ChallengeDefinition(
+    id: ChallengeId.shakeIt,
+    title: 'Shake it',
+    instructions: 'Hold the phone tightly and shake it hard until it is full.',
+    requires: (_) => const {SensorKind.accelerometer},
+    build: (args) => ShakeItChallenge(args: args),
+  ),
+  ChallengeId.retype: ChallengeDefinition(
+    id: ChallengeId.retype,
+    title: 'Retype',
+    instructions: 'Type the sentence shown; capitals and commas do not count.',
+    requires: (_) => const {},
+    build: (args) => RetypeChallenge(args: args),
+  ),
+  ChallengeId.numberOrder: ChallengeDefinition(
+    id: ChallengeId.numberOrder,
+    title: 'Number order',
+    instructions: 'Tap the numbers from 1 upwards; a wrong one starts again.',
+    requires: (_) => const {},
+    build: (args) => NumberOrderChallenge(args: args),
+  ),
+  ChallengeId.wordUnscramble: ChallengeDefinition(
+    id: ChallengeId.wordUnscramble,
+    title: 'Word unscramble',
+    instructions: 'Tap the letters in order to spell the hidden word.',
+    requires: (_) => const {},
+    build: (args) => WordUnscrambleChallenge(args: args),
+  ),
+  ChallengeId.oddOneOut: ChallengeDefinition(
+    id: ChallengeId.oddOneOut,
+    title: 'Odd one out',
+    instructions: 'Find the symbol that is turned, three times in a row.',
+    requires: (_) => const {},
+    build: (args) => OddOneOutChallenge(args: args),
   ),
   ChallengeId.stairs: ChallengeDefinition(
     id: ChallengeId.stairs,

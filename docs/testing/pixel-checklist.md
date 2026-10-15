@@ -112,3 +112,10 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 95 | Airplane mode on; Clock → Add city → type "Ushuaia", then "tokyo". | Both found offline (built-in cities plus every place in the phone's time zone list); time, day and difference show. Settings → Apps → ByeByeSleep → Permissions lists no internet access. |
 | 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
 | 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |
+| 98 | Practice → Memory grid at difficulty 1, then 5. | 3 of 9 tiles light briefly at 1, 8 of 25 at 5; tapping them back passes; a wrong tile turns red and the pattern shows again. Tiles are easy to hit. |
+| 99 | Practice → Shake it at difficulty 1; first just walk around holding the phone, then shake hard. | Walking and gentle moves do not count; hard shakes count one each, up to 20 (60 at 5), then it passes. |
+| 100 | Practice → Retype at difficulty 1 and 5. | A short sentence at 1, a long one at 5; no keyboard suggestions; typing it in lower case without punctuation passes; a typo does not. |
+| 101 | Practice → Number order at difficulty 5. | 25 numbers scattered with gaps, all easy to tap; a wrong number says "Start again at 1" and brings back the tapped ones; 1→25 in order passes. |
+| 102 | Practice → Word unscramble at difficulty 1 and 5. | 4 letters at 1, 8 at 5, never already in order; Undo/Clear work; a wrong full word clears with "Not quite"; the right word passes. |
+| 103 | Practice → Odd one out at difficulty 1 and 5. | One symbol turned upside down in a 3×3 grid at 1; turned slightly (15°) in a 6×6 grid at 5; three finds in a row pass; a miss resets to 0 / 3. |
+| 104 | Add each of the six new challenges to an alarm; let it ring (airplane mode on). | Each shows its own icon in the picker and runs in the ring screen panel without clipping; the estimate under the stages grows with difficulty; Stop appears after the last. |
