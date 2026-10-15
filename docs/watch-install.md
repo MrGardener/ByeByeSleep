@@ -36,8 +36,8 @@ the same Wi-Fi, and Android's free `adb` tool
    adb connect <IP>:<port shown on the Wireless debugging screen>
    adb install ByeByeSleep-watch.apk
    ```
-5. Open **ByeByeSleep** on the watch once and allow **body sensors** and
-   **physical activity** (for steps).
+5. Open **ByeByeSleep** on the watch, tap **Heart rate** once and allow **body
+   sensors** and **physical activity** (for steps).
 6. Turn **Wireless debugging** off again (it uses battery).
 
 **Check it works:** on the phone, Practice → *Get your heart going* → Start. The watch
@@ -48,3 +48,30 @@ opens the heart-rate screen by itself and the phone shows your bpm.
   repository's releases): the watch only talks to a phone app signed with the same key.
 - During the challenge the watch screen stays on so the sensor keeps reading; it
   closes itself when the challenge ends (or after 15 minutes).
+
+## Clock, timer and stopwatch on the watch
+
+Opening **ByeByeSleep** on the watch shows its home screen with four big buttons.
+They work on the watch alone: no phone, no Bluetooth, no internet needed.
+
+| Button | What it does |
+|---|---|
+| **Clock** | Big time (12 h or 24 h as the watch is set), the date, and a coral seconds arc sweeping round the edge. |
+| **Timer** | One timer. Turn the **crown** (or tap − / +) to set 1–180 minutes, then **Start**; **Pause / Resume** and **Reset**. Presets 1, 3, 5, 10, 15 and 30 min start at once. The ring round the edge shows the time left. |
+| **Stopwatch** | **Start / Pause**, **Lap** (while running) and **Reset** (while paused). Laps are listed newest first with lap time and total; fastest in amber, slowest in coral. The crown scrolls the laps. |
+| **Heart rate** | The live sensor screen the phone's watch challenges use (as before). |
+
+- **Time's up:** when the timer ends the watch vibrates in a repeating pattern and
+  shows *Time's up* with **Stop** (and **+1 min**), also with the screen off, the
+  app closed or after a restart. It stops by itself after 10 minutes. The timer
+  uses an exact alarm, so it is on time even when the watch is idle.
+- The first time you start the timer the watch asks to allow **notifications**:
+  allow it, otherwise *Time's up* can not show. If the timer screen shows *Allow
+  full-screen alerts*, tap it and switch that on.
+- The stopwatch keeps counting when you leave the screen or the app is closed; the
+  home screen shows a running timer and stopwatch under their buttons.
+- The screen stays on only while the timer or stopwatch screen is open and
+  counting. When the watch dims, the timer still rings and the stopwatch still
+  counts.
+- The phone's Clock tab (several named timers and stopwatches) and the watch's
+  tools are separate; they do not sync.
