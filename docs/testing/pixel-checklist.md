@@ -120,3 +120,10 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 103 | Watch → Timer → preset 1; allow notifications; press the side button to leave the app and let the screen go off. | After 1 min the screen turns on with "Time's up" and the watch vibrates repeatedly until Stop; "+1 min" starts another minute. |
 | 104 | Watch: start a 3 min timer, restart the watch. | After the restart it still rings at the original end time (or right away if that passed). |
 | 105 | Watch → Stopwatch: Start, Lap 3 times, leave the app for a minute, come back, Pause, Reset. | The time kept counting while away; laps newest first with fastest amber / slowest coral; Reset (only while paused) clears all. |
+| 106 | Practice → Memory grid at difficulty 1, then 5. | 3 of 9 tiles light briefly at 1, 8 of 25 at 5; tapping them back passes; a wrong tile turns red and the pattern shows again. Tiles are easy to hit. |
+| 107 | Practice → Shake it at difficulty 1; first just walk around holding the phone, then shake hard. | Walking and gentle moves do not count; hard shakes count one each, up to 20 (60 at 5), then it passes. |
+| 108 | Practice → Retype at difficulty 1 and 5. | A short sentence at 1, a long one at 5; no keyboard suggestions; typing it in lower case without punctuation passes; a typo does not. |
+| 109 | Practice → Number order at difficulty 5. | 25 numbers scattered with gaps, all easy to tap; a wrong number says "Start again at 1" and brings back the tapped ones; 1→25 in order passes. |
+| 110 | Practice → Word unscramble at difficulty 1 and 5. | 4 letters at 1, 8 at 5, never already in order; Undo/Clear work; a wrong full word clears with "Not quite"; the right word passes. |
+| 111 | Practice → Odd one out at difficulty 1 and 5. | One symbol turned upside down in a 3×3 grid at 1; turned slightly (15°) in a 6×6 grid at 5; three finds in a row pass; a miss resets to 0 / 3. |
+| 112 | Add each of the six new challenges to an alarm; let it ring (airplane mode on). | Each shows its own icon in the picker and runs in the ring screen panel without clipping; the estimate under the stages grows with difficulty; Stop appears after the last. |

@@ -118,6 +118,12 @@ the challenges are done.
 | Time sense | Stop a hidden timer at exactly 20–45 s, counting in your head | — |
 | Pulse code | Watch short/long flashes and tap them back | — |
 | Colour hunt | Photograph something of the colour shown | — |
+| Memory grid | Tap back the tiles that lit up (3 of 3×3 → 8 of 5×5) | — |
+| Shake it | Shake the phone hard 20–60 times (accelerometer) | — |
+| Retype | Type a cheerful sentence exactly; capitals and punctuation don't count (3 → 15 words) | — |
+| Number order | Tap 1…N scattered on screen in order (9 → 25); a wrong tap restarts | — |
+| Word unscramble | Spell the word from its shuffled letters (4 → 8 letters) | — |
+| Odd one out | Find the turned symbol three times in a row (3×3, half turn → 6×6, 15°) | — |
 | Watch challenges | Wrist workout, walk with your watch, heart rate (own section, only after Settings → Smartwatch test) | Watch set up and tested |
 
 "Use wake-up routine" in the alarm editor sets Lights → Walk → Photo → Maze → Calculator.

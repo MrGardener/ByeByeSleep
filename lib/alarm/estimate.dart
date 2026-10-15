@@ -25,6 +25,12 @@ const _typical = <ChallengeId, (int, int)>{
   ChallengeId.timeSense: (25, 90),
   ChallengeId.pulseCode: (20, 90),
   ChallengeId.colourHunt: (20, 120),
+  ChallengeId.memoryGrid: (15, 60),
+  ChallengeId.shakeIt: (15, 45),
+  ChallengeId.retype: (20, 75),
+  ChallengeId.numberOrder: (15, 50),
+  ChallengeId.wordUnscramble: (15, 90),
+  ChallengeId.oddOneOut: (10, 45),
 };
 
 /// Challenges whose difficulty changes how long they take.
@@ -33,6 +39,12 @@ const _scaled = {
   ChallengeId.tiltMaze,
   ChallengeId.brokenCalculator,
   ChallengeId.stroopTap,
+  ChallengeId.memoryGrid,
+  ChallengeId.shakeIt,
+  ChallengeId.retype,
+  ChallengeId.numberOrder,
+  ChallengeId.wordUnscramble,
+  ChallengeId.oddOneOut,
 };
 
 ({Duration low, Duration high}) estimateStop(
