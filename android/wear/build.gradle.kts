@@ -1,7 +1,8 @@
 import java.util.Properties
 
 // The ByeByeSleep watch app (Wear OS): live heart rate for the phone's
-// "Get your heart going" challenge. Same application id and signing key as
+// "Get your heart going" challenge, plus a clock, timer and stopwatch that
+// work on the watch alone (plain Android views, no extra libraries). Same application id and signing key as
 // the phone app — the Wearable Data Layer only connects such pairs.
 plugins {
     id("com.android.application")
@@ -62,4 +63,6 @@ kotlin {
 
 dependencies {
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    // Pure-logic tests (TimerLogic, StopwatchLogic); same version as :app.
+    testImplementation("junit:junit:4.13.2")
 }

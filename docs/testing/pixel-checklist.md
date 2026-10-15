@@ -113,3 +113,10 @@ unless stated otherwise. Write the result (✅/❌ + note) next to each line.
 | 96 | Settings → Clock: Analog, 24 h, seconds off, home = Madrid. | Clock tab follows; with the phone in another time zone a "Home · Madrid" card shows. |
 | 97 | Settings → Bedtime: wind-down 30 min, Quiet hours on. | Asks for Do Not Disturb access once; "Wind down" 30 min before bedtime; DND on at bedtime and off when the alarm rings. |
 | 98 | Alarm editor → Sound: pick another sound (tap to hear it), Gradually louder "Over 1 min", Vibrate off. | Preview plays and stops when the sheet closes; at ring time the chosen sound starts soft and reaches full volume after 1 min; no vibration. |
+| 99 | Watch: open ByeByeSleep from the watch's app list. | Home with Clock, Timer, Stopwatch and Heart rate; the crown scrolls the list; text stays inside the round screen. |
+| 100 | Watch → Heart rate; then on the phone Practice → Get your heart going → Start. | Heart rate opens and asks for sensors as before; the phone still opens the heart-rate screen on the watch by itself and shows bpm. |
+| 101 | Watch → Clock, with the watch set to 24 h and then 12 h. | Big time follows the setting (AM/PM shown only in 12 h), date under it, coral arc sweeps once a minute. |
+| 102 | Watch → Timer: turn the crown, tap − and +, then Start, Pause, Resume, Reset. | Crown/− + change whole minutes (1–180) only while stopped; Pause freezes the time, Resume continues, Reset returns to the set minutes. |
+| 103 | Watch → Timer → preset 1; allow notifications; press the side button to leave the app and let the screen go off. | After 1 min the screen turns on with "Time's up" and the watch vibrates repeatedly until Stop; "+1 min" starts another minute. |
+| 104 | Watch: start a 3 min timer, restart the watch. | After the restart it still rings at the original end time (or right away if that passed). |
+| 105 | Watch → Stopwatch: Start, Lap 3 times, leave the app for a minute, come back, Pause, Reset. | The time kept counting while away; laps newest first with fastest amber / slowest coral; Reset (only while paused) clears all. |
